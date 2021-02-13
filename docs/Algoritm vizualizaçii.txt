@@ -1,0 +1,12 @@
+Algoritm vizualizaçii figur dolžen ostavatjsä takim, ctoby on mog opredelitj bližajšuju tocku peresecenija luca iz kamery s itogovoj figuroj, pri etom ctoby vycisliteljnaja složnostj etogo opredelenija ostavalasj proporçionaljnoj summarnomu kolicestvu bazovyh figur i operaçij nad nimi.
+Takže, želateljno, ctoby algoritm vizualizaçii daval blizkij k tocnomu rezuljtat.
+Ishodä iz etih trebovanij, vyhodit, cto ne podhodät pribležönnyje çiclennyje metody, vrode vokselizaçii i iteraçii vdolj luca.
+
+V slucaje, kogda vsä figura sostoit iz summy drugih figur, algoritm vizualizaçii dostatocno prost.
+Nado lišj najti dlä každoj sostavläjuscej figury bližajšuju tocku peresecenija s lucöm iz kamery i vybratj bližajšuju iz nih.
+Složnostj po vremeni - O(n), složnostj po pamäti O(1). Nado toljko hranitj bližajšuju tocku peresecenija.
+
+V slucaje razniçy dvuh vypuklyh figur najti bližajšuju tocku peresecenija rezuljtata s lucöm dostatocno prosto.
+Nado lišj vycislitj po pare tocek peresecenija oboih figur s lucöm, sostavitj iz etih par otrezki i vycislitj razniçu etih otrezkov.
+
+Takim obrazom, dostatocno legko vizualizirovatj figuru, sostojascuju iz summy vypuklyh figur ili raznostej vypuklyh figur.

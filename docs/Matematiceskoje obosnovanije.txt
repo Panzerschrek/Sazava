@@ -1,0 +1,27 @@
+﻿V tröhmernom prostranstve suscestvujut geometriceskije figury, deläscije prostranstvo na 2 casti - uslovnyje "vnešneje" i "vnutrenneje" podprostranstva.
+Primer takih figur:
+* Ploskostj
+* Sfera
+* çilindr beskonecnoj dliny
+
+Oboznacim eti podprostranstva. Vnutrenneje podprostranstvo my nazovöm "1", a vnešneje - "0".
+Dlä podprostranstv možno opredelitj räd operaçij:
+* Složenije. 0+0=0, 0+1=1, 1+0=1, 1+1=1. Dannaja operaçija kommutativna i assoçiativna.
+* Proizvedenije. 0*0=0, 0*1=0, 1*0=0, 1*1=1. Dannaja operaçija kommutativna i assoçiativna.
+* Raznostj. 0-0=0, 0-1=0, 1-0=1, 1-1=0. Dannaja operaçija nekommutativna i neassoçiativna.
+
+Nekotoryje geometriceskije figury možno polucitj putöm primenenija takih operaçij. Naprimer:
+* parallelepiped - eto proizvedenije šesti poparno paralleljnyh ploskostej
+* ogranicennyj çilindr - proizvedenije çilindra beskonecnoj dliny i dvuh ploskostej
+* koljço - raznostj dvuh vložennyh çilindrov
+
+U figur jestj takoje svojstvo, kak vypuklostj. Lucj peresekajet vypukluju figuru ne boleje cem v dvuh tockah.
+Kak že vlijajut vyšeopredelönnyje operaçii na vypuklostj figur?
+* Složenije vypuklyh figur proizvodit potençialjno-nevypuklyje figury.
+* Proizvedenije vypuklyh figur proizvodit vypukluju figuru ili pustuju figuru.
+* Raznostj vypuklyh figur proizvodit potençialjno-nevypukluju figuru.
+
+U figur jestj takoje svojstvo, ka sväznostj.
+* Summa sväznyh figur možet bytj nesväznoj.
+* Proizvedenije sväznyh figur možet bytj nesväznym. Proizvedenije vypuklyh figur sväzno.
+* Raznostj sväznyh figur možet bytj nesväznoj.
