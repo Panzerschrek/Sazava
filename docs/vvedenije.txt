@@ -1,0 +1,2 @@
+Gde-to 1o-go Fevralä 2021-go goda u menä voznikla ideja sozdatj vizualizator geometrii, polucennoj logiceskimi operaçijami, s ispoljzovanijem šejderov.
+Dannaja ideja pokazalasj mne vesjma lübopytnoj i ja rešil, cto stoit poprobovatj jejo realizovatj.
