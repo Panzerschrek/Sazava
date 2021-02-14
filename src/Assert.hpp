@@ -7,7 +7,7 @@
 #define SZV_ASSERT(x) \
 	{ assert(x); }
 #else
-#define KK_ASSERT(x) {}
+#define SZV_ASSERT(x) {}
 #endif
 
 #define SZV_UNUSED(x) (void)x
