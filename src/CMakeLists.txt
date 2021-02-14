@@ -21,5 +21,21 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_definitions(-DDEBUG)
 endif()
 
+# Search dependencies.
+find_package(SDL2 REQUIRED)
+find_package(Vulkan REQUIRED)
+
 file(GLOB_RECURSE SOURCES "*.cpp" "*.hpp")
 add_executable(Sazava ${SOURCES})
+target_include_directories(
+	Sazava
+		PRIVATE
+			${SDL2_INCLUDE_DIRS}
+			${Vulkan_INCLUDE_DIRS}
+		)
+target_link_libraries(
+	Sazava
+		PRIVATE
+			${SDL2_LIBRARIES}
+			${Vulkan_LIBRARIES}
+	)
