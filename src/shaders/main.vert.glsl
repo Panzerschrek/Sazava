@@ -23,5 +23,5 @@ void main()
 			);
 
 	gl_Position= vec4(pos[gl_VertexIndex], 0.0, 1.0);
-	f_dir= ( view_matrix * vec4( pos[gl_VertexIndex], -1.0, 1.0 ) ).xyz;
+	f_dir= ( view_matrix * vec4( pos[gl_VertexIndex], 1.0, 1.0 ) ).xyz;
 }

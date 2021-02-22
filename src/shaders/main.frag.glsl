@@ -61,6 +61,7 @@ vec4 getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center,
 	return vec4( tc, closest_intersection_dist, far_intersection_dist );
 }
 
+// x, y - tex_coord, z - near distance, w - far distance
 vec4 getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, float cube_radius )
 {
 	vec2 x_plus = getBeamPlaneIntersectionRange( cube_center + vec3( +cube_radius, 0.0, 0.0 ), vec3( +1.0, 0.0, 0.0 ), start, dir_normalized );
@@ -76,7 +77,10 @@ vec4 getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, flo
 
 	vec2 result_range= multiplyRanges( multiplyRanges( x_range, y_range ), z_range );
 	result_range= multiplyRanges( result_range, vec2( 0.01, almost_infinity ) );
-	return vec4( 0.0, 0.0, result_range );
+
+	vec3 world_pos=  start - cube_center + dir_normalized * result_range.x;
+	vec2 tc= vec2( sqrt(3.0) * 0.5 * (world_pos.x - world_pos.y), -world_pos.z + 0.5 * ( world_pos.x + world_pos.y ) );
+	return vec4( tc, result_range );
 }
 
 void main()
@@ -88,11 +92,11 @@ void main()
 	vec3 dir_normalized= normalize(f_dir);
 
 	vec4 cube_res= getCubeIntersection( cam_pos.xyz, dir_normalized, cube_center, cube_radius );
-	vec4 sphere_res= getSphereIntersection( cam_pos.xyz, dir_normalized, cube_center, cube_radius * 1.2 );
+	vec4 sphere_res= getSphereIntersection( cam_pos.xyz, dir_normalized, cube_center + vec3( 0.01, 0.03, 0.05 ), cube_radius * 1.2 );
 
 	vec4 res= vec4( 0.0, 0.0, multiplyRanges( cube_res.zw, sphere_res.zw ) );
 	if( sphere_res.z < cube_res.z )
-		res.xy= vec2( 0.0, 0.0 );
+		res.xy= cube_res.xy;
 	else
 		res.xy= sphere_res.xy;
 
