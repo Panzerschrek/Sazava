@@ -30,6 +30,7 @@ Host::Host()
 bool Host::Loop()
 {
 	const Clock::time_point tick_start_time= Clock::now();
+	const auto dt= tick_start_time - prev_tick_time_;
 	prev_tick_time_ = tick_start_time;
 
 	const SystemEvents system_events= system_window_.ProcessEvents();
@@ -40,7 +41,6 @@ bool Host::Loop()
 	}
 
 	{
-		const auto dt= tick_start_time - prev_tick_time_;
 		const float dt_s= float(dt.count()) * float(Clock::duration::period::num) / float(Clock::duration::period::den);
 		camera_controller_.Update(dt_s, system_window_.GetInputState());
 	}
@@ -52,7 +52,7 @@ bool Host::Loop()
 		{
 			[&](const vk::CommandBuffer command_buffer)
 			{
-				csg_renderer_.EndFrame(command_buffer);
+				csg_renderer_.EndFrame(camera_controller_, command_buffer);
 			},
 			[&](const vk::CommandBuffer command_buffer)
 			{

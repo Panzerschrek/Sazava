@@ -73,12 +73,19 @@ m_Mat4 CameraController::CalculateViewMatrix() const
 	const float z_near= 0.125f;
 	const float z_far= 128.0f;
 
-	m_Mat4 rotate_z, rotate_x, perspective;
+	m_Mat4 rotate_z, rotate_x, perspective, basis_change;
 	rotate_x.RotateX(-elevation_);
 	rotate_z.RotateZ(-azimuth_);
+
+	basis_change.MakeIdentity();
+	basis_change.value[5]= 0.0f;
+	basis_change.value[6]= 1.0f;
+	basis_change.value[9]= -1.0f;
+	basis_change.value[10]= 0.0f;
+
 	perspective.PerspectiveProjection(aspect_, fov, z_near, z_far);
 
-	return rotate_z * rotate_x  * perspective;
+	return rotate_z * rotate_x * basis_change * perspective;
 }
 
 m_Vec3 CameraController::GetCameraPosition() const

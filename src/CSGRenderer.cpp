@@ -11,7 +11,8 @@ namespace
 
 struct Uniforms
 {
-	float dummy[4];
+	m_Mat4 view_matrix;
+	float cam_pos[4];
 };
 
 } // namespace
@@ -35,14 +36,17 @@ CSGRenderer::CSGRenderer(WindowVulkan& window_vulkan)
 
 	// Create pipeline layout
 
-	const vk::PushConstantRange vk_push_constant_range(vk::ShaderStageFlagBits::eFragment, 0u, sizeof(Uniforms));
+	const vk::PushConstantRange vk_push_constant_ranges[1]
+	{
+		{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0u, sizeof(Uniforms)},
+	};
 
 	pipeline_layout_=
 		vk_device_.createPipelineLayoutUnique(
 			vk::PipelineLayoutCreateInfo(
 				vk::PipelineLayoutCreateFlags(),
 				0u, nullptr,
-				1u, &vk_push_constant_range));
+				std::size(vk_push_constant_ranges), vk_push_constant_ranges));
 
 	// Create pipeline.
 
@@ -129,17 +133,25 @@ CSGRenderer::~CSGRenderer()
 	vk_device_.waitIdle();
 }
 
-void CSGRenderer::EndFrame(const vk::CommandBuffer command_buffer)
+void CSGRenderer::EndFrame(const CameraController& camera_controller, const vk::CommandBuffer command_buffer)
 {
 	Uniforms uniforms{};
+	// TODO - maybe calculate invertse matrix inside camera controller?
+	uniforms.view_matrix= camera_controller.CalculateViewMatrix();
+	uniforms.view_matrix.Inverse();
+
+	const m_Vec3 cam_pos= camera_controller.GetCameraPosition();
+	uniforms.cam_pos[0]= cam_pos.x;
+	uniforms.cam_pos[1]= cam_pos.y;
+	uniforms.cam_pos[2]= cam_pos.z;
 
 	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline_);
 
 	command_buffer.pushConstants(
 		*pipeline_layout_,
-		vk::ShaderStageFlagBits::eFragment,
+		vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
 		0u,
-		sizeof(Uniforms),
+		sizeof(uniforms),
 		&uniforms);
 
 	command_buffer.draw(6u, 1u, 0u, 0u);
