@@ -6,10 +6,22 @@
 namespace SZV
 {
 
+namespace
+{
+
+float CalculateAspect(const vk::Extent2D& viewport_size)
+{
+	return float(viewport_size.width) / float(viewport_size.height);
+}
+
+} // namespace
+
+
 Host::Host()
 	:  system_window_()
 	, window_vulkan_(system_window_)
 	, csg_renderer_(window_vulkan_)
+	, camera_controller_(CalculateAspect(window_vulkan_.GetViewportSize()))
 	, init_time_(Clock::now())
 	, prev_tick_time_(init_time_)
 {
@@ -25,6 +37,12 @@ bool Host::Loop()
 	{
 		if(std::get_if<SystemEventTypes::QuitEvent>(&system_event) != nullptr)
 			return true;
+	}
+
+	{
+		const auto dt= tick_start_time - prev_tick_time_;
+		const float dt_s= float(dt.count()) * float(Clock::duration::period::num) / float(Clock::duration::period::den);
+		camera_controller_.Update(dt_s, system_window_.GetInputState());
 	}
 
 	const auto command_buffer= window_vulkan_.BeginFrame();
