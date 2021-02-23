@@ -1,4 +1,5 @@
 #include "CSGRenderer.hpp"
+#include "CSGExpressionGPU.hpp"
 
 namespace SZV
 {
@@ -223,12 +224,48 @@ CSGRenderer::~CSGRenderer()
 
 void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
 {
-	csg_data_buffer_host_[1234]= 0.4f;
+	size_t offset= 0;
+	++offset;
+
+	{
+		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Cube));
+		++offset;
+
+		ExpressionElements::Cube cube{};
+		cube.center[0]= 0.0f;
+		cube.center[1]= 2.0f;
+		cube.center[2]= 0.0f;
+		cube.half_size[0]= 0.95f;
+		cube.half_size[1]= 0.9f;
+		cube.half_size[2]= 0.85f;
+
+		std::memcpy(csg_data_buffer_host_.data() + offset, &cube, sizeof(cube));
+		offset+= sizeof(cube) / sizeof(float);
+	}
+	{
+		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sphere));
+		++offset;
+
+		ExpressionElements::Sphere sphere{};
+		sphere.center[0]= 0.0f;
+		sphere.center[1]= 2.0f;
+		sphere.center[2]= 0.0f;
+		sphere.radius= 1.0f;
+
+		std::memcpy(csg_data_buffer_host_.data() + offset, &sphere, sizeof(sphere));
+		offset+= sizeof(sphere) / sizeof(float);
+	}
+	{
+		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Mul));
+		++offset;
+	}
+
+	csg_data_buffer_host_[0]= float(offset);
 
 	command_buffer.updateBuffer(
 		*csg_data_buffer_gpu_,
 		0u,
-		csg_data_buffer_host_.size() * sizeof(float),
+		offset * sizeof(float),
 		csg_data_buffer_host_.data());
 }
 

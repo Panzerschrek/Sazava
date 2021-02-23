@@ -67,14 +67,14 @@ vec4 getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center,
 }
 
 // x, y - tex_coord, z - near distance, w - far distance
-vec4 getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, float cube_radius )
+vec4 getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, vec3 half_size )
 {
-	vec2 x_plus = getBeamPlaneIntersectionRange( cube_center + vec3( +cube_radius, 0.0, 0.0 ), vec3( +1.0, 0.0, 0.0 ), start, dir_normalized );
-	vec2 x_minus= getBeamPlaneIntersectionRange( cube_center + vec3( -cube_radius, 0.0, 0.0 ), vec3( -1.0, 0.0, 0.0 ), start, dir_normalized );
-	vec2 y_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, +cube_radius, 0.0 ), vec3( 0.0, +1.0, 0.0 ), start, dir_normalized );
-	vec2 y_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, -cube_radius, 0.0 ), vec3( 0.0, -1.0, 0.0 ), start, dir_normalized );
-	vec2 z_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, +cube_radius ), vec3( 0.0, 0.0, +1.0 ), start, dir_normalized );
-	vec2 z_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, -cube_radius ), vec3( 0.0, 0.0, -1.0 ), start, dir_normalized );
+	vec2 x_plus = getBeamPlaneIntersectionRange( cube_center + vec3( +half_size.x, 0.0, 0.0 ), vec3( +1.0, 0.0, 0.0 ), start, dir_normalized );
+	vec2 x_minus= getBeamPlaneIntersectionRange( cube_center + vec3( -half_size.x, 0.0, 0.0 ), vec3( -1.0, 0.0, 0.0 ), start, dir_normalized );
+	vec2 y_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, +half_size.y, 0.0 ), vec3( 0.0, +1.0, 0.0 ), start, dir_normalized );
+	vec2 y_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, -half_size.y, 0.0 ), vec3( 0.0, -1.0, 0.0 ), start, dir_normalized );
+	vec2 z_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, +half_size.z ), vec3( 0.0, 0.0, +1.0 ), start, dir_normalized );
+	vec2 z_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, -half_size.z ), vec3( 0.0, 0.0, -1.0 ), start, dir_normalized );
 
 	vec2 x_range= multiplyRanges( x_plus, x_minus );
 	vec2 y_range= multiplyRanges( y_plus, y_minus );
@@ -90,23 +90,76 @@ vec4 getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, flo
 
 void main()
 {
-	float cube_depth= 2.0;
-	float cube_radius= csg_data[1234];
-	vec3 cube_center= vec3( 0.0, 3.0, 0.0 );
-
 	vec3 dir_normalized= normalize(f_dir);
 
-	vec4 cube_res= getCubeIntersection( cam_pos.xyz, dir_normalized, cube_center, cube_radius );
-	vec4 sphere_res= getSphereIntersection( cam_pos.xyz, dir_normalized, cube_center + vec3( 0.01, 0.03, 0.05 ), cube_radius * 1.2 );
+	const int ranges_stack_size_max= 16;
+	vec4 ranges_stack[ranges_stack_size_max];
+	int ranges_stack_size= 0;
 
-	vec4 res= vec4( 0.0, 0.0, multiplyRanges( cube_res.zw, sphere_res.zw ) );
-	if( sphere_res.z < cube_res.z )
-		res.xy= cube_res.xy;
-	else
-		res.xy= sphere_res.xy;
+	int offset_end= int(csg_data[0]);
+	int offset= 1;
+	while(offset < offset_end)
+	{
+		int element_type= int(csg_data[offset]);
+		++offset;
 
-	if( res.z > res.w )
+		if( element_type == 0 )
+			break;
+		else if( element_type == 1 )
+		{
+			if( ranges_stack_size < 2 )
+				break;
+
+			vec4 range0= ranges_stack[ ranges_stack_size - 1 ];
+			vec4 range1= ranges_stack[ ranges_stack_size - 2 ];
+			vec4 result_range= vec4( 0.0, 0.0, multiplyRanges( range0.zw, range1.zw ) );
+
+			if( range1.z < range0.z )
+				result_range.xy= range0.xy;
+			else
+				result_range.xy= range1.xy;
+
+			ranges_stack[ ranges_stack_size - 2 ]= result_range;
+			--ranges_stack_size;
+		}
+		else if( element_type == 101 )
+		{
+			if( ranges_stack_size >= ranges_stack_size_max )
+				break;
+
+			vec3 center= vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
+			float radius= csg_data[offset+3];
+			offset+= 4;
+
+			ranges_stack[ranges_stack_size]=
+				getSphereIntersection( cam_pos.xyz, dir_normalized, center, radius );
+			++ranges_stack_size;
+		}
+		else if( element_type == 102 )
+		{
+			if( ranges_stack_size >= ranges_stack_size_max )
+				break;
+
+			vec3 center= vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
+			vec3 half_size= vec3( csg_data[offset+3], csg_data[offset+4], csg_data[offset+5] );
+			offset+= 6;
+
+			ranges_stack[ranges_stack_size]=
+				getCubeIntersection( cam_pos.xyz, dir_normalized, center, half_size );
+			++ranges_stack_size;
+		}
+		else
+			break;
+	}
+
+	if( ranges_stack_size == 0 )
 		color= vec4( 0.0, 0.0, 0.0, 0.0 );
 	else
-		color = vec4( fract( res.xy * 8.0 ), ( res.w - res.z ) / ( cube_radius * 2.0 ), 1.0);
+	{
+		vec4 range= ranges_stack[0];
+		if( range.z > range.w )
+			color= vec4( 0.0, 0.0, 0.0, 0.0 );
+		else
+			color = vec4( fract( range.xy * 8.0 ), 0.0, 1.0);
+	}
 }
