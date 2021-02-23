@@ -46,7 +46,7 @@ bool Host::Loop()
 	}
 
 	const auto command_buffer= window_vulkan_.BeginFrame();
-	SZV_UNUSED(command_buffer);
+	csg_renderer_.BeginFrame(command_buffer);
 
 	window_vulkan_.EndFrame(
 		{

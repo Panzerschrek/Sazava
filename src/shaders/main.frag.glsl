@@ -9,6 +9,11 @@ layout(push_constant) uniform uniforms_block
 
 layout(location= 0) in noperspective vec3 f_dir;
 
+layout(set= 0, binding= 0, std430) buffer readonly csg_data_block
+{
+	float csg_data[];
+};
+
 layout(location= 0) out vec4 color;
 
 const float pi= 3.1415926535;
@@ -86,7 +91,7 @@ vec4 getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, flo
 void main()
 {
 	float cube_depth= 2.0;
-	float cube_radius= 0.4;
+	float cube_radius= csg_data[1234];
 	vec3 cube_center= vec3( 0.0, 3.0, 0.0 );
 
 	vec3 dir_normalized= normalize(f_dir);
