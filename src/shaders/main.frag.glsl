@@ -18,6 +18,7 @@ layout(location= 0) out vec4 color;
 
 const float pi= 3.1415926535;
 const float inv_pi= 1.0 / pi;
+const float z_near= 0.1;
 const float almost_infinity= 1.0e16;
 
 // returns min/max
@@ -30,9 +31,9 @@ vec2 getBeamPlaneIntersectionRange( vec3 plane_point, vec3 plane_normal, vec3 be
 
 	float dist= signed_distance_to_plane / dirs_dot;
 	if( dirs_dot > 0.0 )
-		return vec2( -almost_infinity, dist );
+		return vec2( z_near, dist );
 	else
-		return vec2( dist, +almost_infinity );
+		return vec2( max( z_near, dist ), +almost_infinity );
 }
 
 vec2 multiplyRanges( vec2 range0, vec2 range1 )
@@ -63,7 +64,7 @@ vec4 getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center,
 	vec3 radius_vector_normalized= radius_vector / sphere_radius;
 	vec2 tc= vec2( acos( radius_vector_normalized.y ), atan( radius_vector_normalized.z, radius_vector_normalized.x ) ) * inv_pi;
 
-	return vec4( tc, closest_intersection_dist, far_intersection_dist );
+	return vec4( tc, max( z_near, closest_intersection_dist ), far_intersection_dist );
 }
 
 // x, y - tex_coord, z - near distance, w - far distance
@@ -157,13 +158,6 @@ void main()
 	else
 	{
 		vec4 range= ranges_stack[0];
-
-		const float z_near= 0.1;
-		if( range.z < z_near )
-		{
-			range.z= z_near;
-			range.xy= vec2( 0.1, 0.1 );
-		}
 
 		if( range.z >= range.w )
 			color= vec4( 0.0, 0.0, 0.0, 0.0 );
