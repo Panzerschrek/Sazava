@@ -141,7 +141,10 @@ WindowVulkan::WindowVulkan(const SystemWindow& system_window)
 	VkSurfaceKHR vk_tmp_surface;
 	if(!SDL_Vulkan_CreateSurface(system_window.GetSDLWindow(), *vk_instance_, &vk_tmp_surface))
 		Log::FatalError("Could not create Vulkan surface");
-	vk_surface_= vk::UniqueSurfaceKHR(vk_tmp_surface, vk::ObjectDestroy<vk::Instance>(*vk_instance_));
+	vk_surface_=
+		vk::UniqueSurfaceKHR(
+			vk_tmp_surface,
+			vk::ObjectDestroy<vk::Instance, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(*vk_instance_, nullptr, VULKAN_HPP_DEFAULT_DISPATCHER));
 
 	SDL_Vulkan_GetDrawableSize(system_window.GetSDLWindow(), reinterpret_cast<int*>(&viewport_size_.width), reinterpret_cast<int*>(&viewport_size_.height));
 
@@ -217,7 +220,10 @@ WindowVulkan::WindowVulkan(const SystemWindow& system_window)
 	vk::Device vk_device_tmp;
 	if((physical_device.createDevice(&vk_device_create_info, nullptr, &vk_device_tmp)) != vk::Result::eSuccess)
 		Log::FatalError("Could not create Vulkan device");
-	vk_device_.reset(vk_device_tmp);
+	vk_device_=
+		vk::UniqueDevice(
+			vk_device_tmp,
+			vk::ObjectDestroy<vk::NoParent, vk::DispatchLoaderStatic>(nullptr, VULKAN_HPP_DEFAULT_DISPATCHER));
 	Log::Info("Vulkan logical device created");
 
 	vk_queue_= vk_device_->getQueue(queue_family_index, 0u);
