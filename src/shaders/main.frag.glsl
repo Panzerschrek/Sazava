@@ -157,7 +157,15 @@ void main()
 	else
 	{
 		vec4 range= ranges_stack[0];
-		if( range.z > range.w )
+
+		const float z_near= 0.1;
+		if( range.z < z_near )
+		{
+			range.z= z_near;
+			range.xy= vec2( 0.1, 0.1 );
+		}
+
+		if( range.z >= range.w )
 			color= vec4( 0.0, 0.0, 0.0, 0.0 );
 		else
 			color = vec4( fract( range.xy * 8.0 ), 0.0, 1.0);
