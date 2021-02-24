@@ -77,7 +77,7 @@ CSGRenderer::CSGRenderer(WindowVulkan& window_vulkan)
 				vk::PipelineLayoutCreateInfo(
 					vk::PipelineLayoutCreateFlags(),
 					1u, &*descriptor_set_layout_,
-					std::size(vk_push_constant_ranges), vk_push_constant_ranges));
+					uint32_t(std::size(vk_push_constant_ranges)), vk_push_constant_ranges));
 	}
 	{ // Create pipeline.
 		shader_vert_=
