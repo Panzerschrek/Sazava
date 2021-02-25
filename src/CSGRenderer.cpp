@@ -258,6 +258,43 @@ void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
 		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sub));
 		++offset;
 	}
+	{
+		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sphere));
+		++offset;
+
+		ExpressionElements::Sphere sphere{};
+		sphere.center[0]= 0.0f;
+		sphere.center[1]= 2.0f;
+		sphere.center[2]= 3.0f;
+		sphere.radius= 1.0f;
+
+		std::memcpy(csg_data_buffer_host_.data() + offset, &sphere, sizeof(sphere));
+		offset+= sizeof(sphere) / sizeof(float);
+	}
+	{
+		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Cylinder));
+		++offset;
+
+		ExpressionElements::Cylinder cylinder{};
+		cylinder.center[0]= 0.0f;
+		cylinder.center[1]= 2.0f;
+		cylinder.center[2]= 3.0f;
+		cylinder.normal[0]= 0.0f;
+		cylinder.normal[1]= std::sqrt(0.5f);
+		cylinder.normal[2]= std::sqrt(0.5f);
+		cylinder.radius= 0.5f;
+
+		std::memcpy(csg_data_buffer_host_.data() + offset, &cylinder, sizeof(cylinder));
+		offset+= sizeof(cylinder) / sizeof(float);
+	}
+	{
+		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sub));
+		++offset;
+	}
+	{
+		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Add));
+		++offset;
+	}
 
 	csg_data_buffer_host_[0]= float(offset);
 

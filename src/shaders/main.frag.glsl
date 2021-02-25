@@ -216,6 +216,72 @@ Range getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, ve
 	return res;
 }
 
+// x, y - tex_coord, z - near distance, w - far distance
+Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, float radius )
+{
+	vec3 dir_to_center= center - start;
+	vec3 dir_to_center_projected= dir_to_center - normal * dot( normal, dir_to_center );
+
+	float normal_dir_dot= dot( dir_normalized, normal );
+	vec3 dir_projected= dir_normalized - normal * normal_dir_dot;
+	float dir_projected_square_len= dot( dir_projected, dir_projected );
+	if( dir_projected_square_len == 0.0 )
+	{
+		float square_dist= dot( dir_to_center_projected, dir_to_center_projected );
+		Range res;
+
+		if( square_dist >= radius * radius )
+		{
+			res.dist_min = almost_infinity;
+			res.dist_max = almost_infinity;
+		}
+		else
+		{
+			res.dist_min = z_near;
+			res.dist_max = almost_infinity;
+			res.tc_min= vec3( 0.0, 0.0, 0.0 );
+			res.tc_max= res.tc_min;
+		}
+
+		return res;
+	}
+	vec3 dir_normalized_projected= dir_projected * inversesqrt(dir_projected_square_len);
+
+	float vec_to_perependicualar_len= dot(dir_normalized_projected, dir_to_center_projected);
+	vec3 vec_to_perependicualar= vec_to_perependicualar_len * dir_normalized_projected;
+
+	vec3 vec_from_closest_point_to_center= dir_to_center_projected - vec_to_perependicualar;
+
+	float square_dist_to_center= dot( vec_from_closest_point_to_center, vec_from_closest_point_to_center );
+	float diff= radius * radius - square_dist_to_center;
+	if( diff < 0.0 )
+	{
+		Range res;
+		res.dist_min= almost_infinity;
+		res.dist_max = almost_infinity;
+		return res;
+	}
+
+	float dist_norm_factor= inversesqrt( 1.0 - normal_dir_dot * normal_dir_dot );
+
+	float intersection_offset= sqrt( diff );
+	float closest_intersection_dist= ( vec_to_perependicualar_len - intersection_offset ) * dist_norm_factor;
+	float     far_intersection_dist= ( vec_to_perependicualar_len + intersection_offset ) * dist_norm_factor;
+
+	vec3 closest_intersection_pos= start + dir_normalized * closest_intersection_dist;
+	vec3     far_intersection_pos= start + dir_normalized *     far_intersection_dist;
+	vec3 radius_vector_min= closest_intersection_pos - center;
+	vec3 radius_vector_max=     far_intersection_pos - center;
+
+	// TODO - provide basis vector for proper texture coordinates calculation.
+	Range res;
+	res.dist_min= max( z_near, closest_intersection_dist );
+	res.dist_max= far_intersection_dist;
+	res.tc_min= vec3( 8.0 * vec2( radius_vector_min.z, atan( radius_vector_min.y, radius_vector_min.x ) ) * inv_pi, 28.0 );
+	res.tc_max= vec3( 8.0 * vec2( radius_vector_max.z, atan( radius_vector_max.y, radius_vector_max.x ) ) * inv_pi, 28.0 );
+	return res;
+}
+
 void main()
 {
 	vec3 dir_normalized= normalize(f_dir);
@@ -293,6 +359,20 @@ void main()
 
 			ranges_stack[ranges_stack_size]=
 				getCubeIntersection( cam_pos.xyz, dir_normalized, center, half_size );
+			++ranges_stack_size;
+		}
+		else if( element_type == 103 )
+		{
+			if( ranges_stack_size >= ranges_stack_size_max )
+				break;
+
+			vec3 center= vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
+			vec3 normal= vec3( csg_data[offset+3], csg_data[offset+4], csg_data[offset+5] );
+			float radius= csg_data[offset+6];
+			offset+= 7;
+
+			ranges_stack[ranges_stack_size]=
+				getCylinderIntersection( cam_pos.xyz, dir_normalized, center, normal, radius );
 			++ranges_stack_size;
 		}
 		else

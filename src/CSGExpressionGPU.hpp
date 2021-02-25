@@ -16,6 +16,7 @@ enum class ExpressionElementType
 	// Objects. Have parameters (specific count for each element).
 	Sphere= 101,
 	Cube= 102,
+	Cylinder= 103,
 };
 
 namespace ExpressionElements
@@ -31,6 +32,13 @@ struct Cube
 {
 	float center[3];
 	float half_size[3];
+};
+
+struct Cylinder
+{
+	float center[3];
+	float normal[3];
+	float radius;
 };
 
 } // namespace ExpressionElements
