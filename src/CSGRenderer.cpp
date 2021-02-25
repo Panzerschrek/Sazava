@@ -248,14 +248,14 @@ void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
 		ExpressionElements::Sphere sphere{};
 		sphere.center[0]= 0.0f;
 		sphere.center[1]= 2.0f;
-		sphere.center[2]= 1.5f;
+		sphere.center[2]= 0.5f;
 		sphere.radius= 1.0f;
 
 		std::memcpy(csg_data_buffer_host_.data() + offset, &sphere, sizeof(sphere));
 		offset+= sizeof(sphere) / sizeof(float);
 	}
 	{
-		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Add));
+		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sub));
 		++offset;
 	}
 

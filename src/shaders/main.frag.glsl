@@ -112,6 +112,44 @@ Range addRanges( Range range0, Range range1 )
 	return res;
 }
 
+Range subtractRanges( Range range0, Range range1 )
+{
+	if( range0.dist_min >= range0.dist_max || range1.dist_min >= range1.dist_max )
+		return range0; // Invalid ranges.
+
+	if( range0.dist_max <= range1.dist_min || range0.dist_min >= range1.dist_max )
+		return range0; // Ther is no intersection between ranges - just return first range.
+
+	if( range1.dist_min > range0.dist_min && range1.dist_max < range0.dist_max )
+		return range0; // Second range is inside first - just return first range.
+
+	Range res;
+	if( range0.dist_min >= range1.dist_min && range0.dist_max <= range1.dist_max )
+	{
+		// Range is completely zeroed.
+		res.dist_min= range0.dist_min;
+		res.dist_max= range0.dist_min;
+		res.tc_min= range0.tc_min;
+		res.tc_max= range0.tc_max;
+	}
+	else if( range0.dist_min >= range1.dist_min )
+	{
+		res.dist_min= range1.dist_max;
+		res.tc_min= range1.tc_max;
+		res.dist_max= range0.dist_max;
+		res.tc_max= range0.tc_max;
+	}
+	else
+	{
+		res.dist_min= range0.dist_min;
+		res.tc_min= range0.tc_min;
+		res.dist_max= range1.dist_min;
+		res.tc_max= range1.tc_min;
+	}
+
+	return res;
+}
+
 // x, y - tex_coord, z - near distance, w - far distance
 Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center, float sphere_radius )
 {
@@ -135,8 +173,9 @@ Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center
 	float     far_intersection_dist= vec_to_perependicualar_len + intersection_offset;
 
 	vec3 closest_intersection_pos= start + dir_normalized * closest_intersection_dist;
+	vec3     far_intersection_pos= start + dir_normalized *     far_intersection_dist;
 	vec3 radius_vector_min= closest_intersection_pos - sphere_center;
-	vec3 radius_vector_max= closest_intersection_pos + sphere_center;
+	vec3 radius_vector_max=     far_intersection_pos - sphere_center;
 
 	vec3 radius_vector_min_normalized= radius_vector_min / sphere_radius;
 	vec3 radius_vector_max_normalized= radius_vector_max / sphere_radius;
@@ -214,6 +253,18 @@ void main()
 			Range range0= ranges_stack[ ranges_stack_size - 1 ];
 			Range range1= ranges_stack[ ranges_stack_size - 2 ];
 			Range result_range= addRanges( range0, range1 );
+
+			ranges_stack[ ranges_stack_size - 2 ]= result_range;
+			--ranges_stack_size;
+		}
+		else if( element_type == 3 )
+		{
+			if( ranges_stack_size < 2 )
+				break;
+
+			Range range0= ranges_stack[ ranges_stack_size - 2 ];
+			Range range1= ranges_stack[ ranges_stack_size - 1 ];
+			Range result_range= subtractRanges( range0, range1 );
 
 			ranges_stack[ ranges_stack_size - 2 ]= result_range;
 			--ranges_stack_size;
