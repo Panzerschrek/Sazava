@@ -29,6 +29,26 @@ struct Range
 	vec3 tc_min;
 };
 
+vec3 textureFetch( vec3 tc )
+{
+	tc.xy*= 12.0;
+
+	const vec2 texture_patterns[10]= vec2[10]
+	(
+		vec2( 1.0, 1.0 ), vec2( 1.0, 2.0 ), vec2( 1.0, 3.0 ), vec2( 1.0, 4.0 ), vec2( 1.0, 5.0 ),
+		vec2( 2.0, 3.0 ), vec2( 2.0, 5.0 ), vec2( 3.0, 4.0 ), vec2( 3.0, 5.0 ), vec2( 4.0, 5.0 )
+	);
+
+	vec2 pattern_u= texture_patterns[ int(mod( tc.z, 10.0 ) ) ];
+	vec2 pattern_v= texture_patterns[ int(mod( tc.z / 10.0, 10.0 ) ) ];
+
+	vec2 tc_mod= mod( tc.xy, vec2( pattern_u.x + pattern_u.y, pattern_v.x + pattern_v.y ) );
+	vec2 tc_step= step( vec2( pattern_u.x, pattern_v.x ), tc_mod );
+
+	float bit= abs( tc_step.x - tc_step.y ) * 0.5 + 0.5;
+	return vec3( bit, bit, bit );
+}
+
 // returns min/max
 vec2 getBeamPlaneIntersectionRange( vec3 plane_point, vec3 plane_normal, vec3 beam_point, vec3 beam_dir_normalized )
 {
@@ -124,8 +144,8 @@ Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center
 	Range res;
 	res.dist_min= max( z_near, closest_intersection_dist );
 	res.dist_max= far_intersection_dist;
-	res.tc_min= vec3( vec2( acos( radius_vector_min_normalized.y ), atan( radius_vector_min_normalized.z, radius_vector_min_normalized.x ) ) * inv_pi, 0.0 );
-	res.tc_max= vec3( vec2( acos( radius_vector_max_normalized.y ), atan( radius_vector_max_normalized.z, radius_vector_max_normalized.x ) ) * inv_pi, 0.0 );
+	res.tc_min= vec3( 8.0 * vec2( acos( radius_vector_min_normalized.y ), atan( radius_vector_min_normalized.z, radius_vector_min_normalized.x ) ) * inv_pi, 28.0 );
+	res.tc_max= vec3( 8.0 * vec2( acos( radius_vector_max_normalized.y ), atan( radius_vector_max_normalized.z, radius_vector_max_normalized.x ) ) * inv_pi, 28.0 );
 	return res;
 }
 
@@ -237,6 +257,6 @@ void main()
 		if( range.dist_max <= range.dist_min )
 			color= vec4( 0.0, 0.0, 0.0, 0.0 );
 		else
-			color = vec4( fract( range.tc_min.xy * 8.0 ), 0.0, 1.0);
+			color = vec4( textureFetch( range.tc_min ), 1.0);
 	}
 }
