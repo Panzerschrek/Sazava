@@ -21,12 +21,19 @@ const float inv_pi= 1.0 / pi;
 const float z_near= 0.1;
 const float almost_infinity= 1.0e16;
 
+struct RangePoint
+{
+	float dist;
+	vec3 tc; // including texture index
+	vec3 normal;
+	// Store here sqaured scale of texture coordinates
+	float tc_scale;
+};
+
 struct Range
 {
-	float dist_min;
-	float dist_max;
-	vec3 tc_max;
-	vec3 tc_min;
+	RangePoint min;
+	RangePoint max;
 };
 
 vec3 textureFetch( vec3 tc )
@@ -60,8 +67,8 @@ Range getBeamPlaneIntersectionRange(
 	float dirs_dot = dot( plane_normal, beam_dir_normalized );
 	if( dirs_dot == 0.0 )
 	{
-		range.dist_min= -almost_infinity;
-		range.dist_max= +almost_infinity;
+		range.min.dist= -almost_infinity;
+		range.max.dist= +almost_infinity;
 		return range;
 	}
 
@@ -76,18 +83,18 @@ Range getBeamPlaneIntersectionRange(
 
 	vec3 tc= vec3( dot( intersection_pos_relative, plane_binormal ), dot( intersection_pos_relative, plane_tangent ), 0.0 );
 
-	range.tc_min= tc;
-	range.tc_max= tc;
+	range.min.tc= tc;
+	range.max.tc= tc;
 
 	if( dirs_dot > 0.0 )
 	{
-		range.dist_min= z_near;
-		range.dist_max= dist;
+		range.min.dist= z_near;
+		range.max.dist= dist;
 	}
 	else
 	{
-		range.dist_min= max( z_near, dist );
-		range.dist_max= +almost_infinity;
+		range.min.dist= max( z_near, dist );
+		range.max.dist= +almost_infinity;
 	}
 	return range;
 }
@@ -95,79 +102,69 @@ Range getBeamPlaneIntersectionRange(
 Range multiplyRanges( Range range0, Range range1 )
 {
 	Range res;
-	res.dist_min= max( range0.dist_min, range1.dist_min );
-	res.dist_max= min( range0.dist_max, range1.dist_max );
 
-	if( range0.dist_min > range1.dist_min )
-		res.tc_min= range0.tc_min;
+	if( range0.min.dist > range1.min.dist )
+		res.min= range0.min;
 	else
-		res.tc_min= range1.tc_min;
+		res.min= range1.min;
 
-	if( range0.dist_max < range1.dist_max )
-		res.tc_max= range0.tc_max;
+	if( range0.max.dist < range1.max.dist )
+		res.max= range0.max;
 	else
-		res.tc_max= range1.tc_max;
+		res.max= range1.max;
 
 	return res;
 }
 
 Range addRanges( Range range0, Range range1 )
 {
-	if( range0.dist_min >= range0.dist_max )
+	if( range0.min.dist >= range0.max.dist )
 		return range1;
-	if( range1.dist_min >= range1.dist_max )
+	if( range1.min.dist >= range1.max.dist )
 		return range0;
 
 	Range res;
-	res.dist_min= min( range0.dist_min, range1.dist_min );
-	res.dist_max= max( range0.dist_max, range1.dist_max );
 
-	if( range0.dist_min < range1.dist_min )
-		res.tc_min= range0.tc_min;
+	if( range0.min.dist < range1.min.dist )
+		res.min= range0.min;
 	else
-		res.tc_min= range1.tc_min;
+		res.min= range1.min;
 
-	if( range0.dist_max > range1.dist_max )
-		res.tc_max= range0.tc_max;
+	if( range0.max.dist > range1.max.dist )
+		res.max= range0.max;
 	else
-		res.tc_max= range1.tc_max;
+		res.max= range1.max;
 
 	return res;
 }
 
 Range subtractRanges( Range range0, Range range1 )
 {
-	if( range0.dist_min >= range0.dist_max || range1.dist_min >= range1.dist_max )
+	if( range0.min.dist >= range0.max.dist || range1.min.dist >= range1.max.dist )
 		return range0; // Invalid ranges.
 
-	if( range0.dist_max <= range1.dist_min || range0.dist_min >= range1.dist_max )
+	if( range0.max.dist <= range1.min.dist || range0.min.dist >= range1.max.dist )
 		return range0; // Ther is no intersection between ranges - just return first range.
 
-	if( range1.dist_min > range0.dist_min && range1.dist_max < range0.dist_max )
+	if( range1.min.dist > range0.min.dist && range1.max.dist < range0.max.dist )
 		return range0; // Second range is inside first - just return first range.
 
 	Range res;
-	if( range0.dist_min >= range1.dist_min && range0.dist_max <= range1.dist_max )
+	if( range0.min.dist >= range1.min.dist && range0.max.dist <= range1.max.dist )
 	{
 		// Range is completely zeroed.
-		res.dist_min= range0.dist_min;
-		res.dist_max= range0.dist_min;
-		res.tc_min= range0.tc_min;
-		res.tc_max= range0.tc_max;
+		res.min.dist= range0.min.dist;
+		res.max.dist= range0.min.dist;
 	}
-	else if( range0.dist_min >= range1.dist_min )
+	else if( range0.min.dist >= range1.min.dist )
 	{
-		res.dist_min= range1.dist_max;
-		res.tc_min= range1.tc_max;
-		res.dist_max= range0.dist_max;
-		res.tc_max= range0.tc_max;
+		res.min= range1.max;
+		res.max= range0.max;
 	}
 	else
 	{
-		res.dist_min= range0.dist_min;
-		res.tc_min= range0.tc_min;
-		res.dist_max= range1.dist_min;
-		res.tc_max= range1.tc_min;
+		res.min= range0.min;
+		res.max= range1.min;
 	}
 
 	return res;
@@ -186,8 +183,8 @@ Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center
 	if( diff < 0.0 )
 	{
 		Range res;
-		res.dist_min= almost_infinity;
-		res.dist_max = almost_infinity;
+		res.min.dist= almost_infinity;
+		res.max.dist = almost_infinity;
 		return res;
 	}
 
@@ -204,10 +201,10 @@ Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center
 	vec3 radius_vector_max_normalized= radius_vector_max / sphere_radius;
 
 	Range res;
-	res.dist_min= max( z_near, closest_intersection_dist );
-	res.dist_max= far_intersection_dist;
-	res.tc_min= vec3( 8.0 * vec2( acos( radius_vector_min_normalized.y ), atan( radius_vector_min_normalized.z, radius_vector_min_normalized.x ) ) * inv_pi, 28.0 );
-	res.tc_max= vec3( 8.0 * vec2( acos( radius_vector_max_normalized.y ), atan( radius_vector_max_normalized.z, radius_vector_max_normalized.x ) ) * inv_pi, 28.0 );
+	res.min.dist= max( z_near, closest_intersection_dist );
+	res.max.dist= far_intersection_dist;
+	res.min.tc= vec3( 8.0 * vec2( acos( radius_vector_min_normalized.y ), atan( radius_vector_min_normalized.z, radius_vector_min_normalized.x ) ) * inv_pi, 28.0 );
+	res.max.tc= vec3( 8.0 * vec2( acos( radius_vector_max_normalized.y ), atan( radius_vector_max_normalized.z, radius_vector_max_normalized.x ) ) * inv_pi, 28.0 );
 	return res;
 }
 
@@ -227,15 +224,15 @@ Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 
 		if( square_dist >= radius * radius )
 		{
-			res.dist_min = almost_infinity;
-			res.dist_max = almost_infinity;
+			res.min.dist = almost_infinity;
+			res.max.dist = almost_infinity;
 		}
 		else
 		{
-			res.dist_min = z_near;
-			res.dist_max = almost_infinity;
-			res.tc_min= vec3( 0.0, 0.0, 0.0 );
-			res.tc_max= res.tc_min;
+			res.min.dist = z_near;
+			res.max.dist = almost_infinity;
+			res.min.tc= vec3( 0.0, 0.0, 0.0 );
+			res.max.tc= res.min.tc;
 		}
 
 		return res;
@@ -252,8 +249,8 @@ Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 	if( diff < 0.0 )
 	{
 		Range res;
-		res.dist_min= almost_infinity;
-		res.dist_max = almost_infinity;
+		res.min.dist= almost_infinity;
+		res.max.dist = almost_infinity;
 		return res;
 	}
 
@@ -270,10 +267,10 @@ Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 
 	// TODO - provide basis vector for proper texture coordinates calculation.
 	Range res;
-	res.dist_min= max( z_near, closest_intersection_dist );
-	res.dist_max= far_intersection_dist;
-	res.tc_min= vec3( 8.0 * vec2( radius_vector_min.z, atan( radius_vector_min.y, radius_vector_min.x ) ) * inv_pi, 28.0 );
-	res.tc_max= vec3( 8.0 * vec2( radius_vector_max.z, atan( radius_vector_max.y, radius_vector_max.x ) ) * inv_pi, 28.0 );
+	res.min.dist= max( z_near, closest_intersection_dist );
+	res.max.dist= far_intersection_dist;
+	res.min.tc= vec3( 8.0 * vec2( radius_vector_min.z, atan( radius_vector_min.y, radius_vector_min.x ) ) * inv_pi, 28.0 );
+	res.max.tc= vec3( 8.0 * vec2( radius_vector_max.z, atan( radius_vector_max.y, radius_vector_max.x ) ) * inv_pi, 28.0 );
 	return res;
 }
 
@@ -281,7 +278,7 @@ void main()
 {
 	vec3 dir_normalized= normalize(f_dir);
 
-	const int ranges_stack_size_max= 16;
+	const int ranges_stack_size_max= 8;
 	Range ranges_stack[ranges_stack_size_max];
 	int ranges_stack_size= 0;
 
@@ -381,9 +378,9 @@ void main()
 	{
 		Range range= ranges_stack[0];
 
-		if( range.dist_max <= range.dist_min )
+		if( range.max.dist <= range.min.dist )
 			color= vec4( 0.0, 0.0, 0.0, 0.0 );
 		else
-			color = vec4( textureFetch( range.tc_min ), 1.0);
+			color = vec4( textureFetch( range.min.tc ), 1.0);
 	}
 }
