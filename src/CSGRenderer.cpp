@@ -224,85 +224,37 @@ CSGRenderer::~CSGRenderer()
 
 void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
 {
-	size_t offset= 0;
-	++offset;
+	const CSGTree::CSGTreeNode tree
 	{
-		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Cube));
-		++offset;
+		CSGTree::AddChain
+		{ {
+			CSGTree::SubChain
+			{ {
+				CSGTree::Cube{ { 0.0f, 2.0f, 0.0f }, { 1.9f, 1.8f, 1.7f } },
+				CSGTree::Sphere{ { 0.0f, 2.0f, 0.5f }, 1.0f },
+			} },
+			CSGTree::
+					SubChain
+			{ {
+				CSGTree::Sphere{ { 0.0f, 2.0f, 3.0f }, 1.0f },
+				CSGTree::Cylinder{ { 0.0f, 2.0f, 3.0f }, { 0.0f, std::sqrt(0.5f), std::sqrt(0.5f) }, 0.5f },
+			} },
+			CSGTree::MulChain
+			{ {
+				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, 0.75f },
+				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.75f },
+			} },
+			CSGTree::Cylinder{ { 3.0f, 3.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.5f },
+		} },
+	};
 
-		ExpressionElements::Cube cube{};
-		cube.center[0]= 0.0f;
-		cube.center[1]= 2.0f;
-		cube.center[2]= 0.0f;
-		cube.half_size[0]= 0.95f;
-		cube.half_size[1]= 0.9f;
-		cube.half_size[2]= 0.85f;
-
-		std::memcpy(csg_data_buffer_host_.data() + offset, &cube, sizeof(cube));
-		offset+= sizeof(cube) / sizeof(float);
-	}
-	{
-		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sphere));
-		++offset;
-
-		ExpressionElements::Sphere sphere{};
-		sphere.center[0]= 0.0f;
-		sphere.center[1]= 2.0f;
-		sphere.center[2]= 0.5f;
-		sphere.radius= 1.0f;
-
-		std::memcpy(csg_data_buffer_host_.data() + offset, &sphere, sizeof(sphere));
-		offset+= sizeof(sphere) / sizeof(float);
-	}
-	{
-		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sub));
-		++offset;
-	}
-	{
-		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sphere));
-		++offset;
-
-		ExpressionElements::Sphere sphere{};
-		sphere.center[0]= 0.0f;
-		sphere.center[1]= 2.0f;
-		sphere.center[2]= 3.0f;
-		sphere.radius= 1.0f;
-
-		std::memcpy(csg_data_buffer_host_.data() + offset, &sphere, sizeof(sphere));
-		offset+= sizeof(sphere) / sizeof(float);
-	}
-	{
-		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Cylinder));
-		++offset;
-
-		ExpressionElements::Cylinder cylinder{};
-		cylinder.center[0]= 0.0f;
-		cylinder.center[1]= 2.0f;
-		cylinder.center[2]= 3.0f;
-		cylinder.normal[0]= 0.0f;
-		cylinder.normal[1]= std::sqrt(0.5f);
-		cylinder.normal[2]= std::sqrt(0.5f);
-		cylinder.radius= 0.5f;
-
-		std::memcpy(csg_data_buffer_host_.data() + offset, &cylinder, sizeof(cylinder));
-		offset+= sizeof(cylinder) / sizeof(float);
-	}
-	{
-		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Sub));
-		++offset;
-	}
-	{
-		csg_data_buffer_host_[offset]= float(int(ExpressionElementType::Add));
-		++offset;
-	}
-
-	csg_data_buffer_host_[0]= float(offset);
+	const CSGExpressionGPU epxression_prepared= ConvertCSGTreeToGPUExpression(tree);
 
 	command_buffer.updateBuffer(
 		*csg_data_buffer_gpu_,
 		0u,
-		offset * sizeof(float),
-		csg_data_buffer_host_.data());
+		epxression_prepared.size() * sizeof(float),
+		epxression_prepared.data());
 }
 
 void CSGRenderer::EndFrame(const CameraController& camera_controller, const vk::CommandBuffer command_buffer)
