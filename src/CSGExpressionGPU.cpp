@@ -24,7 +24,7 @@ enum class ExpressionElementType
 
 	// Objects. Have parameters (specific count for each element).
 	Sphere= 101,
-	Cube= 102,
+	Plane= 102,
 	Cylinder= 103,
 };
 
@@ -37,10 +37,11 @@ struct Sphere
 	float radius;
 };
 
-struct Cube
+struct Plane
 {
 	float center[3];
-	float half_size[3];
+	float normal[3]; // Actually, not a normal, but some vector with non-zero length
+	float binormal[3];
 };
 
 struct Cylinder
@@ -117,15 +118,54 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Sp
 
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cube& node)
 {
-	ExpressionElements::Cube cube{};
-	cube.center[0]= node.center[0];
-	cube.center[1]= node.center[1];
-	cube.center[2]= node.center[2];
-	cube.half_size[0]= node.size[0] * 0.5f;
-	cube.half_size[1]= node.size[1] * 0.5f;
-	cube.half_size[2]= node.size[2] * 0.5f;
+	const ExpressionElements::Plane plane_x_plus
+	{
+		{ node.center[0] + node.size[0] * 0.5f, node.center[1], node.center[2] },
+		{ +1.0f, 0.0f, 0.0f },
+		{ 0.0f, +1.0f, 0.0f },
+	};
+	const ExpressionElements::Plane plane_x_minus
+	{
+		{ node.center[0] - node.size[0] * 0.5f, node.center[1], node.center[2] },
+		{ -1.0f, 0.0f, 0.0f },
+		{ 0.0f, -1.0f, 0.0f },
+	};
+	const ExpressionElements::Plane plane_y_plus
+	{
+		{ node.center[0], node.center[1] + node.size[1] * 0.5f, node.center[2] },
+		{ 0.0f, +1.0f, 0.0f },
+		{ +1.0f, 0.0f, 0.0f },
+	};
+	const ExpressionElements::Plane plane_y_minus
+	{
+		{ node.center[0], node.center[1] - node.size[1] * 0.5f, node.center[2] },
+		{ 0.0f, -1.0f, 0.0f },
+		{ -1.0f, 0.0f, 0.0f },
+	};
+	const ExpressionElements::Plane plane_z_plus
+	{
+		{ node.center[0], node.center[1], node.center[2] + node.size[2] * 0.5f },
+		{ 0.0f, 0.0f, +1.0f },
+		{ +1.0f, 0.0f, 0.0f },
+	};
+	const ExpressionElements::Plane plane_z_minus
+	{
+		{ node.center[0], node.center[1], node.center[2] - node.size[2] * 0.5f },
+		{ 0.0f, 0.0f, -1.0f },
+		{ -1.0f, 0.0f, 0.0f },
+	};
 
-	AppendExpressionComponent(out_expression, ExpressionElementType::Cube, cube);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, plane_x_plus );
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, plane_x_minus);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, plane_y_plus );
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, plane_y_minus);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, plane_z_plus );
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, plane_z_minus);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
 }
 
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cylinder& node)

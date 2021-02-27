@@ -212,23 +212,6 @@ Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center
 }
 
 // x, y - tex_coord, z - near distance, w - far distance
-Range getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, vec3 half_size )
-{
-	Range x_plus = getBeamPlaneIntersectionRange( cube_center + vec3( +half_size.x, 0.0, 0.0 ), vec3( +1.0, 0.0, 0.0 ), vec3( 0.0, +1.0, 0.0 ), start, dir_normalized );
-	Range x_minus= getBeamPlaneIntersectionRange( cube_center + vec3( -half_size.x, 0.0, 0.0 ), vec3( -1.0, 0.0, 0.0 ), vec3( 0.0, -1.0, 0.0 ), start, dir_normalized );
-	Range y_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, +half_size.y, 0.0 ), vec3( 0.0, +1.0, 0.0 ), vec3( +1.0, 0.0, 0.0 ), start, dir_normalized );
-	Range y_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, -half_size.y, 0.0 ), vec3( 0.0, -1.0, 0.0 ), vec3( -1.0, 0.0, 0.0 ), start, dir_normalized );
-	Range z_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, +half_size.z ), vec3( 0.0, 0.0, +1.0 ), vec3( +1.0, 0.0, 0.0 ), start, dir_normalized );
-	Range z_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, -half_size.z ), vec3( 0.0, 0.0, -1.0 ), vec3( -0.5, 0.5, 0.0 ), start, dir_normalized );
-
-	Range x_range= multiplyRanges( x_plus, x_minus );
-	Range y_range= multiplyRanges( y_plus, y_minus );
-	Range z_range= multiplyRanges( z_plus, z_minus );
-
-	return multiplyRanges( multiplyRanges( x_range, y_range ), z_range );
-}
-
-// x, y - tex_coord, z - near distance, w - far distance
 Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, float radius )
 {
 	vec3 dir_to_center= center - start;
@@ -365,12 +348,13 @@ void main()
 			if( ranges_stack_size >= ranges_stack_size_max )
 				break;
 
-			vec3 center= vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
-			vec3 half_size= vec3( csg_data[offset+3], csg_data[offset+4], csg_data[offset+5] );
-			offset+= 6;
+			vec3 point   = vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
+			vec3 normal  = vec3( csg_data[offset+3], csg_data[offset+4], csg_data[offset+5] );
+			vec3 binormal= vec3( csg_data[offset+6], csg_data[offset+7], csg_data[offset+8] );
+			offset+= 9;
 
 			ranges_stack[ranges_stack_size]=
-				getCubeIntersection( cam_pos.xyz, dir_normalized, center, half_size );
+				getBeamPlaneIntersectionRange( point, normal, binormal, cam_pos.xyz, dir_normalized );
 			++ranges_stack_size;
 		}
 		else if( element_type == 103 )
