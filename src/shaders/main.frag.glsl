@@ -49,24 +49,47 @@ vec3 textureFetch( vec3 tc )
 	return vec3( bit, bit, bit );
 }
 
-// returns min/max
-vec2 getBeamPlaneIntersectionRange( vec3 plane_point, vec3 plane_normal, vec3 beam_point, vec3 beam_dir_normalized )
+// Input plane "normal" may be not normalized. Scale normal and binormal together to scale texture coordinates.
+Range getBeamPlaneIntersectionRange(
+	vec3 plane_point, vec3 plane_normal, vec3 plane_binormal,
+	vec3 beam_point, vec3 beam_dir_normalized )
 {
+	Range range;
+
 	float signed_distance_to_plane= dot( plane_normal, plane_point - beam_point );
 	float dirs_dot = dot( plane_normal, beam_dir_normalized );
 	if( dirs_dot == 0.0 )
-		return vec2( -almost_infinity, +almost_infinity );
+	{
+		range.dist_min= -almost_infinity;
+		range.dist_max= +almost_infinity;
+		return range;
+	}
 
 	float dist= signed_distance_to_plane / dirs_dot;
-	if( dirs_dot > 0.0 )
-		return vec2( z_near, dist );
-	else
-		return vec2( max( z_near, dist ), +almost_infinity );
-}
 
-vec2 multiplyRangesSimple( vec2 range0, vec2 range1 )
-{
-	return vec2( max( range0.x, range1.x ), min( range0.y, range1.y ) );
+	// Project texture, using plane point as texture basis center and normal and binormal as basis vectors.
+	// Calculate tanged using normal and binormal.
+	// This approach allows texture mapping with non-orthogonal basis, but does not allow mirrored texture mapping and mapping with non-orthogonal basis.
+	vec3 intersection_pos= beam_point + dist * beam_dir_normalized;
+	vec3 intersection_pos_relative= intersection_pos - plane_point;
+	vec3 plane_tangent= cross( plane_normal, plane_binormal );
+
+	vec3 tc= vec3( dot( intersection_pos_relative, plane_binormal ), dot( intersection_pos_relative, plane_tangent ), 0.0 );
+
+	range.tc_min= tc;
+	range.tc_max= tc;
+
+	if( dirs_dot > 0.0 )
+	{
+		range.dist_min= z_near;
+		range.dist_max= dist;
+	}
+	else
+	{
+		range.dist_min= max( z_near, dist );
+		range.dist_max= +almost_infinity;
+	}
+	return range;
 }
 
 Range multiplyRanges( Range range0, Range range1 )
@@ -191,29 +214,18 @@ Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center
 // x, y - tex_coord, z - near distance, w - far distance
 Range getCubeIntersection( vec3 start, vec3 dir_normalized, vec3 cube_center, vec3 half_size )
 {
-	vec2 x_plus = getBeamPlaneIntersectionRange( cube_center + vec3( +half_size.x, 0.0, 0.0 ), vec3( +1.0, 0.0, 0.0 ), start, dir_normalized );
-	vec2 x_minus= getBeamPlaneIntersectionRange( cube_center + vec3( -half_size.x, 0.0, 0.0 ), vec3( -1.0, 0.0, 0.0 ), start, dir_normalized );
-	vec2 y_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, +half_size.y, 0.0 ), vec3( 0.0, +1.0, 0.0 ), start, dir_normalized );
-	vec2 y_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, -half_size.y, 0.0 ), vec3( 0.0, -1.0, 0.0 ), start, dir_normalized );
-	vec2 z_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, +half_size.z ), vec3( 0.0, 0.0, +1.0 ), start, dir_normalized );
-	vec2 z_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, -half_size.z ), vec3( 0.0, 0.0, -1.0 ), start, dir_normalized );
+	Range x_plus = getBeamPlaneIntersectionRange( cube_center + vec3( +half_size.x, 0.0, 0.0 ), vec3( +1.0, 0.0, 0.0 ), vec3( 0.0, +1.0, 0.0 ), start, dir_normalized );
+	Range x_minus= getBeamPlaneIntersectionRange( cube_center + vec3( -half_size.x, 0.0, 0.0 ), vec3( -1.0, 0.0, 0.0 ), vec3( 0.0, -1.0, 0.0 ), start, dir_normalized );
+	Range y_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, +half_size.y, 0.0 ), vec3( 0.0, +1.0, 0.0 ), vec3( +1.0, 0.0, 0.0 ), start, dir_normalized );
+	Range y_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, -half_size.y, 0.0 ), vec3( 0.0, -1.0, 0.0 ), vec3( -1.0, 0.0, 0.0 ), start, dir_normalized );
+	Range z_plus = getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, +half_size.z ), vec3( 0.0, 0.0, +1.0 ), vec3( +1.0, 0.0, 0.0 ), start, dir_normalized );
+	Range z_minus= getBeamPlaneIntersectionRange( cube_center + vec3( 0.0, 0.0, -half_size.z ), vec3( 0.0, 0.0, -1.0 ), vec3( -0.5, 0.5, 0.0 ), start, dir_normalized );
 
-	vec2 x_range= multiplyRangesSimple( x_plus, x_minus );
-	vec2 y_range= multiplyRangesSimple( y_plus, y_minus );
-	vec2 z_range= multiplyRangesSimple( z_plus, z_minus );
+	Range x_range= multiplyRanges( x_plus, x_minus );
+	Range y_range= multiplyRanges( y_plus, y_minus );
+	Range z_range= multiplyRanges( z_plus, z_minus );
 
-	vec2 result_range= multiplyRangesSimple( multiplyRangesSimple( x_range, y_range ), z_range );
-	result_range= multiplyRangesSimple( result_range, vec2( 0.01, almost_infinity ) );
-
-	vec3 world_pos_min= start - cube_center + dir_normalized * result_range.x;
-	vec3 world_pos_max= start - cube_center + dir_normalized * result_range.y;
-
-	Range res;
-	res.dist_min= result_range.x;
-	res.dist_max= result_range.y;
-	res.tc_min= vec3( sqrt(3.0) * 0.5 * (world_pos_min.x - world_pos_min.y), -world_pos_min.z + 0.5 * ( world_pos_min.x + world_pos_min.y ), 0.0 );
-	res.tc_max= vec3( sqrt(3.0) * 0.5 * (world_pos_max.x - world_pos_max.y), -world_pos_max.z + 0.5 * ( world_pos_max.x + world_pos_max.y ), 0.0 );
-	return res;
+	return multiplyRanges( multiplyRanges( x_range, y_range ), z_range );
 }
 
 // x, y - tex_coord, z - near distance, w - far distance
