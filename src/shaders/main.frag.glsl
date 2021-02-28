@@ -5,6 +5,9 @@ layout(push_constant) uniform uniforms_block
 {
 	mat4 view_matrix;
 	vec4 cam_pos;
+	vec4 dir_to_sun_normalized;
+	vec4 sun_color;
+	vec4 ambient_light_color;
 };
 
 layout(location= 0) in noperspective vec3 f_dir;
@@ -85,6 +88,8 @@ Range getBeamPlaneIntersectionRange(
 
 	range.min.tc= tc;
 	range.max.tc= tc;
+	range.min.normal= plane_normal;
+	range.max.normal= plane_normal;
 
 	if( dirs_dot > 0.0 )
 	{
@@ -160,11 +165,13 @@ Range subtractRanges( Range range0, Range range1 )
 	{
 		res.min= range1.max;
 		res.max= range0.max;
+		res.min.normal= -res.min.normal;
 	}
 	else
 	{
 		res.min= range0.min;
 		res.max= range1.min;
+		res.max.normal= -res.max.normal;
 	}
 
 	return res;
@@ -205,6 +212,8 @@ Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center
 	res.max.dist= far_intersection_dist;
 	res.min.tc= vec3( 8.0 * vec2( acos( radius_vector_min_normalized.y ), atan( radius_vector_min_normalized.z, radius_vector_min_normalized.x ) ) * inv_pi, 28.0 );
 	res.max.tc= vec3( 8.0 * vec2( acos( radius_vector_max_normalized.y ), atan( radius_vector_max_normalized.z, radius_vector_max_normalized.x ) ) * inv_pi, 28.0 );
+	res.min.normal= radius_vector_min;
+	res.max.normal= radius_vector_max;
 	return res;
 }
 
@@ -271,6 +280,8 @@ Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 	res.max.dist= far_intersection_dist;
 	res.min.tc= vec3( 8.0 * vec2( radius_vector_min.z, atan( radius_vector_min.y, radius_vector_min.x ) ) * inv_pi, 28.0 );
 	res.max.tc= vec3( 8.0 * vec2( radius_vector_max.z, atan( radius_vector_max.y, radius_vector_max.x ) ) * inv_pi, 28.0 );
+	res.min.normal= radius_vector_min - normal * dot( normal, radius_vector_min );
+	res.max.normal= radius_vector_max - normal * dot( normal, radius_vector_max );
 	return res;
 }
 
@@ -381,6 +392,14 @@ void main()
 		if( range.max.dist <= range.min.dist )
 			color= vec4( 0.0, 0.0, 0.0, 0.0 );
 		else
-			color = vec4( textureFetch( range.min.tc ), 1.0);
+		{
+			vec3 normal= normalize( range.min.normal );
+			float sun_light_dot= max( dot( normal, dir_to_sun_normalized.xyz ), 0.0 );
+
+			vec3 tex_value= textureFetch( range.min.tc );
+
+			vec3 result_light=  tex_value * ( sun_color.rgb * sun_light_dot + ambient_light_color.rgb );
+			color = vec4( result_light, 1.0);
+		}
 	}
 }

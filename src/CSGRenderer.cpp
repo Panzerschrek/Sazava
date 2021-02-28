@@ -14,6 +14,9 @@ struct Uniforms
 {
 	m_Mat4 view_matrix;
 	float cam_pos[4];
+	float dir_to_sun_normalized[4];
+	float sun_color[4];
+	float ambient_light_color[4];
 };
 
 } // namespace
@@ -232,9 +235,10 @@ void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
 			{ {
 				CSGTree::Cube{ { 0.0f, 2.0f, 0.0f }, { 1.9f, 1.8f, 1.7f } },
 				CSGTree::Sphere{ { 0.0f, 2.0f, 0.5f }, 1.0f },
+				CSGTree::Sphere{ { 0.0f, 2.0f, -0.2f }, 0.5f },
+				CSGTree::Cube{ { 0.8f, 2.8f, -0.6f }, { 0.5f, 0.5f, 0.5f } },
 			} },
-			CSGTree::
-					SubChain
+			CSGTree::SubChain
 			{ {
 				CSGTree::Sphere{ { 0.0f, 2.0f, 3.0f }, 1.0f },
 				CSGTree::Cylinder{ { 0.0f, 2.0f, 3.0f }, { 0.0f, std::sqrt(0.5f), std::sqrt(0.5f) }, 0.5f },
@@ -269,6 +273,19 @@ void CSGRenderer::EndFrame(const CameraController& camera_controller, const vk::
 	uniforms.cam_pos[0]= cam_pos.x;
 	uniforms.cam_pos[1]= cam_pos.y;
 	uniforms.cam_pos[2]= cam_pos.z;
+
+	m_Vec3 dir_to_sun= m_Vec3( 0.2f, 0.3f, 0.4f );
+	dir_to_sun*= dir_to_sun.GetInvLength();
+
+	uniforms.dir_to_sun_normalized[0]= dir_to_sun.x;
+	uniforms.dir_to_sun_normalized[1]= dir_to_sun.y;
+	uniforms.dir_to_sun_normalized[2]= dir_to_sun.y;
+	uniforms.sun_color[0]= 0.75f;
+	uniforms.sun_color[1]= 0.675f;
+	uniforms.sun_color[2]= 0.6f;
+	uniforms.ambient_light_color[0]= 0.3f;
+	uniforms.ambient_light_color[1]= 0.3f;
+	uniforms.ambient_light_color[2]= 0.4f;
 
 	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline_);
 
