@@ -248,6 +248,7 @@ void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
 				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, 0.75f },
 				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.75f },
 			} },
+			CSGTree::Cube{ { -3.6f, 2.4f, 1.1f }, { 0.25f, 0.25f, 0.20f } },
 			CSGTree::Cylinder{ { 3.0f, 3.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.5f },
 			CSGTree::Cube{ { 6.0f, 1.0f, 0.0f }, { 1.5f, 2.5f, 4.0f } },
 		} },
@@ -279,10 +280,10 @@ void CSGRenderer::EndFrame(const CameraController& camera_controller, const vk::
 
 	uniforms.dir_to_sun_normalized[0]= dir_to_sun.x;
 	uniforms.dir_to_sun_normalized[1]= dir_to_sun.y;
-	uniforms.dir_to_sun_normalized[2]= dir_to_sun.y;
-	uniforms.sun_color[0]= 0.75f;
-	uniforms.sun_color[1]= 0.675f;
-	uniforms.sun_color[2]= 0.6f;
+	uniforms.dir_to_sun_normalized[2]= dir_to_sun.z;
+	uniforms.sun_color[0]= 1.0f;
+	uniforms.sun_color[1]= 0.9f;
+	uniforms.sun_color[2]= 0.8f;
 	uniforms.ambient_light_color[0]= 0.3f;
 	uniforms.ambient_light_color[1]= 0.3f;
 	uniforms.ambient_light_color[2]= 0.4f;

@@ -21,7 +21,8 @@ layout(location= 0) out vec4 color;
 
 const float pi= 3.1415926535;
 const float inv_pi= 1.0 / pi;
-const float z_near= 0.1;
+const float z_near= 0.02;
+const float shadow_offset= 0.01;
 const float almost_infinity= 1.0e16;
 
 struct RangePoint
@@ -285,10 +286,8 @@ Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 	return res;
 }
 
-void main()
+Range traceRay( vec3 start_pos, vec3 dir_normalized )
 {
-	vec3 dir_normalized= normalize(f_dir);
-
 	const int ranges_stack_size_max= 8;
 	Range ranges_stack[ranges_stack_size_max];
 	int ranges_stack_size= 0;
@@ -348,7 +347,7 @@ void main()
 			offset+= 4;
 
 			ranges_stack[ranges_stack_size]=
-				getSphereIntersection( cam_pos.xyz, dir_normalized, center, radius );
+				getSphereIntersection( start_pos, dir_normalized, center, radius );
 			++ranges_stack_size;
 		}
 		else if( element_type == 102 )
@@ -362,7 +361,7 @@ void main()
 			offset+= 9;
 
 			ranges_stack[ranges_stack_size]=
-				getBeamPlaneIntersectionRange( point, normal, binormal, cam_pos.xyz, dir_normalized );
+				getBeamPlaneIntersectionRange( point, normal, binormal, start_pos, dir_normalized );
 			++ranges_stack_size;
 		}
 		else if( element_type == 103 )
@@ -376,7 +375,7 @@ void main()
 			offset+= 7;
 
 			ranges_stack[ranges_stack_size]=
-				getCylinderIntersection( cam_pos.xyz, dir_normalized, center, normal, radius );
+				getCylinderIntersection( start_pos, dir_normalized, center, normal, radius );
 			++ranges_stack_size;
 		}
 		else
@@ -384,22 +383,48 @@ void main()
 	}
 
 	if( ranges_stack_size == 0 )
-		color= vec4( 0.0, 0.0, 0.0, 0.0 );
+	{
+		Range res;
+		res.min.dist= +almost_infinity;
+		res.max.dist= -almost_infinity;
+		return res;
+	}
+	return ranges_stack[0];
+}
+
+void main()
+{
+	vec3 dir_normalized= normalize(f_dir);
+	Range range= traceRay( cam_pos.xyz, dir_normalized );
+
+	if( range.max.dist <= range.min.dist )
+	{
+		float sun_dir_dot= dot( dir_normalized, dir_to_sun_normalized.xyz );
+		float sun_factor= smoothstep( 0.998, 1.0, sun_dir_dot );
+		float sun_ligh_scale= 10.0;
+		float ambient_light_scale= 1.5;
+		vec3 result_color= sun_ligh_scale * sun_factor * sun_color.rgb + ambient_light_scale * ambient_light_color.rgb;
+		color= vec4( result_color, 0.0 );
+	}
 	else
 	{
-		Range range= ranges_stack[0];
+		vec3 normal= normalize( range.min.normal );
+		float sun_light_dot= max( dot( normal, dir_to_sun_normalized.xyz ), 0.0 );
 
-		if( range.max.dist <= range.min.dist )
-			color= vec4( 0.0, 0.0, 0.0, 0.0 );
-		else
+		float shadow_factor;
 		{
-			vec3 normal= normalize( range.min.normal );
-			float sun_light_dot= max( dot( normal, dir_to_sun_normalized.xyz ), 0.0 );
-
-			vec3 tex_value= textureFetch( range.min.tc );
-
-			vec3 result_light=  tex_value * ( sun_color.rgb * sun_light_dot + ambient_light_color.rgb );
-			color = vec4( result_light, 1.0);
+			vec3 intersection_pos= cam_pos.xyz + range.min.dist * dir_normalized + shadow_offset * dir_to_sun_normalized.xyz;
+			Range shadow_range= traceRay( intersection_pos, dir_to_sun_normalized.xyz );
+			if( shadow_range.max.dist <= shadow_range.min.dist )
+				shadow_factor= 1.0;
+			else
+				shadow_factor= 0.0;
 		}
+
+		vec3 tex_value= textureFetch( range.min.tc );
+
+		vec3 result_light= tex_value * ( sun_light_dot * shadow_factor * sun_color.rgb + ambient_light_color.rgb );
+		color = vec4( result_light, 1.0);
 	}
+
 }
