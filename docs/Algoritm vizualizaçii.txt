@@ -10,3 +10,11 @@ V slucaje razniçy dvuh vypuklyh figur najti bližajšuju tocku peresecenija rez
 Nado lišj vycislitj po pare tocek peresecenija oboih figur s lucöm, sostavitj iz etih par otrezki i vycislitj razniçu etih otrezkov.
 
 Takim obrazom, dostatocno legko vizualizirovatj figuru, sostojascuju iz summy vypuklyh figur ili raznostej vypuklyh figur.
+
+-- Optimizaçija --
+
+Dlä figury, sostojascej iz summy množestva drugih figur, možet bytj premenena sledujuscaja optimizaçija:
+Dlä každoj podfigury nahoditsä ogranicivajuscij parallelepiped, kotoryj rasterizujetsä s predvariteljnoj peredacej v glavnyj fragmentnyj šejder toljko soderžimogo etoj podfigury.
+Rezuljtat raboty šejdera zapisyvajetsä v rezuljtirujuscij bufer çveta i bufer glubiny s testom glubiny.
+Takoj podhod pozvoläjet sokratitj obscuju složnostj šejdera, za scöt uvelicenija kolicestva vyzovov šejdera.
+V dannom podhode neljzä budet primenätj zatenenije s neposredstvennym nahoždenijem peresecenija luca do istocnika sveta ot tocki figury. Vmesto etogo pridötsä ispoljzovatj, naprimer, tenevyje karty.
