@@ -107,12 +107,7 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Su
 
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Sphere& node)
 {
-	ExpressionElements::Sphere sphere{};
-	sphere.center[0]= node.center[0];
-	sphere.center[1]= node.center[1];
-	sphere.center[2]= node.center[2];
-	sphere.radius= node.radius;
-
+	const ExpressionElements::Sphere sphere{ { node.center.x, node.center.y, node.center.z }, node.radius };
 	AppendExpressionComponent(out_expression, ExpressionElementType::Sphere, sphere);
 }
 
@@ -120,37 +115,37 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cu
 {
 	const ExpressionElements::Plane plane_x_plus
 	{
-		{ node.center[0] + node.size[0] * 0.5f, node.center[1], node.center[2] },
+		{ node.center.x + node.size.x * 0.5f, node.center.y, node.center.z },
 		{ +1.0f, 0.0f, 0.0f },
 		{ 0.0f, +1.0f, 0.0f },
 	};
 	const ExpressionElements::Plane plane_x_minus
 	{
-		{ node.center[0] - node.size[0] * 0.5f, node.center[1], node.center[2] },
+		{ node.center.x - node.size.x * 0.5f, node.center.y, node.center.z },
 		{ -1.0f, 0.0f, 0.0f },
 		{ 0.0f, -1.0f, 0.0f },
 	};
 	const ExpressionElements::Plane plane_y_plus
 	{
-		{ node.center[0], node.center[1] + node.size[1] * 0.5f, node.center[2] },
+		{ node.center.x, node.center.y + node.size.y * 0.5f, node.center.z },
 		{ 0.0f, +1.0f, 0.0f },
 		{ +1.0f, 0.0f, 0.0f },
 	};
 	const ExpressionElements::Plane plane_y_minus
 	{
-		{ node.center[0], node.center[1] - node.size[1] * 0.5f, node.center[2] },
+		{ node.center.x, node.center.y - node.size.y * 0.5f, node.center.z },
 		{ 0.0f, -1.0f, 0.0f },
 		{ -1.0f, 0.0f, 0.0f },
 	};
 	const ExpressionElements::Plane plane_z_plus
 	{
-		{ node.center[0], node.center[1], node.center[2] + node.size[2] * 0.5f },
+		{ node.center.x, node.center.y, node.center.z + node.size.z * 0.5f },
 		{ 0.0f, 0.0f, +1.0f },
 		{ +1.0f, 0.0f, 0.0f },
 	};
 	const ExpressionElements::Plane plane_z_minus
 	{
-		{ node.center[0], node.center[1], node.center[2] - node.size[2] * 0.5f },
+		{ node.center.x, node.center.y, node.center.z - node.size.z * 0.5f },
 		{ 0.0f, 0.0f, -1.0f },
 		{ -1.0f, 0.0f, 0.0f },
 	};
@@ -170,14 +165,12 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cu
 
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cylinder& node)
 {
-	ExpressionElements::Cylinder cylinder{};
-	cylinder.center[0]= node.center[0];
-	cylinder.center[1]= node.center[1];
-	cylinder.center[2]= node.center[2];
-	cylinder.normal[0]= node.normal[0];
-	cylinder.normal[1]= node.normal[1];
-	cylinder.normal[2]= node.normal[2];
-	cylinder.radius= node.radius;
+	const ExpressionElements::Cylinder cylinder
+	{
+		{ node.center.x, node.center.y, node.center.z },
+		{ node.normal.x, node.normal.y, node.normal.z },
+		node.radius,
+	};
 
 	AppendExpressionComponent(out_expression, ExpressionElementType::Cylinder, cylinder);
 }

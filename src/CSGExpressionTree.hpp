@@ -1,4 +1,5 @@
 #pragma once
+#include "Vec.hpp"
 #include <variant>
 #include <vector>
 
@@ -40,20 +41,20 @@ struct SubChain
 
 struct Sphere
 {
-	float center[3];
+	m_Vec3 center;
 	float radius;
 };
 
 struct Cube
 {
-	float center[3];
-	float size[3];
+	m_Vec3 center;
+	m_Vec3 size;
 };
 
 struct Cylinder
 {
-	float center[3];
-	float normal[3];
+	m_Vec3 center;
+	m_Vec3 normal;
 	float radius;
 };
 
