@@ -304,7 +304,8 @@ void CSGRenderer::EndFrame(const CameraController& camera_controller, const vk::
 		sizeof(uniforms),
 		&uniforms);
 
-	command_buffer.draw(6u, 1u, 0u, 0u);
+	// Draw single fullscreen triangle.
+	command_buffer.draw(3u, 1u, 0u, 0u);
 }
 
 } // namespace SZV
