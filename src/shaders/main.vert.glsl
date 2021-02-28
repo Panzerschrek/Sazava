@@ -5,6 +5,9 @@ layout(push_constant) uniform uniforms_block
 {
 	mat4 view_matrix;
 	vec4 cam_pos;
+	vec4 dir_to_sun_normalized;
+	vec4 sun_color;
+	vec4 ambient_light_color;
 };
 
 layout(location= 0) out noperspective vec3 f_dir;

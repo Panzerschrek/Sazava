@@ -401,7 +401,7 @@ void main()
 	{
 		float sun_dir_dot= dot( dir_normalized, dir_to_sun_normalized.xyz );
 		float sun_factor= smoothstep( 0.998, 1.0, sun_dir_dot );
-		float sun_ligh_scale= 10.0;
+		float sun_ligh_scale= 2.0;
 		float ambient_light_scale= 1.5;
 		vec3 result_color= sun_ligh_scale * sun_factor * sun_color.rgb + ambient_light_scale * ambient_light_color.rgb;
 		color= vec4( result_color, 0.0 );
