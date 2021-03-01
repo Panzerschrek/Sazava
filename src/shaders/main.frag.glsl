@@ -286,6 +286,96 @@ Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 	return res;
 }
 
+Range getConeIntersection( vec3 start, vec3 dir_normalized, vec3 center )
+{
+	if( dir_normalized.z == 0.0 )
+	{
+		// TODO - fix this
+		Range res;
+		res.min.dist= +almost_infinity;
+		res.max.dist= -almost_infinity;
+		return res;
+	}
+
+	float k= 0.25; // tangent of cone angle
+	float k2= k * k;
+
+	float dx_dz= dir_normalized.x / dir_normalized.z;
+	float dy_dz= dir_normalized.y / dir_normalized.z;
+	float dx_dz2= dx_dz * dx_dz;
+	float dy_dz2= dy_dz * dy_dz;
+
+	float x0= start.x - center.x;
+	float y0= start.y - center.y;
+	float z0= start.z - center.z;
+
+	float x0_dx_dz= x0 * dx_dz;
+	float y0_dy_dz= y0 * dy_dz;
+
+	// Quadratic equation parameters.
+	float a= dx_dz2 + dy_dz2 - k2;
+	float b= 2.0 * ( -z0 * ( dx_dz2 + dy_dz2 ) + x0_dx_dz + y0_dy_dz  );
+	float c= -2.0 * z0 * ( x0_dx_dz + y0_dy_dz ) + z0 * z0 * ( dx_dz2 + dy_dz2 ) + x0 * x0 + y0 * y0;
+
+	float d= b * b - 4.0 * a * c;
+	if( d < 0.0 )
+	{
+		// No quadratic equation roots - has no intersection.
+		Range res;
+		res.min.dist= +almost_infinity;
+		res.max.dist= -almost_infinity;
+		return res;
+	}
+
+	float d_root= sqrt(d);
+
+	float z_root_0= ( -b + d_root ) / ( 2.0 * a );
+	float z_root_1= ( -b - d_root ) / ( 2.0 * a );
+
+	float x_root_0 = x0 + ( z_root_0 - z0 ) * dx_dz;
+	float y_root_0 = y0 + ( z_root_0 - z0 ) * dy_dz;
+
+	float x_root_1 = x0 + ( z_root_1 - z0 ) * dx_dz;
+	float y_root_1 = y0 + ( z_root_1 - z0 ) * dy_dz;
+
+	vec3 intersection_pos_0= vec3( x_root_0, y_root_0, z_root_0 ) + center;
+	vec3 intersection_pos_1= vec3( x_root_1, y_root_1, z_root_1 ) + center;
+	float dist0= dot( intersection_pos_0 - start, dir_normalized );
+	float dist1= dot( intersection_pos_1 - start, dir_normalized );
+
+	vec3 tc0= vec3( atan( y_root_0, x_root_0 ) * inv_pi, z_root_0, 99.0 );
+	vec3 tc1= vec3( atan( y_root_1, x_root_1 ) * inv_pi, z_root_1, 99.0 );
+	vec3 normal0= vec3( x_root_0, y_root_0, -k2 * z_root_0 );
+	vec3 normal1= vec3( x_root_1, y_root_1, -k2 * z_root_1 );
+
+	Range res;
+	if( dir_normalized.z > 0.0 )
+	{
+		res.min.dist= dist1;
+		res.min.tc= tc1;
+		res.min.normal= normal1;
+		res.max.dist= dist0;
+		res.max.tc= tc0;
+		res.max.normal= normal0;
+	}
+	else
+	{
+		res.min.dist= dist0;
+		res.min.tc= tc0;
+		res.min.normal= normal0;
+		res.max.dist= dist1;
+		res.max.tc= tc1;
+		res.max.normal= normal1;
+	}
+
+	if( a < 0.0 )
+		res.max.dist= almost_infinity;
+
+	res.min.dist= max( z_near, res.min.dist );
+
+	return res;
+}
+
 Range traceRay( vec3 start_pos, vec3 dir_normalized )
 {
 	const int ranges_stack_size_max= 8;
@@ -378,6 +468,18 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 				getCylinderIntersection( start_pos, dir_normalized, center, normal, radius );
 			++ranges_stack_size;
 		}
+		else if( element_type == 104 )
+		{
+			if( ranges_stack_size >= ranges_stack_size_max )
+				break;
+
+			vec3 center= vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
+			offset+= 3;
+
+			ranges_stack[ranges_stack_size]=
+				getConeIntersection( start_pos, dir_normalized, center );
+			++ranges_stack_size;
+		}
 		else
 			break;
 	}
@@ -426,5 +528,4 @@ void main()
 		vec3 result_light= tex_value * ( sun_light_dot * shadow_factor * sun_color.rgb + ambient_light_color.rgb );
 		color = vec4( result_light, 1.0);
 	}
-
 }

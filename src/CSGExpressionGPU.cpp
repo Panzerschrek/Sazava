@@ -26,6 +26,7 @@ enum class ExpressionElementType
 	Sphere= 101,
 	Plane= 102,
 	Cylinder= 103,
+	Cone= 104,
 };
 
 namespace ExpressionElements
@@ -49,6 +50,11 @@ struct Cylinder
 	float center[3];
 	float normal[3];
 	float radius;
+};
+
+struct Cone
+{
+	float center[3];
 };
 
 } // namespace ExpressionElements
@@ -173,6 +179,16 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cy
 	};
 
 	AppendExpressionComponent(out_expression, ExpressionElementType::Cylinder, cylinder);
+}
+
+void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cone& node)
+{
+	const ExpressionElements::Cone conde
+	{
+		{ node.center.x, node.center.y, node.center.z },
+	};
+
+	AppendExpressionComponent(out_expression, ExpressionElementType::Cone, conde);
 }
 
 void ConvertCSGTreeNode(CSGExpressionGPU& out_expression, const CSGTree::CSGTreeNode& node)

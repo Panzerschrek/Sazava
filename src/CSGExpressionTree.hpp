@@ -15,6 +15,7 @@ struct SubChain;
 struct Sphere;
 struct Cube;
 struct Cylinder;
+struct Cone;
 
 using CSGTreeNode= std::variant<
 	MulChain,
@@ -22,7 +23,8 @@ using CSGTreeNode= std::variant<
 	SubChain,
 	Sphere,
 	Cube,
-	Cylinder >;
+	Cylinder,
+	Cone >;
 
 struct MulChain
 {
@@ -56,6 +58,11 @@ struct Cylinder
 	m_Vec3 center;
 	m_Vec3 normal;
 	float radius;
+};
+
+struct Cone
+{
+	m_Vec3 center;
 };
 
 } // namespace CSGTree
