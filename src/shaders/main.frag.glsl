@@ -40,28 +40,81 @@ struct Range
 	RangePoint max;
 };
 
-vec3 textureFetch( vec3 tc )
+Range MultiplyRanges( Range range0, Range range1 )
 {
-	tc.xy*= 12.0;
+	Range res;
 
-	const vec2 texture_patterns[10]= vec2[10]
-	(
-		vec2( 1.0, 1.0 ), vec2( 1.0, 2.0 ), vec2( 1.0, 3.0 ), vec2( 1.0, 4.0 ), vec2( 1.0, 5.0 ),
-		vec2( 2.0, 3.0 ), vec2( 2.0, 5.0 ), vec2( 3.0, 4.0 ), vec2( 3.0, 5.0 ), vec2( 4.0, 5.0 )
-	);
+	if( range0.min.dist > range1.min.dist )
+		res.min= range0.min;
+	else
+		res.min= range1.min;
 
-	vec2 pattern_u= texture_patterns[ int(mod( tc.z, 10.0 ) ) ];
-	vec2 pattern_v= texture_patterns[ int(mod( tc.z / 10.0, 10.0 ) ) ];
+	if( range0.max.dist < range1.max.dist )
+		res.max= range0.max;
+	else
+		res.max= range1.max;
 
-	vec2 tc_mod= mod( tc.xy, vec2( pattern_u.x + pattern_u.y, pattern_v.x + pattern_v.y ) );
-	vec2 tc_step= step( vec2( pattern_u.x, pattern_v.x ), tc_mod );
+	return res;
+}
 
-	float bit= abs( tc_step.x - tc_step.y ) * 0.5 + 0.5;
-	return vec3( bit, bit, bit );
+Range AddRanges( Range range0, Range range1 )
+{
+	if( range0.min.dist >= range0.max.dist )
+		return range1;
+	if( range1.min.dist >= range1.max.dist )
+		return range0;
+
+	Range res;
+
+	if( range0.min.dist < range1.min.dist )
+		res.min= range0.min;
+	else
+		res.min= range1.min;
+
+	if( range0.max.dist > range1.max.dist )
+		res.max= range0.max;
+	else
+		res.max= range1.max;
+
+	return res;
+}
+
+Range SubtractRanges( Range range0, Range range1 )
+{
+	if( range0.min.dist >= range0.max.dist || range1.min.dist >= range1.max.dist )
+		return range0; // Invalid ranges.
+
+	if( range0.max.dist <= range1.min.dist || range0.min.dist >= range1.max.dist )
+		return range0; // Ther is no intersection between ranges - just return first range.
+
+	if( range1.min.dist > range0.min.dist && range1.max.dist < range0.max.dist )
+		return range0; // Second range is inside first - just return first range.
+
+	Range res;
+	if( range0.min.dist >= range1.min.dist && range0.max.dist <= range1.max.dist )
+	{
+		// Range is completely zeroed.
+		res.min.dist= range0.min.dist;
+		res.max.dist= range0.min.dist;
+	}
+	else if( range0.min.dist >= range1.min.dist )
+	{
+		res.min= range1.max;
+		res.max= range0.max;
+		res.min.normal= -res.min.normal;
+	}
+	else
+	{
+		res.min= range0.min;
+		res.max= range1.min;
+		res.max.normal= -res.max.normal;
+	}
+
+	return res;
 }
 
 // Input plane "normal" may be not normalized. Scale normal and binormal together to scale texture coordinates.
-Range getBeamPlaneIntersectionRange(
+Range GetPlaneIntersection(
 	vec3 plane_point, vec3 plane_normal, vec3 plane_binormal,
 	vec3 beam_point, vec3 beam_dir_normalized )
 {
@@ -105,81 +158,7 @@ Range getBeamPlaneIntersectionRange(
 	return range;
 }
 
-Range multiplyRanges( Range range0, Range range1 )
-{
-	Range res;
-
-	if( range0.min.dist > range1.min.dist )
-		res.min= range0.min;
-	else
-		res.min= range1.min;
-
-	if( range0.max.dist < range1.max.dist )
-		res.max= range0.max;
-	else
-		res.max= range1.max;
-
-	return res;
-}
-
-Range addRanges( Range range0, Range range1 )
-{
-	if( range0.min.dist >= range0.max.dist )
-		return range1;
-	if( range1.min.dist >= range1.max.dist )
-		return range0;
-
-	Range res;
-
-	if( range0.min.dist < range1.min.dist )
-		res.min= range0.min;
-	else
-		res.min= range1.min;
-
-	if( range0.max.dist > range1.max.dist )
-		res.max= range0.max;
-	else
-		res.max= range1.max;
-
-	return res;
-}
-
-Range subtractRanges( Range range0, Range range1 )
-{
-	if( range0.min.dist >= range0.max.dist || range1.min.dist >= range1.max.dist )
-		return range0; // Invalid ranges.
-
-	if( range0.max.dist <= range1.min.dist || range0.min.dist >= range1.max.dist )
-		return range0; // Ther is no intersection between ranges - just return first range.
-
-	if( range1.min.dist > range0.min.dist && range1.max.dist < range0.max.dist )
-		return range0; // Second range is inside first - just return first range.
-
-	Range res;
-	if( range0.min.dist >= range1.min.dist && range0.max.dist <= range1.max.dist )
-	{
-		// Range is completely zeroed.
-		res.min.dist= range0.min.dist;
-		res.max.dist= range0.min.dist;
-	}
-	else if( range0.min.dist >= range1.min.dist )
-	{
-		res.min= range1.max;
-		res.max= range0.max;
-		res.min.normal= -res.min.normal;
-	}
-	else
-	{
-		res.min= range0.min;
-		res.max= range1.min;
-		res.max.normal= -res.max.normal;
-	}
-
-	return res;
-}
-
-// x, y - tex_coord, z - near distance, w - far distance
-Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center, float sphere_radius )
+Range GetSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center, float sphere_radius )
 {
 	vec3 dir_to_center= sphere_center - start;
 	float vec_to_perependicualar_len= dot(dir_normalized, dir_to_center);
@@ -218,8 +197,7 @@ Range getSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center
 	return res;
 }
 
-// x, y - tex_coord, z - near distance, w - far distance
-Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, float radius )
+Range GetCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, float radius )
 {
 	vec3 dir_to_center= center - start;
 	vec3 dir_to_center_projected= dir_to_center - normal * dot( normal, dir_to_center );
@@ -286,7 +264,7 @@ Range getCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 	return res;
 }
 
-Range getConeIntersection( vec3 start, vec3 dir_normalized, vec3 center )
+Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center )
 {
 	float k= 0.5; // tangent of cone angle
 	float k2= k * k;
@@ -346,7 +324,7 @@ Range getConeIntersection( vec3 start, vec3 dir_normalized, vec3 center )
 	return res;
 }
 
-Range traceRay( vec3 start_pos, vec3 dir_normalized )
+Range GetSceneIntersection( vec3 start_pos, vec3 dir_normalized )
 {
 	const int ranges_stack_size_max= 8;
 	Range ranges_stack[ranges_stack_size_max];
@@ -368,7 +346,7 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 
 			Range range0= ranges_stack[ ranges_stack_size - 1 ];
 			Range range1= ranges_stack[ ranges_stack_size - 2 ];
-			Range result_range= multiplyRanges( range0, range1 );
+			Range result_range= MultiplyRanges( range0, range1 );
 
 			ranges_stack[ ranges_stack_size - 2 ]= result_range;
 			--ranges_stack_size;
@@ -380,7 +358,7 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 
 			Range range0= ranges_stack[ ranges_stack_size - 1 ];
 			Range range1= ranges_stack[ ranges_stack_size - 2 ];
-			Range result_range= addRanges( range0, range1 );
+			Range result_range= AddRanges( range0, range1 );
 
 			ranges_stack[ ranges_stack_size - 2 ]= result_range;
 			--ranges_stack_size;
@@ -392,7 +370,7 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 
 			Range range0= ranges_stack[ ranges_stack_size - 2 ];
 			Range range1= ranges_stack[ ranges_stack_size - 1 ];
-			Range result_range= subtractRanges( range0, range1 );
+			Range result_range= SubtractRanges( range0, range1 );
 
 			ranges_stack[ ranges_stack_size - 2 ]= result_range;
 			--ranges_stack_size;
@@ -407,7 +385,7 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 			offset+= 4;
 
 			ranges_stack[ranges_stack_size]=
-				getSphereIntersection( start_pos, dir_normalized, center, radius );
+				GetSphereIntersection( start_pos, dir_normalized, center, radius );
 			++ranges_stack_size;
 		}
 		else if( element_type == 102 )
@@ -421,7 +399,7 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 			offset+= 9;
 
 			ranges_stack[ranges_stack_size]=
-				getBeamPlaneIntersectionRange( point, normal, binormal, start_pos, dir_normalized );
+				GetPlaneIntersection( point, normal, binormal, start_pos, dir_normalized );
 			++ranges_stack_size;
 		}
 		else if( element_type == 103 )
@@ -435,7 +413,7 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 			offset+= 7;
 
 			ranges_stack[ranges_stack_size]=
-				getCylinderIntersection( start_pos, dir_normalized, center, normal, radius );
+				GetCylinderIntersection( start_pos, dir_normalized, center, normal, radius );
 			++ranges_stack_size;
 		}
 		else if( element_type == 104 )
@@ -447,7 +425,7 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 			offset+= 3;
 
 			ranges_stack[ranges_stack_size]=
-				getConeIntersection( start_pos, dir_normalized, center );
+				GetConeIntersection( start_pos, dir_normalized, center );
 			++ranges_stack_size;
 		}
 		else
@@ -464,10 +442,30 @@ Range traceRay( vec3 start_pos, vec3 dir_normalized )
 	return ranges_stack[0];
 }
 
+vec3 TextureFetch( vec3 tc )
+{
+	tc.xy*= 12.0;
+
+	const vec2 texture_patterns[10]= vec2[10]
+	(
+		vec2( 1.0, 1.0 ), vec2( 1.0, 2.0 ), vec2( 1.0, 3.0 ), vec2( 1.0, 4.0 ), vec2( 1.0, 5.0 ),
+		vec2( 2.0, 3.0 ), vec2( 2.0, 5.0 ), vec2( 3.0, 4.0 ), vec2( 3.0, 5.0 ), vec2( 4.0, 5.0 )
+	);
+
+	vec2 pattern_u= texture_patterns[ int(mod( tc.z, 10.0 ) ) ];
+	vec2 pattern_v= texture_patterns[ int(mod( tc.z / 10.0, 10.0 ) ) ];
+
+	vec2 tc_mod= mod( tc.xy, vec2( pattern_u.x + pattern_u.y, pattern_v.x + pattern_v.y ) );
+	vec2 tc_step= step( vec2( pattern_u.x, pattern_v.x ), tc_mod );
+
+	float bit= abs( tc_step.x - tc_step.y ) * 0.5 + 0.5;
+	return vec3( bit, bit, bit );
+}
+
 void main()
 {
 	vec3 dir_normalized= normalize(f_dir);
-	Range range= traceRay( cam_pos.xyz, dir_normalized );
+	Range range= GetSceneIntersection( cam_pos.xyz, dir_normalized );
 
 	if( range.max.dist <= range.min.dist )
 	{
@@ -486,14 +484,14 @@ void main()
 		float shadow_factor;
 		{
 			vec3 intersection_pos= cam_pos.xyz + range.min.dist * dir_normalized + shadow_offset * dir_to_sun_normalized.xyz;
-			Range shadow_range= traceRay( intersection_pos, dir_to_sun_normalized.xyz );
+			Range shadow_range= GetSceneIntersection( intersection_pos, dir_to_sun_normalized.xyz );
 			if( shadow_range.max.dist <= shadow_range.min.dist )
 				shadow_factor= 1.0;
 			else
 				shadow_factor= 0.0;
 		}
 
-		vec3 tex_value= textureFetch( range.min.tc );
+		vec3 tex_value= TextureFetch( range.min.tc );
 
 		vec3 result_light= tex_value * ( sun_light_dot * shadow_factor * sun_color.rgb + ambient_light_color.rgb );
 		color = vec4( result_light, 1.0);
