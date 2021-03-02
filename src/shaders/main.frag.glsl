@@ -284,7 +284,8 @@ Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center )
 			// No linear equation roots - has no intersection.
 			Range res;
 			res.min.dist= +almost_infinity;
-			res.max.dist=-almost_infinity;
+			res.max.dist= -almost_infinity;
+			return res;
 		}
 		dist_min= dist_max= -c / b;
 	}
