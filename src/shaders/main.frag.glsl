@@ -145,6 +145,10 @@ Range GetPlaneIntersection(
 	range.min.normal= plane_normal;
 	range.max.normal= plane_normal;
 
+	// TODO - set proper values for scale.
+	range.min.tc_scale= 1.0;
+	range.max.tc_scale= 1.0;
+
 	if( dirs_dot > 0.0 )
 	{
 		range.min.dist= z_near;
@@ -188,10 +192,12 @@ Range GetSphereIntersection( vec3 start, vec3 dir_normalized, vec3 center, float
 	Range res;
 	res.min.dist= dist_min;
 	res.max.dist= dist_max;
-	res.min.tc= vec3( 8.0 * inv_pi * vec2( atan( pos_min.y, pos_min.x ), atan( length(pos_min.xy), pos_min.z ) ), 28.0 );
-	res.max.tc= vec3( 8.0 * inv_pi * vec2( atan( pos_max.y, pos_max.x ), atan( length(pos_max.xy), pos_max.z ) ), 28.0 );
+	res.min.tc= vec3( 3.0 * inv_pi * vec2( atan( pos_min.y, pos_min.x ), atan( length(pos_min.xy), pos_min.z ) ), 0.0 );
+	res.max.tc= vec3( 3.0 * inv_pi * vec2( atan( pos_max.y, pos_max.x ), atan( length(pos_max.xy), pos_max.z ) ), 0.0 );
 	res.min.normal= pos_min;
 	res.max.normal= pos_max;
+	res.min.tc_scale= square_radius;
+	res.max.tc_scale= square_radius;
 
 	res.min.dist= max( z_near, res.min.dist );
 
@@ -249,10 +255,12 @@ Range GetCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 	Range res;
 	res.min.dist= dist_min;
 	res.max.dist= dist_max;
-	res.min.tc= vec3( 8.0 * inv_pi * atan( pos_min.y, pos_min.x ), pos_min.z, 28.0 );
-	res.max.tc= vec3( 8.0 * inv_pi * atan( pos_max.y, pos_max.x ), pos_max.z, 28.0 );
+	res.min.tc= vec3( 3.0 * inv_pi * atan( pos_min.y, pos_min.x ), pos_min.z, 0.0 );
+	res.max.tc= vec3( 3.0 * inv_pi * atan( pos_max.y, pos_max.x ), pos_max.z, 0.0 );
 	res.min.normal= tangent * pos_min.x + binormal * pos_min.y;
 	res.max.normal= tangent * pos_max.x + binormal * pos_max.y;
+	res.min.tc_scale= 1.0;
+	res.max.tc_scale= 1.0;
 
 	res.min.dist= max( z_near, res.min.dist );
 
@@ -312,10 +320,12 @@ Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 no
 	Range res;
 	res.min.dist= dist_min;
 	res.max.dist= dist_max;
-	res.min.tc= vec3( atan( pos_min.y, pos_min.x ) * inv_pi, pos_min.z, 99.0 );
-	res.max.tc= vec3( atan( pos_max.y, pos_max.x ) * inv_pi, pos_max.z, 99.0 );
+	res.min.tc= vec3( 3.0 * inv_pi * atan( pos_min.y, pos_min.x ), pos_min.z, 0.0 );
+	res.max.tc= vec3( 3.0 * inv_pi * atan( pos_max.y, pos_max.x ), pos_max.z, 0.0 );
 	res.min.normal= tangent * normal_min.x + binormal * normal_min.y + normal * normal_min.z;
 	res.max.normal= tangent * normal_max.x + binormal * normal_max.y + normal * normal_max.z;
+	res.min.tc_scale= 1.0;
+	res.max.tc_scale= 1.0;
 
 	// Disable lower part of cone, because we need to produce convex body.
 	if( a > 0.0 )
@@ -414,10 +424,12 @@ Range GetParaboloidIntersection( vec3 start, vec3 dir_normalized, vec3 center, v
 	Range res;
 	res.min.dist= dist_min;
 	res.max.dist= dist_max;
-	res.min.tc= vec3( inv_pi * atan( pos_min.y, pos_min.x ), pos_min.z, 0.0 );
-	res.max.tc= vec3( inv_pi * atan( pos_max.y, pos_max.x ), pos_max.z, 0.0 );
+	res.min.tc= vec3( 3.0 * inv_pi * atan( pos_min.y, pos_min.x ), pos_min.z, 0.0 );
+	res.max.tc= vec3( 3.0 * inv_pi * atan( pos_max.y, pos_max.x ), pos_max.z, 0.0 );
 	res.min.normal= tangent * normal_min.x + binormal * normal_min.y + normal * normal_min.z;
 	res.max.normal= tangent * normal_max.x + binormal * normal_max.y + normal * normal_max.z;
+	res.min.tc_scale= 1.0;
+	res.max.tc_scale= 1.0;
 
 	res.min.dist= max( z_near, res.min.dist );
 
@@ -561,7 +573,7 @@ Range GetSceneIntersection( vec3 start_pos, vec3 dir_normalized )
 	return ranges_stack[0];
 }
 
-vec3 TextureFetch( vec3 tc )
+vec3 TextureFetch( vec3 tc, float smooth_size )
 {
 	tc.xy*= 12.0;
 
@@ -574,10 +586,14 @@ vec3 TextureFetch( vec3 tc )
 	vec2 pattern_u= texture_patterns[ int(mod( tc.z, 10.0 ) ) ];
 	vec2 pattern_v= texture_patterns[ int(mod( tc.z / 10.0, 10.0 ) ) ];
 
-	vec2 tc_mod= mod( tc.xy, vec2( pattern_u.x + pattern_u.y, pattern_v.x + pattern_v.y ) );
-	vec2 tc_step= step( vec2( pattern_u.x, pattern_v.x ), tc_mod );
+	vec2 pattern_size= vec2( pattern_u.x + pattern_u.y, pattern_v.x + pattern_v.y );
+	vec2 tc_mod= abs( mod( tc.xy, pattern_size ) - pattern_size * 0.5 );
 
-	float bit= abs( tc_step.x - tc_step.y ) * 0.5 + 0.5;
+	vec2 pattern_border= vec2( pattern_u.x, pattern_v.x ) * 0.5;
+	vec2 pattern_delta= vec2( smooth_size, smooth_size );
+	vec2 tc_step= smoothstep( pattern_border - pattern_delta, pattern_border + pattern_delta, tc_mod );
+
+	float bit= abs( tc_step.x - tc_step.y ) * 0.5 + 0.4;
 	return vec3( bit, bit, bit );
 }
 
@@ -610,7 +626,10 @@ void main()
 				shadow_factor= 0.0;
 		}
 
-		vec3 tex_value= TextureFetch( range.min.tc );
+		// Calculate approximation of smooth size for texture fetch.
+		// TODO - count also viewport size and field of view.
+		float smooth_size= range.min.dist * inversesqrt(range.min.tc_scale) * 0.1 / max( 0.1, -dot( normal, dir_normalized ) );
+		vec3 tex_value= TextureFetch( range.min.tc, smooth_size );
 
 		vec3 result_light= tex_value * ( sun_light_dot * shadow_factor * sun_color.rgb + ambient_light_color.rgb );
 		color = vec4( result_light, 1.0);
