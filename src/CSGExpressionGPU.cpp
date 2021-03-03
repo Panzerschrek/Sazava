@@ -35,7 +35,7 @@ namespace ExpressionElements
 struct Sphere
 {
 	float center[3];
-	float radius;
+	float square_radius;
 };
 
 struct Plane
@@ -118,7 +118,7 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Su
 
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Sphere& node)
 {
-	const ExpressionElements::Sphere sphere{ { node.center.x, node.center.y, node.center.z }, node.radius };
+	const ExpressionElements::Sphere sphere{ { node.center.x, node.center.y, node.center.z }, node.radius * node.radius };
 	AppendExpressionComponent(out_expression, ExpressionElementType::Sphere, sphere);
 }
 

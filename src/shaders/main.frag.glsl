@@ -158,42 +158,43 @@ Range GetPlaneIntersection(
 	return range;
 }
 
-Range GetSphereIntersection( vec3 start, vec3 dir_normalized, vec3 sphere_center, float sphere_radius )
+Range GetSphereIntersection( vec3 start, vec3 dir_normalized, vec3 center, float square_radius )
 {
-	vec3 dir_to_center= sphere_center - start;
-	float vec_to_perependicualar_len= dot(dir_normalized, dir_to_center);
-	vec3 vec_to_perependicualar= vec_to_perependicualar_len * dir_normalized;
-	vec3 vec_from_closest_point_to_center= dir_to_center - vec_to_perependicualar;
+	// Find itersection between ray and sphere, solving quadratic equation relative do "distance" variable.
+	vec3 v0= start - center;
 
-	float square_dist_to_center= dot( vec_from_closest_point_to_center, vec_from_closest_point_to_center );
-	float diff= sphere_radius * sphere_radius - square_dist_to_center;
-	if( diff < 0.0 )
+	//float a= dot( dir_normalized, dir_normalized ); // "a" is always 1.0 since direction is normalized.
+	float b= 2.0 * dot( dir_normalized, v0 );
+	float c= dot( v0, v0 ) - square_radius;
+
+	float d= b * b - 4.0 * c;
+	if( d < 0.0 )
 	{
+		// No quadratic equation roots - has no intersection.
 		Range res;
-		res.min.dist= almost_infinity;
-		res.max.dist = almost_infinity;
+		res.min.dist= +almost_infinity;
+		res.max.dist= -almost_infinity;
 		return res;
 	}
 
-	float intersection_offset= sqrt( diff );
-	float closest_intersection_dist= vec_to_perependicualar_len - intersection_offset;
-	float     far_intersection_dist= vec_to_perependicualar_len + intersection_offset;
+	float d_root= sqrt(d);
+	float dist_min= 0.5 * ( -b - d_root );
+	float dist_max= 0.5 * ( -b + d_root );
 
-	vec3 closest_intersection_pos= start + dir_normalized * closest_intersection_dist;
-	vec3     far_intersection_pos= start + dir_normalized *     far_intersection_dist;
-	vec3 radius_vector_min= closest_intersection_pos - sphere_center;
-	vec3 radius_vector_max=     far_intersection_pos - sphere_center;
+	vec3 pos_min= v0 + dir_normalized * dist_min;
+	vec3 pos_max= v0 + dir_normalized * dist_max;
 
-	vec3 radius_vector_min_normalized= radius_vector_min / sphere_radius;
-	vec3 radius_vector_max_normalized= radius_vector_max / sphere_radius;
-
+	// TODO - provide basis vectors for texture mapping.
 	Range res;
-	res.min.dist= max( z_near, closest_intersection_dist );
-	res.max.dist= far_intersection_dist;
-	res.min.tc= vec3( 8.0 * vec2( acos( radius_vector_min_normalized.y ), atan( radius_vector_min_normalized.z, radius_vector_min_normalized.x ) ) * inv_pi, 28.0 );
-	res.max.tc= vec3( 8.0 * vec2( acos( radius_vector_max_normalized.y ), atan( radius_vector_max_normalized.z, radius_vector_max_normalized.x ) ) * inv_pi, 28.0 );
-	res.min.normal= radius_vector_min;
-	res.max.normal= radius_vector_max;
+	res.min.dist= dist_min;
+	res.max.dist= dist_max;
+	res.min.tc= vec3( 8.0 * inv_pi * vec2( atan( pos_min.y, pos_min.x ), atan( length(pos_min.xy), pos_min.z ) ), 28.0 );
+	res.max.tc= vec3( 8.0 * inv_pi * vec2( atan( pos_max.y, pos_max.x ), atan( length(pos_max.xy), pos_max.z ) ), 28.0 );
+	res.min.normal= pos_min;
+	res.max.normal= pos_max;
+
+	res.min.dist= max( z_near, res.min.dist );
+
 	return res;
 }
 
@@ -417,11 +418,11 @@ Range GetSceneIntersection( vec3 start_pos, vec3 dir_normalized )
 				break;
 
 			vec3 center= vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
-			float radius= csg_data[offset+3];
+			float square_radius= csg_data[offset+3];
 			offset+= 4;
 
 			ranges_stack[ranges_stack_size]=
-				GetSphereIntersection( start_pos, dir_normalized, center, radius );
+				GetSphereIntersection( start_pos, dir_normalized, center, square_radius );
 			++ranges_stack_size;
 		}
 		else if( element_type == 102 )
