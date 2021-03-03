@@ -27,6 +27,7 @@ enum class ExpressionElementType
 	Plane= 102,
 	Cylinder= 103,
 	Cone= 104,
+	Paraboloid= 105,
 };
 
 namespace ExpressionElements
@@ -60,6 +61,15 @@ struct Cone
 	float normal[3]; // main axis of the cone
 	float binormal[3];
 	float square_tangenrt;
+};
+
+struct Paraboloid
+{
+	float center[3];
+	// Vectors must be normalized and perpendicular!
+	float normal[3]; // main axis of the cone
+	float binormal[3];
+	float factor;
 };
 
 } // namespace ExpressionElements
@@ -190,7 +200,7 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cy
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cone& node)
 {
 	const float tangent= std::tan(node.angle * 0.5f);
-	const ExpressionElements::Cone conde
+	const ExpressionElements::Cone cone
 	{
 		{ node.center.x, node.center.y, node.center.z },
 		{ node.normal.x, node.normal.y, node.normal.z },
@@ -198,7 +208,20 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Co
 		tangent * tangent,
 	};
 
-	AppendExpressionComponent(out_expression, ExpressionElementType::Cone, conde);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Cone, cone);
+}
+
+void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Paraboloid& node)
+{
+	const ExpressionElements::Paraboloid paraboloid
+	{
+		{ node.center.x, node.center.y, node.center.z },
+		{ node.normal.x, node.normal.y, node.normal.z },
+		{ node.binormal.x, node.binormal.y, node.binormal.z },
+		node.factor,
+	};
+
+	AppendExpressionComponent(out_expression, ExpressionElementType::Paraboloid, paraboloid);
 }
 
 void ConvertCSGTreeNode(CSGExpressionGPU& out_expression, const CSGTree::CSGTreeNode& node)

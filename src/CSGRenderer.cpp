@@ -256,6 +256,17 @@ void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
 				CSGTree::Cube{ { 0.0f, 7.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } },
 				CSGTree::Cone{ { 0.0f, 7.0f, 0.0f }, { 0.0f, std::sqrt(0.5f), std::sqrt(0.5f) }, { 1.0f, 0.0f, 0.0f }, 3.1415926535f / 4.0f },
 			} },
+			CSGTree::SubChain
+			{ {
+				CSGTree::Cube{ { 1.0f, 5.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } },
+				CSGTree::Paraboloid{ { 1.0f, 5.0f, -1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 0.25f },
+				CSGTree::Paraboloid{ { 1.0f, 5.1f, -1.1f }, { 0.0f, std::sqrt(0.5f), -std::sqrt(0.5f) }, { 1.0f, 0.0f, 0.0f }, 0.5 },
+			} },
+			CSGTree::MulChain
+			{ {
+				CSGTree::Cube{ { 2.0f, 6.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } },
+				CSGTree::Paraboloid{ { 2.0f, 6.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, 0.5 },
+			} }
 		} },
 	};
 

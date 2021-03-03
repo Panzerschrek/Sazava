@@ -16,6 +16,7 @@ struct Sphere;
 struct Cube;
 struct Cylinder;
 struct Cone;
+struct Paraboloid;
 
 using CSGTreeNode= std::variant<
 	MulChain,
@@ -24,7 +25,8 @@ using CSGTreeNode= std::variant<
 	Sphere,
 	Cube,
 	Cylinder,
-	Cone >;
+	Cone,
+	Paraboloid >;
 
 struct MulChain
 {
@@ -71,6 +73,17 @@ struct Cone
 	m_Vec3 normal; // main axis of the cone
 	m_Vec3 binormal;
 	float angle;
+};
+
+struct Paraboloid
+{
+	m_Vec3 center;
+
+	// Vectors must be normalized and perpendicular!
+	// TODO - replace vectors with something else
+	m_Vec3 normal; // main axis of the cone
+	m_Vec3 binormal;
+	float factor;
 };
 
 } // namespace CSGTree

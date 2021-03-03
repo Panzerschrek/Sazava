@@ -201,7 +201,7 @@ Range GetSphereIntersection( vec3 start, vec3 dir_normalized, vec3 center, float
 Range GetCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, vec3 binormal, float square_radius )
 {
 	// Find itersection between ray and cylinder, solving quadratic equation relative do "distance" variable.
-	// Before doing this, convert input vectors into cone space, using basis vectors.
+	// Before doing this, convert input vectors into cylinder space, using basis vectors.
 	vec3 tangent= cross( normal, binormal );
 
 	vec3 v0= start - center;
@@ -361,6 +361,69 @@ Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 no
 	return res;
 }
 
+Range GetParaboloidIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, vec3 binormal, float k )
+{
+	// Find itersection between ray and paraboloid, solving quadratic equation relative do "distance" variable.
+	// Before doing this, convert input vectors into paraboloid space, using basis vectors.
+	vec3 tangent= cross( normal, binormal );
+
+	vec3 v0= start - center;
+	v0= vec3( dot( v0, tangent ), dot( v0, binormal ), dot( v0, normal ) );
+	vec3 dir= vec3( dot( dir_normalized, tangent ), dot( dir_normalized, binormal ), dot( dir_normalized, normal ) );
+
+	float a= dot( dir.xy, dir.xy );
+	float b= 2.0 * dot( dir.xy, v0.xy ) - k * dir.z;
+	float c= dot( v0.xy, v0.xy ) - k * v0.z;
+
+	float dist_min, dist_max;
+	if( a == 0.0 )
+	{
+		if( b == 0.0 )
+		{
+			// No linear equation roots - has no intersection.
+			Range res;
+			res.min.dist= +almost_infinity;
+			res.max.dist= -almost_infinity;
+			return res;
+		}
+		dist_min= dist_max= -c / b;
+	}
+	else
+	{
+		float d= b * b - 4.0 * a * c;
+		if( d < 0.0 )
+		{
+			// No quadratic equation roots - has no intersection.
+			Range res;
+			res.min.dist= +almost_infinity;
+			res.max.dist= -almost_infinity;
+			return res;
+		}
+
+		float d_root= sqrt(d);
+		float two_a= 2.0 * a;
+		dist_min= ( -b - d_root ) / two_a;
+		dist_max= ( -b + d_root ) / two_a;
+	}
+
+	vec3 pos_min= v0 + dir * dist_min;
+	vec3 pos_max= v0 + dir * dist_max;
+	vec3 normal_min= vec3( pos_min.xy, -0.5 * k );
+	vec3 normal_max= vec3( pos_max.xy, -0.5 * k );
+
+	Range res;
+	res.min.dist= dist_min;
+	res.max.dist= dist_max;
+	res.min.tc= vec3( inv_pi * atan( pos_min.y, pos_min.x ), pos_min.z, 0.0 );
+	res.max.tc= vec3( inv_pi * atan( pos_max.y, pos_max.x ), pos_max.z, 0.0 );
+	res.min.normal= tangent * normal_min.x + binormal * normal_min.y + normal * normal_min.z;
+	res.max.normal= tangent * normal_max.x + binormal * normal_max.y + normal * normal_max.z;
+
+	res.min.dist= max( z_near, res.min.dist );
+
+	return res;
+}
+
 Range GetSceneIntersection( vec3 start_pos, vec3 dir_normalized )
 {
 	const int ranges_stack_size_max= 8;
@@ -467,6 +530,21 @@ Range GetSceneIntersection( vec3 start_pos, vec3 dir_normalized )
 
 			ranges_stack[ranges_stack_size]=
 				GetConeIntersection( start_pos, dir_normalized, center, normal, binormal, square_tangent );
+			++ranges_stack_size;
+		}
+		else if( element_type == 105 )
+		{
+			if( ranges_stack_size >= ranges_stack_size_max )
+				break;
+
+			vec3 center  = vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
+			vec3 normal  = vec3( csg_data[offset+3], csg_data[offset+4], csg_data[offset+5] );
+			vec3 binormal= vec3( csg_data[offset+6], csg_data[offset+7], csg_data[offset+8] );
+			float factor= csg_data[offset+9];
+			offset+= 10;
+
+			ranges_stack[ranges_stack_size]=
+				GetParaboloidIntersection( start_pos, dir_normalized, center, normal, binormal, factor );
 			++ranges_stack_size;
 		}
 		else
