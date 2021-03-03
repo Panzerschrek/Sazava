@@ -322,8 +322,45 @@ Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 no
 	res.min.normal= tangent * normal_min.x + binormal * normal_min.y + normal * normal_min.z;
 	res.max.normal= tangent * normal_max.x + binormal * normal_max.y + normal * normal_max.z;
 
-	if( a < 0.0 )
-		res.max.dist= almost_infinity;
+	// Disable lower part of cone, because we need to produce convex body.
+	if( a > 0.0 )
+	{
+		if( pos_min.z < 0.0 )
+		{
+			res.min.dist= +almost_infinity;
+			res.max.dist= -almost_infinity;
+		}
+	}
+	else if( c > 0.0 )
+	{
+		// Outside cone.
+		if( pos_min.z < 0.0 )
+		{
+			res.min.dist= +almost_infinity;
+			res.max.dist= -almost_infinity;
+		}
+		else
+			res.max.dist= +almost_infinity;
+	}
+	else
+	{
+		// Inside cone.
+		if( v0.z < 0.0 )
+		{
+			// Inside lower cone.
+			if( b > 0.0 )
+				res.max.dist= +almost_infinity;
+		}
+		else
+		{
+			// Inside upper cone.
+			res.min.dist= z_near;
+
+			if( b < 0.0 )
+				res.max.dist= +almost_infinity;
+		}
+	}
+
 	res.min.dist= max( z_near, res.min.dist );
 
 	return res;
