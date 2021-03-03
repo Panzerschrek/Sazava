@@ -68,6 +68,7 @@ struct Cone
 	// TODO - replace vectors with something else
 	m_Vec3 normal; // main axis of the cone
 	m_Vec3 binormal;
+	float angle;
 };
 
 } // namespace CSGTree

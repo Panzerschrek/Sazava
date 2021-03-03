@@ -58,6 +58,7 @@ struct Cone
 	// Vectors must be normalized and perpendicular!
 	float normal[3]; // main axis of the cone
 	float binormal[3];
+	float square_tangenrt;
 };
 
 } // namespace ExpressionElements
@@ -186,11 +187,13 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cy
 
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cone& node)
 {
+	const float tangent= std::tan(node.angle * 0.5f);
 	const ExpressionElements::Cone conde
 	{
 		{ node.center.x, node.center.y, node.center.z },
 		{ node.normal.x, node.normal.y, node.normal.z },
 		{ node.binormal.x, node.binormal.y, node.binormal.z },
+		tangent * tangent,
 	};
 
 	AppendExpressionComponent(out_expression, ExpressionElementType::Cone, conde);

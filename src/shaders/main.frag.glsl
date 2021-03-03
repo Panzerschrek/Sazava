@@ -264,11 +264,8 @@ Range GetCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 	return res;
 }
 
-Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, vec3 binormal )
+Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, vec3 binormal, float square_tangent )
 {
-	float k= 0.5; // tangent of cone angle
-	float k2= k * k;
-
 	// Find itersection between ray and cone, solving quadratic equation relative do "distance" variable.
 	// Before doing this, convert input vectors into cone space, using basis vectors.
 	vec3 tangent= cross( normal, binormal );
@@ -277,9 +274,9 @@ Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 no
 	v0= vec3( dot( v0, tangent ), dot( v0, binormal ), dot( v0, normal ) );
 	vec3 dir= vec3( dot( dir_normalized, tangent ), dot( dir_normalized, binormal ), dot( dir_normalized, normal ) );
 
-	float a= dot( dir.xy, dir.xy ) - k2 * ( dir.z * dir.z );
-	float b= 2.0 * ( dot( dir.xy, v0.xy ) - k2 * ( dir.z * v0.z ) );
-	float c= dot( v0.xy, v0.xy ) - k2 * ( v0.z * v0.z );
+	float a= dot( dir.xy, dir.xy ) - square_tangent * ( dir.z * dir.z );
+	float b= 2.0 * ( dot( dir.xy, v0.xy ) - square_tangent * ( dir.z * v0.z ) );
+	float c= dot( v0.xy, v0.xy ) - square_tangent * ( v0.z * v0.z );
 
 	float dist_min, dist_max;
 	if( a == 0.0 )
@@ -314,8 +311,8 @@ Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 no
 
 	vec3 pos_min= v0 + dir * dist_min;
 	vec3 pos_max= v0 + dir * dist_max;
-	vec3 normal_min= vec3( pos_min.xy, -k2 * pos_min.z );
-	vec3 normal_max= vec3( pos_max.xy, -k2 * pos_max.z );
+	vec3 normal_min= vec3( pos_min.xy, -square_tangent * pos_min.z );
+	vec3 normal_max= vec3( pos_max.xy, -square_tangent * pos_max.z );
 
 	Range res;
 	res.min.dist= dist_min;
@@ -432,10 +429,11 @@ Range GetSceneIntersection( vec3 start_pos, vec3 dir_normalized )
 			vec3 center  = vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
 			vec3 normal  = vec3( csg_data[offset+3], csg_data[offset+4], csg_data[offset+5] );
 			vec3 binormal= vec3( csg_data[offset+6], csg_data[offset+7], csg_data[offset+8] );
-			offset+= 9;
+			float square_tangent= csg_data[offset+9];
+			offset+= 10;
 
 			ranges_stack[ranges_stack_size]=
-				GetConeIntersection( start_pos, dir_normalized, center, normal, binormal );
+				GetConeIntersection( start_pos, dir_normalized, center, normal, binormal, square_tangent );
 			++ranges_stack_size;
 		}
 		else
