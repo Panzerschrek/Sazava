@@ -55,8 +55,10 @@ struct Cube
 
 struct Cylinder
 {
+	// Vectors must be normalized and perpendicular!
 	m_Vec3 center;
 	m_Vec3 normal;
+	m_Vec3 binormal;
 	float radius;
 };
 

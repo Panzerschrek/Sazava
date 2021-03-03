@@ -49,7 +49,8 @@ struct Cylinder
 {
 	float center[3];
 	float normal[3];
-	float radius;
+	float binormal[3];
+	float square_radius;
 };
 
 struct Cone
@@ -179,7 +180,8 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cy
 	{
 		{ node.center.x, node.center.y, node.center.z },
 		{ node.normal.x, node.normal.y, node.normal.z },
-		node.radius,
+		{ node.binormal.x, node.binormal.y, node.binormal.z },
+		node.radius * node.radius,
 	};
 
 	AppendExpressionComponent(out_expression, ExpressionElementType::Cylinder, cylinder);

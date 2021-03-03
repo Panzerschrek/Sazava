@@ -241,15 +241,15 @@ void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
 			CSGTree::SubChain
 			{ {
 				CSGTree::Sphere{ { 0.0f, 2.0f, 3.0f }, 1.0f },
-				CSGTree::Cylinder{ { 0.0f, 2.0f, 3.0f }, { 0.0f, std::sqrt(0.5f), std::sqrt(0.5f) }, 0.5f },
+				CSGTree::Cylinder{ { 0.0f, 2.0f, 3.0f }, { 0.0f, std::sqrt(0.5f), std::sqrt(0.5f) }, { 1.0f, 0.0f, 0.0f }, 0.5f },
 			} },
 			CSGTree::MulChain
 			{ {
-				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, 0.75f },
-				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.75f },
+				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.75f },
+				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.75f },
 			} },
 			CSGTree::Cube{ { -3.6f, 2.4f, 1.1f }, { 0.25f, 0.25f, 0.20f } },
-			CSGTree::Cylinder{ { 3.0f, 3.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.5f },
+			CSGTree::Cylinder{ { 3.0f, 3.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 0.5f },
 			CSGTree::Cube{ { 6.0f, 1.0f, 0.0f }, { 1.5f, 2.5f, 4.0f } },
 			CSGTree::SubChain
 			{ {
