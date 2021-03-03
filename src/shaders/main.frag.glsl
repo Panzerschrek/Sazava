@@ -264,16 +264,21 @@ Range GetCylinderIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec
 	return res;
 }
 
-Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center )
+Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center, vec3 normal, vec3 binormal )
 {
 	float k= 0.5; // tangent of cone angle
 	float k2= k * k;
 
 	// Find itersection between ray and cone, solving quadratic equation relative do "distance" variable.
-	vec3 v0= start - center;
+	// Before doing this, convert input vectors into cone space, using basis vectors.
+	vec3 tangent= cross( normal, binormal );
 
-	float a= dot( dir_normalized.xy, dir_normalized.xy ) - k2 * ( dir_normalized.z * dir_normalized.z );
-	float b= 2.0 * ( dot( dir_normalized.xy, v0.xy ) - k2 * ( dir_normalized.z * v0.z ) );
+	vec3 v0= start - center;
+	v0= vec3( dot( v0, tangent ), dot( v0, binormal ), dot( v0, normal ) );
+	vec3 dir= vec3( dot( dir_normalized, tangent ), dot( dir_normalized, binormal ), dot( dir_normalized, normal ) );
+
+	float a= dot( dir.xy, dir.xy ) - k2 * ( dir.z * dir.z );
+	float b= 2.0 * ( dot( dir.xy, v0.xy ) - k2 * ( dir.z * v0.z ) );
 	float c= dot( v0.xy, v0.xy ) - k2 * ( v0.z * v0.z );
 
 	float dist_min, dist_max;
@@ -307,16 +312,18 @@ Range GetConeIntersection( vec3 start, vec3 dir_normalized, vec3 center )
 		dist_max= ( -b + d_root ) / two_a;
 	}
 
-	vec3 pos_min= v0 + dir_normalized * dist_min;
-	vec3 pos_max= v0 + dir_normalized * dist_max;
+	vec3 pos_min= v0 + dir * dist_min;
+	vec3 pos_max= v0 + dir * dist_max;
+	vec3 normal_min= vec3( pos_min.xy, -k2 * pos_min.z );
+	vec3 normal_max= vec3( pos_max.xy, -k2 * pos_max.z );
 
 	Range res;
 	res.min.dist= dist_min;
 	res.max.dist= dist_max;
 	res.min.tc= vec3( atan( pos_min.y, pos_min.x ) * inv_pi, pos_min.z, 99.0 );
 	res.max.tc= vec3( atan( pos_max.y, pos_max.x ) * inv_pi, pos_max.z, 99.0 );
-	res.min.normal= vec3( pos_min.xy, -k2 * pos_min.z );
-	res.max.normal= vec3( pos_max.xy, -k2 * pos_max.z );
+	res.min.normal= tangent * normal_min.x + binormal * normal_min.y + normal * normal_min.z;
+	res.max.normal= tangent * normal_max.x + binormal * normal_max.y + normal * normal_max.z;
 
 	if( a < 0.0 )
 		res.max.dist= almost_infinity;
@@ -422,11 +429,13 @@ Range GetSceneIntersection( vec3 start_pos, vec3 dir_normalized )
 			if( ranges_stack_size >= ranges_stack_size_max )
 				break;
 
-			vec3 center= vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
-			offset+= 3;
+			vec3 center  = vec3( csg_data[offset+0], csg_data[offset+1], csg_data[offset+2] );
+			vec3 normal  = vec3( csg_data[offset+3], csg_data[offset+4], csg_data[offset+5] );
+			vec3 binormal= vec3( csg_data[offset+6], csg_data[offset+7], csg_data[offset+8] );
+			offset+= 9;
 
 			ranges_stack[ranges_stack_size]=
-				GetConeIntersection( start_pos, dir_normalized, center );
+				GetConeIntersection( start_pos, dir_normalized, center, normal, binormal );
 			++ranges_stack_size;
 		}
 		else

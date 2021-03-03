@@ -63,6 +63,11 @@ struct Cylinder
 struct Cone
 {
 	m_Vec3 center;
+
+	// Vectors must be normalized and perpendicular!
+	// TODO - replace vectors with something else
+	m_Vec3 normal; // main axis of the cone
+	m_Vec3 binormal;
 };
 
 } // namespace CSGTree
