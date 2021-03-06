@@ -62,6 +62,7 @@ struct Cylinder
 	m_Vec3 normal;
 	m_Vec3 binormal;
 	float radius;
+	float height;
 };
 
 struct Cone
@@ -73,6 +74,7 @@ struct Cone
 	m_Vec3 normal; // main axis of the cone
 	m_Vec3 binormal;
 	float angle;
+	float height;
 };
 
 struct Paraboloid
@@ -84,6 +86,7 @@ struct Paraboloid
 	m_Vec3 normal; // main axis of the cone
 	m_Vec3 binormal;
 	float factor;
+	float height;
 };
 
 } // namespace CSGTree

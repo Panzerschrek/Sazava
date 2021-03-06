@@ -195,6 +195,28 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cy
 	};
 
 	AppendExpressionComponent(out_expression, ExpressionElementType::Cylinder, cylinder);
+
+	const m_Vec3 top_plane_point= node.center + node.normal * (node.height * 0.5f);
+	const ExpressionElements::Plane top_plane
+	{
+		{ top_plane_point.x, top_plane_point.y, top_plane_point.z },
+		{ node.normal.x, node.normal.y, node.normal.z },
+		{ node.binormal.x, node.binormal.y, node.normal.z },
+	};
+
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, top_plane);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
+
+	const m_Vec3 bottom_plane_point= node.center - node.normal * (node.height * 0.5f);
+	const ExpressionElements::Plane bottom_plane
+	{
+		{ bottom_plane_point.x, bottom_plane_point.y, bottom_plane_point.z },
+		{ -node.normal.x, -node.normal.y, -node.normal.z },
+		{ node.binormal.x, node.binormal.y, node.normal.z },
+	};
+
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, bottom_plane);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
 }
 
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Cone& node)
@@ -209,6 +231,17 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Co
 	};
 
 	AppendExpressionComponent(out_expression, ExpressionElementType::Cone, cone);
+
+	const m_Vec3 top_plane_point= node.center + node.normal * node.height;
+	const ExpressionElements::Plane top_plane
+	{
+		{ top_plane_point.x, top_plane_point.y, top_plane_point.z },
+		{ node.normal.x, node.normal.y, node.normal.z },
+		{ node.binormal.x, node.binormal.y, node.normal.z },
+	};
+
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, top_plane);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
 }
 
 void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Paraboloid& node)
@@ -222,6 +255,17 @@ void ConvertCSGTreeNode_impl(CSGExpressionGPU& out_expression, const CSGTree::Pa
 	};
 
 	AppendExpressionComponent(out_expression, ExpressionElementType::Paraboloid, paraboloid);
+
+	const m_Vec3 top_plane_point= node.center + node.normal * node.height;
+	const ExpressionElements::Plane top_plane
+	{
+		{ top_plane_point.x, top_plane_point.y, top_plane_point.z },
+		{ node.normal.x, node.normal.y, node.normal.z },
+		{ node.binormal.x, node.binormal.y, node.normal.z },
+	};
+
+	AppendExpressionComponent(out_expression, ExpressionElementType::Plane, top_plane);
+	AppendExpressionComponent(out_expression, ExpressionElementType::Mul);
 }
 
 void ConvertCSGTreeNode(CSGExpressionGPU& out_expression, const CSGTree::CSGTreeNode& node)
