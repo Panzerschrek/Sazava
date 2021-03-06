@@ -597,6 +597,16 @@ vec3 TextureFetch( vec3 tc, float smooth_size )
 	return vec3( bit, bit, bit );
 }
 
+vec3 TextureFetch3d( vec3 coord, float smooth_size )
+{
+	vec3 tc_mod= abs( fract( coord * 6.0 ) - vec3( 0.5, 0.5, 0.5 ) );
+	vec3 tc_step= smoothstep( 0.25 - smooth_size, 0.25 + smooth_size, tc_mod );
+
+	float bit= abs( abs( tc_step.x - tc_step.y ) - tc_step.z );
+	bit= bit * 0.5 + 0.4;
+	return vec3( bit, bit, bit );
+}
+
 void main()
 {
 	vec3 dir_normalized= normalize(f_dir);
@@ -626,10 +636,19 @@ void main()
 				shadow_factor= 0.0;
 		}
 
+		vec3 tex_value;
 		// Calculate approximation of smooth size for texture fetch.
 		// TODO - count also viewport size and field of view.
-		float smooth_size= range.min.dist * inversesqrt(range.min.tc_scale) * 0.1 / max( 0.1, -dot( normal, dir_normalized ) );
-		vec3 tex_value= TextureFetch( range.min.tc, smooth_size );
+		if( false )
+		{
+			float smooth_size= range.min.dist * inversesqrt(range.min.tc_scale) * 0.1 / max( 0.1, -dot( normal, dir_normalized ) );
+			tex_value= TextureFetch( range.min.tc, smooth_size );
+		}
+		else
+		{
+			float smooth_size= range.min.dist * 0.02 / max( 0.1, -dot( normal, dir_normalized ) );
+			tex_value= TextureFetch3d( cam_pos.xyz + range.min.dist * dir_normalized, smooth_size );
+		}
 
 		vec3 result_light= tex_value * ( sun_light_dot * shadow_factor * sun_color.rgb + ambient_light_color.rgb );
 		color = vec4( result_light, 1.0);
