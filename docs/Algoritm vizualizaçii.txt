@@ -18,3 +18,36 @@ Dlä každoj podfigury nahoditsä ogranicivajuscij parallelepiped, kotoryj raste
 Rezuljtat raboty šejdera zapisyvajetsä v rezuljtirujuscij bufer çveta i bufer glubiny s testom glubiny.
 Takoj podhod pozvoläjet sokratitj obscuju složnostj šejdera, za scöt uvelicenija kolicestva vyzovov šejdera.
 V dannom podhode neljzä budet primenätj zatenenije s neposredstvennym nahoždenijem peresecenija luca do istocnika sveta ot tocki figury. Vmesto etogo pridötsä ispoljzovatj, naprimer, tenevyje karty.
+
+-- Jesco odin variant optimizaçii --
+
+Vozmožen sledujuscihj podhod: otrisovyvatj poverhnostj každoj elementarnoj figury otdeljno, ispoljzuja bufer glubiny dlä uporädocivanija.
+Pri etom poverhnostj elementarnoj figury možet bytj ogranicena drugimi poverhnostämi.
+Tak cto dlä otrisovki otdeljnoj figury nado najti peresecenije luca iz kamery s nej i proveritj, cto tocka peresecenija nahoditsä vnutri rezuljtirujuscej figury.
+Jesli elementarnyje figury ograniceny v prostranstve, to na každuju figuru budut vlijatj ne vse drugije figury, a toljko nekotoryje - te, cto prostranstvenno s neju peresekajutsä.
+V rezuljtate dlä ogranicenija elementarnoj figury potrebujetsä proverka peresecenija s neboljšoj castju vseh figur.
+Vozmožny, konecno, slucaji, kogda na figuru vlijajut siljno mnogo figur, no ih možno optimizirovatj vrucnuju ili popytatjsä realizovatj avtomaticeskij mehanizm optimizaçii.
+
+Pri etom pri otrisovke elementarnoj figury nado toljko proveritj peresecenije luca s neju v jejo ogranicennoj oblasti. Eto možno realizovatj rasterizaçijej ogranicivajuscego parallepipeda.
+
+Lübuju elementarnuju figuru v takom podhode možno predstavitj kak uravnenije 2-go porädka v 3-hmernom prostranstve, kotoroje imejet 10 koeffiçientov.
+Uznatj o tom, "snaruži" ili "vnutri" nahoditsä tocka tekuscej figury možno, podstaviv koordinaty etoj tocki v eto uravnenije i sravnitj jego rezuljtat s nulöm.
+Rezuljtirujuscij priznak "vnutri"/"snaruži" možet bytj polucen kak rezuljtat dereva binarnyh operaçij "and", "or", "not" s listjami, predstavläjuscimi soboj eti samyje uravnenija 2-go porädka.
+Dlä každoj otdeljnoj otobražajemoj figury etot derevo možet bytj svoim, polucennym iz polnogo dereva sçeny putöm otkidyvanija teh vetvej, cto konstantny v oblasti tekuscej figury.
+
+Teksturirovanije možno realizovatj zadav bazis teksturnyh koordinat i tip ih naloženija (ploskostnyje, çilindriceskije, sfericeskije).
+Normalj možno ocenj prosto poscitatj cerez casticnyje proizvodnyje poverhnosti po "x", "y, "z".
+
+Tocnyje teni v takom podhode nevozmožny, predötsä ispoljzovatj tenevyje karty.
+
+Preimuscestva dannogo podhoda:
+* Uproscajetsä glavnyj šejder. Koda stanovitsä siljno menjše, vesj kod obrabotki castnyh slucajev figur zamenäjetsä na obscij kod dlä vseh poverhnostej 2-go porädka.
+  Umenjšajetsä razmer potrebläjemoj pamätj, vmesto stekov diapazonov (s teksturnymi koordinatami i normalämi), nado hranitj toljko stek "bool" flagov.
+* Stanovitsä vozmožnym risovatj boleje massivnyje i detaljnyje sçeny. Složnostj vycislenij v otdeljnom piksele ne zavisit ot razmera sçeny.
+* Uhodit ogranicenije na "CSG" operaçii, sväzannyje s predstavlenijem promežutocnogo rezuljtata ka jedinstvennogo diapazona. Možno budet risovatj proizvoljnuju "CSG" geometriju.
+
+Nedostatki:
+* Netu cötkih tenej, jedinstvennyj variant - tenevyje karty.
+* Mnogokratnaja pererisovka pikselej, v nekotoryh mestah. Vozmožno, effekt ot etogo možno umenjšitj cerez boleje renneje prostavlenije glubiny v šejdere.
+* Boleje složnaja predobrabotka sçeny na "CPU".
+* Problemy s rasterizaçijej ogranicivajuscih parallelepipedov iznutri. Pridötsä, k primeru, nahoditj takije parallelepipedy, vnutri kotoryh nahoditsä kamera, i risovatj dlä nih polnoekrannyj kvadrat.
