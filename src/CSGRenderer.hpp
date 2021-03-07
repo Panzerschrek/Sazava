@@ -1,5 +1,6 @@
 #pragma once
 #include "CameraController.hpp"
+#include "CSGExpressionTree.hpp"
 #include "WindowVulkan.hpp"
 
 namespace SZV
@@ -11,7 +12,7 @@ public:
 	explicit CSGRenderer(WindowVulkan& window_vulkan);
 	~CSGRenderer();
 
-	void BeginFrame(vk::CommandBuffer command_buffer);
+	void BeginFrame(vk::CommandBuffer command_buffer, const CSGTree::CSGTreeNode& csg_tree);
 	void EndFrame(const CameraController& camera_controller, vk::CommandBuffer command_buffer);
 
 private:

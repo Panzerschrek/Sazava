@@ -225,49 +225,9 @@ CSGRenderer::~CSGRenderer()
 	vk_device_.waitIdle();
 }
 
-void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer)
+void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer, const CSGTree::CSGTreeNode& csg_tree)
 {
-	const CSGTree::CSGTreeNode tree
-	{
-		CSGTree::AddChain
-		{ {
-			CSGTree::SubChain
-			{ {
-				CSGTree::Cube{ { 0.0f, 2.0f, 0.0f }, { 1.9f, 1.8f, 1.7f } },
-				CSGTree::Sphere{ { 0.0f, 2.0f, 0.5f }, 1.0f },
-				CSGTree::Sphere{ { 0.0f, 2.0f, -0.2f }, 0.5f },
-				CSGTree::Cube{ { 0.8f, 2.8f, -0.6f }, { 0.5f, 0.5f, 0.5f } },
-			} },
-			CSGTree::SubChain
-			{ {
-				CSGTree::Sphere{ { 0.0f, 2.0f, 3.0f }, 1.0f },
-				CSGTree::Cylinder{ { 0.0f, 2.0f, 3.0f }, { 0.0f, std::sqrt(0.5f), std::sqrt(0.5f) }, { 1.0f, 0.0f, 0.0f }, 0.5f, 1.96f },
-			} },
-			CSGTree::MulChain
-			{ {
-				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.75f, 3.0f },
-				CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.75f, 3.0f },
-			} },
-			CSGTree::Cube{ { -3.6f, 2.4f, 1.1f }, { 0.25f, 0.25f, 0.20f } },
-			CSGTree::Cylinder{ { 3.0f, 3.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 0.5f, 10.0f },
-			CSGTree::Cube{ { 6.0f, 1.0f, 0.0f }, { 1.5f, 2.5f, 4.0f } },
-			CSGTree::SubChain
-			{ {
-				CSGTree::Cube{ { 0.0f, 7.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } },
-				CSGTree::Cone{ { 0.0f, 7.0f, 0.0f }, { 0.0f, std::sqrt(0.5f), std::sqrt(0.5f) }, { 1.0f, 0.0f, 0.0f }, 3.1415926535f / 4.0f, 1.0f },
-			} },
-			CSGTree::SubChain
-			{ {
-				CSGTree::Cube{ { 1.0f, 5.0f, -1.0f }, { 1.0f, 1.0f, 1.0f } },
-				CSGTree::Paraboloid{ { 1.0f, 5.0f, -1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 0.25f, 1.0f },
-				CSGTree::Paraboloid{ { 1.0f, 5.1f, -1.1f }, { 0.0f, std::sqrt(0.5f), -std::sqrt(0.5f) }, { 1.0f, 0.0f, 0.0f }, 0.5f, 1.0f },
-			} },
-			CSGTree::Paraboloid{ { 2.0f, 6.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, 0.5f, 0.5f },
-			CSGTree::Cone{ { 2.5f, 8.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 3.1415926535f / 5.0f, 2.5f },
-		} },
-	};
-
-	const CSGExpressionGPU epxression_prepared= ConvertCSGTreeToGPUExpression(tree);
+	const CSGExpressionGPU epxression_prepared= ConvertCSGTreeToGPUExpression(csg_tree);
 
 	command_buffer.updateBuffer(
 		*csg_data_buffer_gpu_,
