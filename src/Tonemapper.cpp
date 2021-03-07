@@ -609,6 +609,16 @@ void Tonemapper::DoMainPass(const vk::CommandBuffer command_buffer, const std::f
 
 	command_buffer.endRenderPass();
 
+	// Wait for finish of main rendering.
+	// TODO - check all barrienrs in this function !!!
+	command_buffer.pipelineBarrier(
+		vk::PipelineStageFlagBits::eColorAttachmentOutput,
+		vk::PipelineStageFlagBits::eFragmentShader | vk::PipelineStageFlagBits::eTransfer,
+		vk::DependencyFlags(),
+		{ {vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eTransferRead} },
+		{},
+		{});
+
 	// Calculate exposure.
 
 	// Transfer layout of brightness image to optimal for tranfer destination.
@@ -781,6 +791,15 @@ void Tonemapper::DoMainPass(const vk::CommandBuffer command_buffer, const std::f
 			command_buffer.draw(6u, 1u, 0u, 0u);
 
 			command_buffer.endRenderPass();
+
+			command_buffer.pipelineBarrier(
+				vk::PipelineStageFlagBits::eColorAttachmentOutput,
+				vk::PipelineStageFlagBits::eFragmentShader,
+				vk::DependencyFlags(),
+				{ {vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead} },
+				{},
+				{});
+
 		} // for bloom buffers.
 	}
 }
@@ -796,7 +815,7 @@ void Tonemapper::EndFrame(const vk::CommandBuffer command_buffer)
 
 	const float deformation_factor= 10.0f;
 	const float color_deformation_factor= 0.25f;
-	const float bloom_scale= 0.125f;;
+	const float bloom_scale= 0.25f;
 
 	Uniforms uniforms;
 	uniforms.fragment.deformation_factor[0]= deformation_factor * (1.0f - 0.1f * color_deformation_factor);
