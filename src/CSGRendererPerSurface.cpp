@@ -315,6 +315,7 @@ void CSGRendererPerSurface::BeginFrame(const vk::CommandBuffer command_buffer, c
 		{ { 0.5f, -0.5f, 0.0f, }, 0.0f },
 		{ { 0.4f, +0.5f, 0.0f, }, 0.0f },
 		{ { -0.7f, 0.2f, 0.0f, }, 0.0f },
+		{ { -0.7f, -0.7f, 0.0f, }, 0.0f },
 	};
 
 	command_buffer.updateBuffer(
@@ -322,6 +323,14 @@ void CSGRendererPerSurface::BeginFrame(const vk::CommandBuffer command_buffer, c
 		0u,
 		vk::DeviceSize(sizeof(test_vertices)),
 		test_vertices);
+
+	const IndexType test_indeces[]{ 0, 1, 2,  0, 2, 3 };
+
+	command_buffer.updateBuffer(
+		*index_buffer_,
+		0u,
+		vk::DeviceSize(sizeof(test_indeces)),
+		test_indeces);
 
 	tonemapper_.DoMainPass(command_buffer, [&]{Draw(command_buffer);});
 }
@@ -355,9 +364,9 @@ void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer)
 
 	const vk::DeviceSize offsets= 0u;
 	command_buffer.bindVertexBuffers(0u, 1u, &*vertex_buffer_, &offsets);
+		command_buffer.bindIndexBuffer(*index_buffer_, 0u, sizeof(IndexType) == 2 ? vk::IndexType::eUint16 : vk::IndexType::eUint32);
 
-	// Draw single fullscreen triangle.
-	command_buffer.draw(3u, 1u, 0u, 0u);
+	command_buffer.drawIndexed(6u, 1u, 0u, 0u, 0u);
 }
 
 } // namespace SZV
