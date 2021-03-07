@@ -18,7 +18,7 @@ public:
 	void EndFrame(vk::CommandBuffer command_buffer) override;
 
 private:
-	void Draw(vk::CommandBuffer command_buffer, const CameraController& camera_controller);
+	void Draw(vk::CommandBuffer command_buffer, const CameraController& camera_controller, size_t index_count);
 
 private:
 	const vk::Device vk_device_;

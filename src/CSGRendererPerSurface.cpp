@@ -28,6 +28,105 @@ struct SurfaceVertex
 
 using IndexType= uint16_t;
 
+using VerticesVector= std::vector<SurfaceVertex>;
+using IndicesVector= std::vector<IndexType>;
+
+void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::CSGTreeNode& node);
+
+void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_Vec3& center, const m_Vec3 half_size)
+{
+	static const m_Vec3 cube_vertices[8]=
+	{
+		{ 1.0f,  1.0f,  1.0f }, { -1.0f,  1.0f,  1.0f },
+		{ 1.0f, -1.0f,  1.0f }, { -1.0f, -1.0f,  1.0f },
+		{ 1.0f,  1.0f, -1.0f }, { -1.0f,  1.0f, -1.0f },
+		{ 1.0f, -1.0f, -1.0f }, { -1.0f, -1.0f, -1.0f },
+	};
+
+	static const IndexType cube_indices[12 * 3]=
+	{
+		0, 1, 5,  0, 5, 4,
+		0, 4, 6,  0, 6, 2,
+		4, 5, 7,  4, 7, 6,
+		0, 3, 1,  0, 2, 3,
+		2, 7, 3,  2, 6, 7,
+		1, 3, 7,  1, 7, 5,
+	};
+
+	const size_t start_index= out_vertices.size();
+	for(const m_Vec3& cube_vertex : cube_vertices)
+	{
+		const SurfaceVertex v
+		{
+			{
+				cube_vertex.x * half_size.x + center.x,
+				cube_vertex.y * half_size.y + center.y,
+				cube_vertex.z * half_size.z + center.z,
+			},
+			0.0f,
+		};
+		out_vertices.push_back(v);
+	}
+
+	for(const size_t cube_index : cube_indices)
+		out_indices.push_back(IndexType(cube_index + start_index));
+}
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::MulChain& node)
+{
+	for(const CSGTree::CSGTreeNode& child : node.elements)
+		BuildSceneMeshNode_r(out_vertices, out_indices, child);
+}
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::AddChain& node)
+{
+	for(const CSGTree::CSGTreeNode& child : node.elements)
+		BuildSceneMeshNode_r(out_vertices, out_indices, child);
+}
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::SubChain& node)
+{
+	for(const CSGTree::CSGTreeNode& child : node.elements)
+		BuildSceneMeshNode_r(out_vertices, out_indices, child);
+}
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Sphere& node)
+{
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.radius));
+}
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Cube& node)
+{
+	AddCube(out_vertices, out_indices, node.center, node.size * 0.5f);
+}
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Cylinder& node)
+{
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.height * 0.5f));
+}
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Cone& node)
+{
+	const float top_radius= node.height * std::tan(node.angle);
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f));
+}
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Paraboloid& node)
+{
+	const float top_radius= node.height * node.factor;
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f));
+}
+
+void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::CSGTreeNode& node)
+{
+	std::visit(
+		[&](const auto& el)
+		{
+			BuildSceneMeshNode_impl(out_vertices, out_indices, el);
+		},
+		node);
+}
+
 } // namespace
 
 CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
@@ -309,32 +408,28 @@ void CSGRendererPerSurface::BeginFrame(
 	const CameraController& camera_controller,
 	const CSGTree::CSGTreeNode& csg_tree)
 {
-	(void)camera_controller;
-	(void)csg_tree;
-
-	const SurfaceVertex test_vertices[]
-	{
-		{ { 0.5f, -0.5f, 0.0f, }, 0.0f },
-		{ { 0.4f, +0.5f, 0.0f, }, 0.0f },
-		{ { -0.7f, 0.2f, 0.0f, }, 0.0f },
-		{ { -0.7f, -0.7f, 0.0f, }, 0.0f },
-	};
+	VerticesVector vertices;
+	IndicesVector indices;
+	BuildSceneMeshNode_r(vertices, indices, csg_tree);
 
 	command_buffer.updateBuffer(
 		*vertex_buffer_,
 		0u,
-		vk::DeviceSize(sizeof(test_vertices)),
-		test_vertices);
-
-	const IndexType test_indeces[]{ 0, 1, 2,  0, 2, 3 };
+		vk::DeviceSize(sizeof(SurfaceVertex) * vertices.size()),
+		vertices.data());
 
 	command_buffer.updateBuffer(
 		*index_buffer_,
 		0u,
-		vk::DeviceSize(sizeof(test_indeces)),
-		test_indeces);
+		vk::DeviceSize(sizeof(IndexType) * indices.size()),
+		indices.data());
 
-	tonemapper_.DoMainPass(command_buffer, [&]{Draw(command_buffer, camera_controller);});
+	tonemapper_.DoMainPass(
+		command_buffer,
+		[&]
+		{
+			Draw(command_buffer, camera_controller, indices.size());
+		});
 }
 
 void CSGRendererPerSurface::EndFrame(const vk::CommandBuffer command_buffer)
@@ -342,7 +437,7 @@ void CSGRendererPerSurface::EndFrame(const vk::CommandBuffer command_buffer)
 	tonemapper_.EndFrame(command_buffer);
 }
 
-void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer, const CameraController& camera_controller)
+void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer, const CameraController& camera_controller, const size_t index_count)
 {
 	Uniforms uniforms{};
 	uniforms.view_matrix= camera_controller.CalculateFullViewMatrix();
@@ -367,7 +462,7 @@ void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer, const C
 	command_buffer.bindVertexBuffers(0u, 1u, &*vertex_buffer_, &offsets);
 		command_buffer.bindIndexBuffer(*index_buffer_, 0u, sizeof(IndexType) == 2 ? vk::IndexType::eUint16 : vk::IndexType::eUint32);
 
-	command_buffer.drawIndexed(6u, 1u, 0u, 0u, 0u);
+	command_buffer.drawIndexed(uint32_t(index_count), 1u, 0u, 0u, 0u);
 }
 
 } // namespace SZV
