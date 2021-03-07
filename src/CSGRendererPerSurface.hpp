@@ -1,5 +1,6 @@
 #pragma once
 #include "I_CSGRenderer.hpp"
+#include "Tonemapper.hpp"
 
 namespace SZV
 {
@@ -15,6 +16,7 @@ public:
 
 private:
 	const vk::Device vk_device_;
+	Tonemapper tonemapper_;
 };
 
 } // namespace SZV

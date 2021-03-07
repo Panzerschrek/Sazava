@@ -6,6 +6,7 @@ namespace SZV
 
 CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 	: vk_device_(window_vulkan.GetVulkanDevice())
+	, tonemapper_(window_vulkan)
 {
 }
 
@@ -20,14 +21,15 @@ void CSGRendererPerSurface::BeginFrame(const vk::CommandBuffer command_buffer, c
 	// TODO
 	SZV_UNUSED(command_buffer);
 	SZV_UNUSED(csg_tree);
+
+	tonemapper_.DoMainPass(command_buffer, [this]{});
 }
 
 void CSGRendererPerSurface::EndFrame(const CameraController& camera_controller, const vk::CommandBuffer command_buffer)
 {
 	// TODO
 	SZV_UNUSED(camera_controller);
-	SZV_UNUSED(command_buffer);
+	tonemapper_.EndFrame(command_buffer);
 }
-
 
 } // namespace SZV

@@ -17,6 +17,7 @@ vk::PhysicalDeviceFeatures GetRequiredDeviceFeatures()
 	// http://vulkan.gpuinfo.org/listfeatures.php
 
 	vk::PhysicalDeviceFeatures features;
+	features.setVertexPipelineStoresAndAtomics(VK_TRUE); // For tonemapping, 99.7%
 	return features;
 }
 
