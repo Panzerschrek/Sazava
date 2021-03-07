@@ -1,5 +1,6 @@
 #include "Host.hpp"
 #include "Assert.hpp"
+#include "CSGRendererPerSurface.hpp"
 #include "CSGRendererStraightforward.hpp"
 #include <thread>
 
@@ -64,7 +65,7 @@ CSGTree::CSGTreeNode GetTestCSGTree()
 Host::Host()
 	:  system_window_()
 	, window_vulkan_(system_window_)
-	, csg_renderer_(std::make_unique<CSGRendererStraightforward>(window_vulkan_))
+	, csg_renderer_(std::make_unique<CSGRendererPerSurface>(window_vulkan_))
 	, camera_controller_(CalculateAspect(window_vulkan_.GetViewportSize()))
 	, init_time_(Clock::now())
 	, prev_tick_time_(init_time_)
