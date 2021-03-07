@@ -88,6 +88,13 @@ m_Mat4 CameraController::CalculateViewMatrix() const
 	return rotate_z * rotate_x * basis_change * perspective;
 }
 
+m_Mat4 CameraController::CalculateFullViewMatrix() const
+{
+	m_Mat4 translate;
+	translate.Translate( -pos_ );
+	return translate * CalculateViewMatrix();
+}
+
 m_Vec3 CameraController::GetCameraPosition() const
 {
 	return pos_;

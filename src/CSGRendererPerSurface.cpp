@@ -154,7 +154,7 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 			VK_FALSE,
 			VK_FALSE,
 			vk::PolygonMode::eFill,
-			vk::CullModeFlagBits::eNone,
+			vk::CullModeFlagBits::eFront,
 			vk::FrontFace::eCounterClockwise,
 			VK_FALSE, 0.0f, 0.0f, 0.0f,
 			1.0f);
@@ -334,7 +334,7 @@ void CSGRendererPerSurface::BeginFrame(
 		vk::DeviceSize(sizeof(test_indeces)),
 		test_indeces);
 
-	tonemapper_.DoMainPass(command_buffer, [&]{Draw(command_buffer);});
+	tonemapper_.DoMainPass(command_buffer, [&]{Draw(command_buffer, camera_controller);});
 }
 
 void CSGRendererPerSurface::EndFrame(const vk::CommandBuffer command_buffer)
@@ -342,9 +342,10 @@ void CSGRendererPerSurface::EndFrame(const vk::CommandBuffer command_buffer)
 	tonemapper_.EndFrame(command_buffer);
 }
 
-void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer)
+void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer, const CameraController& camera_controller)
 {
 	Uniforms uniforms{};
+	uniforms.view_matrix= camera_controller.CalculateFullViewMatrix();
 
 	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline_);
 

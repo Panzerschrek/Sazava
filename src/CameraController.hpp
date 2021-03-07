@@ -15,6 +15,7 @@ public:
 
 	// Returns rotation + aspect
 	m_Mat4 CalculateViewMatrix() const;
+	m_Mat4 CalculateFullViewMatrix() const;
 	m_Vec3 GetCameraPosition() const;
 
 private:
