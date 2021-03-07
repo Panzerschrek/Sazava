@@ -91,13 +91,13 @@ bool Host::Loop()
 	}
 
 	const auto command_buffer= window_vulkan_.BeginFrame();
-	csg_renderer_->BeginFrame(command_buffer, GetTestCSGTree());
+	csg_renderer_->BeginFrame(command_buffer, camera_controller_, GetTestCSGTree());
 
 	window_vulkan_.EndFrame(
 		{
 			[&](const vk::CommandBuffer command_buffer)
 			{
-				csg_renderer_->EndFrame(camera_controller_, command_buffer);
+				csg_renderer_->EndFrame(command_buffer);
 			},
 			[&](const vk::CommandBuffer command_buffer)
 			{

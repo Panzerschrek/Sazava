@@ -304,11 +304,13 @@ CSGRendererPerSurface::~CSGRendererPerSurface()
 	vk_device_.waitIdle();
 }
 
-void CSGRendererPerSurface::BeginFrame(const vk::CommandBuffer command_buffer, const CSGTree::CSGTreeNode& csg_tree)
+void CSGRendererPerSurface::BeginFrame(
+	const vk::CommandBuffer command_buffer,
+	const CameraController& camera_controller,
+	const CSGTree::CSGTreeNode& csg_tree)
 {
-	// TODO
-	SZV_UNUSED(command_buffer);
-	SZV_UNUSED(csg_tree);
+	(void)camera_controller;
+	(void)csg_tree;
 
 	const SurfaceVertex test_vertices[]
 	{
@@ -335,10 +337,8 @@ void CSGRendererPerSurface::BeginFrame(const vk::CommandBuffer command_buffer, c
 	tonemapper_.DoMainPass(command_buffer, [&]{Draw(command_buffer);});
 }
 
-void CSGRendererPerSurface::EndFrame(const CameraController& camera_controller, const vk::CommandBuffer command_buffer)
+void CSGRendererPerSurface::EndFrame(const vk::CommandBuffer command_buffer)
 {
-	// TODO
-	SZV_UNUSED(camera_controller);
 	tonemapper_.EndFrame(command_buffer);
 }
 

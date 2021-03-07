@@ -23,6 +23,7 @@ struct Uniforms
 
 CSGRendererStraightforward::CSGRendererStraightforward(WindowVulkan& window_vulkan)
 	: vk_device_(window_vulkan.GetVulkanDevice())
+	, tonemapper_(window_vulkan)
 {
 	const vk::PhysicalDeviceMemoryProperties& memory_properties= window_vulkan.GetMemoryProperties();
 
@@ -120,7 +121,7 @@ CSGRendererStraightforward::CSGRendererStraightforward(WindowVulkan& window_vulk
 			vk::PipelineInputAssemblyStateCreateFlags(),
 			vk::PrimitiveTopology::eTriangleList);
 
-		const vk::Extent2D viewport_size= window_vulkan.GetViewportSize();
+		const vk::Extent2D viewport_size= tonemapper_.GetFramebufferSize();
 		const vk::Viewport vk_viewport(0.0f, 0.0f, float(viewport_size.width), float(viewport_size.height), 0.0f, 1.0f);
 		const vk::Rect2D vk_scissor(vk::Offset2D(0, 0), viewport_size);
 
@@ -140,6 +141,18 @@ CSGRendererStraightforward::CSGRendererStraightforward(WindowVulkan& window_vulk
 			1.0f);
 
 		const vk::PipelineMultisampleStateCreateInfo vk_pipeline_multisample_state_create_info;
+
+		const vk::PipelineDepthStencilStateCreateInfo vk_pipeline_depth_state_create_info(
+				vk::PipelineDepthStencilStateCreateFlags(),
+				VK_FALSE,
+				VK_FALSE,
+				vk::CompareOp::eAlways,
+				VK_FALSE,
+				VK_FALSE,
+				vk::StencilOpState(),
+				vk::StencilOpState(),
+				0.0f,
+				1.0f);
 
 		const vk::PipelineColorBlendAttachmentState pipeline_color_blend_attachment_state(
 			VK_FALSE,
@@ -165,11 +178,11 @@ CSGRendererStraightforward::CSGRendererStraightforward(WindowVulkan& window_vulk
 					&vk_pipieline_viewport_state_create_info,
 					&vk_pipilane_rasterization_state_create_info,
 					&vk_pipeline_multisample_state_create_info,
-					nullptr,
+					&vk_pipeline_depth_state_create_info,
 					&vk_pipeline_color_blend_state_create_info,
 					nullptr,
 					*pipeline_layout_,
-					window_vulkan.GetRenderPass(),
+					tonemapper_.GetMainRenderPass(),
 					0u));
 	}
 
@@ -225,7 +238,10 @@ CSGRendererStraightforward::~CSGRendererStraightforward()
 	vk_device_.waitIdle();
 }
 
-void CSGRendererStraightforward::BeginFrame(const vk::CommandBuffer command_buffer, const CSGTree::CSGTreeNode& csg_tree)
+void CSGRendererStraightforward::BeginFrame(
+	vk::CommandBuffer command_buffer,
+	const CameraController& camera_controller,
+	const CSGTree::CSGTreeNode& csg_tree)
 {
 	const CSGExpressionGPU epxression_prepared= ConvertCSGTreeToGPUExpression(csg_tree);
 
@@ -234,9 +250,16 @@ void CSGRendererStraightforward::BeginFrame(const vk::CommandBuffer command_buff
 		0u,
 		epxression_prepared.size() * sizeof(float),
 		epxression_prepared.data());
+
+	tonemapper_.DoMainPass(command_buffer, [&]{ Draw(command_buffer, camera_controller); } );
 }
 
-void CSGRendererStraightforward::EndFrame(const CameraController& camera_controller, const vk::CommandBuffer command_buffer)
+void CSGRendererStraightforward::EndFrame(const vk::CommandBuffer command_buffer)
+{
+	tonemapper_.EndFrame(command_buffer);
+}
+
+void CSGRendererStraightforward::Draw(const vk::CommandBuffer command_buffer, const CameraController& camera_controller)
 {
 	Uniforms uniforms{};
 	// TODO - maybe calculate invertse matrix inside camera controller?
@@ -254,9 +277,9 @@ void CSGRendererStraightforward::EndFrame(const CameraController& camera_control
 	uniforms.dir_to_sun_normalized[0]= dir_to_sun.x;
 	uniforms.dir_to_sun_normalized[1]= dir_to_sun.y;
 	uniforms.dir_to_sun_normalized[2]= dir_to_sun.z;
-	uniforms.sun_color[0]= 1.0f;
-	uniforms.sun_color[1]= 0.9f;
-	uniforms.sun_color[2]= 0.8f;
+	uniforms.sun_color[0]= 1.0f * 3.0f;
+	uniforms.sun_color[1]= 0.9f * 3.0f;
+	uniforms.sun_color[2]= 0.8f * 3.0f;
 	uniforms.ambient_light_color[0]= 0.3f;
 	uniforms.ambient_light_color[1]= 0.3f;
 	uniforms.ambient_light_color[2]= 0.4f;
