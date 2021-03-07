@@ -1,19 +1,17 @@
 #pragma once
-#include "CameraController.hpp"
-#include "CSGExpressionTree.hpp"
-#include "WindowVulkan.hpp"
+#include "I_CSGRenderer.hpp"
 
 namespace SZV
 {
 
-class CSGRenderer
+class CSGRendererStraightforward final : public I_CSGRenderer
 {
 public:
-	explicit CSGRenderer(WindowVulkan& window_vulkan);
-	~CSGRenderer();
+	explicit CSGRendererStraightforward(WindowVulkan& window_vulkan);
+	~CSGRendererStraightforward();
 
-	void BeginFrame(vk::CommandBuffer command_buffer, const CSGTree::CSGTreeNode& csg_tree);
-	void EndFrame(const CameraController& camera_controller, vk::CommandBuffer command_buffer);
+	void BeginFrame(vk::CommandBuffer command_buffer, const CSGTree::CSGTreeNode& csg_tree) override;
+	void EndFrame(const CameraController& camera_controller, vk::CommandBuffer command_buffer) override;
 
 private:
 	const vk::Device vk_device_;

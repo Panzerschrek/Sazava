@@ -1,5 +1,5 @@
 #pragma once
-#include "CSGRenderer.hpp"
+#include "I_CSGRenderer.hpp"
 #include "CameraController.hpp"
 #include "SystemWindow.hpp"
 #include "WindowVulkan.hpp"
@@ -25,7 +25,7 @@ private:
 
 	SystemWindow system_window_;
 	WindowVulkan window_vulkan_;
-	CSGRenderer csg_renderer_;
+	std::unique_ptr<I_CSGRenderer> csg_renderer_;
 	CameraController camera_controller_;
 
 	const Clock::time_point init_time_;

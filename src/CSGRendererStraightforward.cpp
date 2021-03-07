@@ -1,4 +1,4 @@
-#include "CSGRenderer.hpp"
+#include "CSGRendererStraightforward.hpp"
 #include "CSGExpressionGPU.hpp"
 
 namespace SZV
@@ -21,7 +21,7 @@ struct Uniforms
 
 } // namespace
 
-CSGRenderer::CSGRenderer(WindowVulkan& window_vulkan)
+CSGRendererStraightforward::CSGRendererStraightforward(WindowVulkan& window_vulkan)
 	: vk_device_(window_vulkan.GetVulkanDevice())
 {
 	const vk::PhysicalDeviceMemoryProperties& memory_properties= window_vulkan.GetMemoryProperties();
@@ -219,13 +219,13 @@ CSGRenderer::CSGRenderer(WindowVulkan& window_vulkan)
 	}
 }
 
-CSGRenderer::~CSGRenderer()
+CSGRendererStraightforward::~CSGRendererStraightforward()
 {
 	// Sync before destruction.
 	vk_device_.waitIdle();
 }
 
-void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer, const CSGTree::CSGTreeNode& csg_tree)
+void CSGRendererStraightforward::BeginFrame(const vk::CommandBuffer command_buffer, const CSGTree::CSGTreeNode& csg_tree)
 {
 	const CSGExpressionGPU epxression_prepared= ConvertCSGTreeToGPUExpression(csg_tree);
 
@@ -236,7 +236,7 @@ void CSGRenderer::BeginFrame(const vk::CommandBuffer command_buffer, const CSGTr
 		epxression_prepared.data());
 }
 
-void CSGRenderer::EndFrame(const CameraController& camera_controller, const vk::CommandBuffer command_buffer)
+void CSGRendererStraightforward::EndFrame(const CameraController& camera_controller, const vk::CommandBuffer command_buffer)
 {
 	Uniforms uniforms{};
 	// TODO - maybe calculate invertse matrix inside camera controller?

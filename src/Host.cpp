@@ -1,5 +1,6 @@
 #include "Host.hpp"
 #include "Assert.hpp"
+#include "CSGRendererStraightforward.hpp"
 #include <thread>
 
 
@@ -63,7 +64,7 @@ CSGTree::CSGTreeNode GetTestCSGTree()
 Host::Host()
 	:  system_window_()
 	, window_vulkan_(system_window_)
-	, csg_renderer_(window_vulkan_)
+	, csg_renderer_(std::make_unique<CSGRendererStraightforward>(window_vulkan_))
 	, camera_controller_(CalculateAspect(window_vulkan_.GetViewportSize()))
 	, init_time_(Clock::now())
 	, prev_tick_time_(init_time_)
@@ -89,13 +90,13 @@ bool Host::Loop()
 	}
 
 	const auto command_buffer= window_vulkan_.BeginFrame();
-	csg_renderer_.BeginFrame(command_buffer, GetTestCSGTree());
+	csg_renderer_->BeginFrame(command_buffer, GetTestCSGTree());
 
 	window_vulkan_.EndFrame(
 		{
 			[&](const vk::CommandBuffer command_buffer)
 			{
-				csg_renderer_.EndFrame(camera_controller_, command_buffer);
+				csg_renderer_->EndFrame(camera_controller_, command_buffer);
 			},
 			[&](const vk::CommandBuffer command_buffer)
 			{
