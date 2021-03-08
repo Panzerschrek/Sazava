@@ -93,7 +93,8 @@ void main()
 	normal= normalize(normal);
 	float sun_light_dot= max( dot( normal, dir_to_sun_normalized.xyz ), 0.0 );
 
-	vec3 tex_value= TextureFetch3d( intersection_pos, 0.01 );
+	float smooth_size= dist * 0.02 / max( 0.1, -dot( normal, n ) );
+	vec3 tex_value= TextureFetch3d( intersection_pos, smooth_size );
 	vec3 color= tex_value * ( sun_light_dot * sun_color.rgb + ambient_light_color.rgb );
 
 	out_color= vec4( color, 0.5 );
