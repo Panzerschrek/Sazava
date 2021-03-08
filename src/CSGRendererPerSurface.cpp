@@ -54,6 +54,51 @@ using VerticesVector= std::vector<SurfaceVertex>;
 using IndicesVector= std::vector<IndexType>;
 using GPUSurfacesVector= std::vector<GPUSurface>;
 
+namespace TreeElementsLowLevel
+{
+
+struct Add;
+struct Mul;
+struct Sub;
+struct Leaf;
+struct OneLeaf;
+struct ZeroLeaf;
+
+using TreeElement= std::variant<
+	Add,
+	Mul,
+	Sub,
+	Leaf,
+	OneLeaf,
+	ZeroLeaf>;
+
+struct Add
+{
+	std::unique_ptr<TreeElement> l;
+	std::unique_ptr<TreeElement> r;
+};
+
+struct Mul
+{
+	std::unique_ptr<TreeElement> l;
+	std::unique_ptr<TreeElement> r;
+};
+
+struct Sub
+{
+	std::unique_ptr<TreeElement> l;
+	std::unique_ptr<TreeElement> r;
+};
+
+struct Leaf
+{
+	size_t surface_index;
+	m_Vec3 bb_min;
+	m_Vec3 bb_max;
+};
+
+} // namespace TreeElementsLowLevel
+
 GPUSurface TransformSurface_impl(
 	const GPUSurface& s,
 	const m_Vec3& shift,
