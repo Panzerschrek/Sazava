@@ -121,7 +121,6 @@ void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_in
 	surface.k= node.center.x * node.center.x + node.center.y * node.center.y + node.center.z * node.center.z - node.radius * node.radius;
 
 	const size_t surface_index= out_surfaces.size();
-
 	out_surfaces.push_back(surface);
 
 	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.radius), surface_index);
@@ -137,16 +136,33 @@ void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_in
 
 void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cylinder& node)
 {
-	// TODO - add surfaces.
+	GPUSurface surface{};
+	surface.xx= surface.yy= 1.0f;
+	surface.x= -2.0f * node.center.x;
+	surface.y= -2.0f * node.center.y;
+	surface.k= node.center.x * node.center.x + node.center.y * node.center.y - node.radius * node.radius;
+
 	const size_t surface_index= out_surfaces.size();
+	out_surfaces.push_back(surface);
 
 	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.height * 0.5f), surface_index);
 }
 
 void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
 {
-	// TODO - add surfaces.
+	const float tangent= std::tan(node.angle * 0.5f);
+	const float k2= tangent * tangent;
+
+	GPUSurface surface{};
+	surface.xx= surface.yy= 1.0f;
+	surface.zz= -k2;
+	surface.x= -2.0f * node.center.x;
+	surface.y= -2.0f * node.center.y;
+	surface.z= 2.0f * k2 * node.center.z;
+	surface.k= node.center.x * node.center.x + node.center.y * node.center.y - k2 * node.center.z * node.center.z;
+
 	const size_t surface_index= out_surfaces.size();
+	out_surfaces.push_back(surface);
 
 	const float top_radius= node.height * std::tan(node.angle);
 	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f), surface_index);
@@ -154,8 +170,15 @@ void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_in
 
 void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Paraboloid& node)
 {
-	// TODO - add surfaces.
+	GPUSurface surface{};
+	surface.xx= surface.yy= 1.0f;
+	surface.x= -2.0f * node.center.x;
+	surface.y= -2.0f * node.center.y;
+	surface.z= -node.factor;
+	surface.k= node.center.x * node.center.x + node.center.y * node.center.y + node.center.z * node.factor;
+
 	const size_t surface_index= out_surfaces.size();
+	out_surfaces.push_back(surface);
 
 	const float top_radius= node.height * node.factor;
 	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f), surface_index);
