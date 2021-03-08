@@ -4,6 +4,9 @@ layout(push_constant) uniform uniforms_block
 {
 	mat4 mat;
 	vec4 cam_pos;
+	vec4 dir_to_sun_normalized;
+	vec4 sun_color;
+	vec4 ambient_light_color;
 };
 
 layout(location=0) in vec3 f_dir;
@@ -74,9 +77,20 @@ void main()
 	if( dist_min < 0.0 )
 		discard;
 
-	vec3 intersection_pos=v + n * dist_min;
+	vec3 intersection_pos= v + n * dist_min;
 
-	vec3 color= TextureFetch3d( intersection_pos, 0.01 );
+	vec3 normal=
+		2.0 * xx_yy_zz * intersection_pos +
+		vec3( xy, xy, xz ) * intersection_pos.yxx +
+		vec3( xz, yz, yz ) * intersection_pos.zzy +
+		x_y_z;
+
+	normal= normalize(normal);
+	float sun_light_dot= max( dot( normal, dir_to_sun_normalized.xyz ), 0.0 );
+
+	vec3 tex_value= TextureFetch3d( intersection_pos, 0.01 );
+	vec3 color= tex_value * ( sun_light_dot * sun_color.rgb + ambient_light_color.rgb );
+
 	out_color= vec4( color, 0.5 );
 	// TODO - set depth
 }

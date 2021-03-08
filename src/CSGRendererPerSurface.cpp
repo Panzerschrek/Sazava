@@ -18,8 +18,10 @@ namespace Shaders
 struct Uniforms
 {
 	m_Mat4 view_matrix;
-	m_Vec3 cam_pos;
-	float reserved;
+	m_Vec3 cam_pos; float reserved;
+	float dir_to_sun_normalized[4];
+	float sun_color[4];
+	float ambient_light_color[4];
 };
 
 struct SurfaceVertex
@@ -516,6 +518,19 @@ void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer, const C
 	Uniforms uniforms{};
 	uniforms.view_matrix= camera_controller.CalculateFullViewMatrix();
 	uniforms.cam_pos= camera_controller.GetCameraPosition();
+
+	m_Vec3 dir_to_sun= m_Vec3( 0.2f, 0.3f, 0.4f );
+	dir_to_sun*= dir_to_sun.GetInvLength();
+
+	uniforms.dir_to_sun_normalized[0]= dir_to_sun.x;
+	uniforms.dir_to_sun_normalized[1]= dir_to_sun.y;
+	uniforms.dir_to_sun_normalized[2]= dir_to_sun.z;
+	uniforms.sun_color[0]= 1.0f * 3.0f;
+	uniforms.sun_color[1]= 0.9f * 3.0f;
+	uniforms.sun_color[2]= 0.8f * 3.0f;
+	uniforms.ambient_light_color[0]= 0.3f;
+	uniforms.ambient_light_color[1]= 0.3f;
+	uniforms.ambient_light_color[2]= 0.4f;
 
 	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline_);
 
