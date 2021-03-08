@@ -395,7 +395,7 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 			VK_FALSE,
 			vk::PolygonMode::eFill,
 			vk::CullModeFlagBits::eFront,
-			vk::FrontFace::eCounterClockwise,
+			vk::FrontFace::eClockwise,
 			VK_FALSE, 0.0f, 0.0f, 0.0f,
 			1.0f);
 
