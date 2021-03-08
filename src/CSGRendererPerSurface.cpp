@@ -54,7 +54,10 @@ using VerticesVector= std::vector<SurfaceVertex>;
 using IndicesVector= std::vector<IndexType>;
 using GPUSurfacesVector= std::vector<GPUSurface>;
 
-GPUSurface TransformSurface( const GPUSurface& s, const m_Vec3& center, const m_Vec3& x_vec, const m_Vec3& y_vec, const m_Vec3& z_vec )
+GPUSurface TransformSurface_impl(
+	const GPUSurface& s,
+	const m_Vec3& shift,
+	const m_Vec3& x_vec, const m_Vec3& y_vec, const m_Vec3& z_vec)
 {
 	GPUSurface r{};
 
@@ -81,49 +84,64 @@ GPUSurface TransformSurface( const GPUSurface& s, const m_Vec3& center, const m_
 		s.yz * y_vec.z * z_vec.z;
 
 	r.xy=
-		2.0f * ( s.xx * x_vec.x * x_vec.y + s.yy * y_vec.x * y_vec.y + s.zz * z_vec.x * z_vec.y) +
+		2.0f * (s.xx * x_vec.x * x_vec.y + s.yy * y_vec.x * y_vec.y + s.zz * z_vec.x * z_vec.y) +
 		s.xy * (x_vec.x * y_vec.y + y_vec.x * x_vec.y) +
 		s.xz * (x_vec.x * z_vec.y + z_vec.x * x_vec.y) +
 		s.yz * (y_vec.x * z_vec.y + z_vec.x * y_vec.y);
 	r.xz=
-		2.0f * ( s.xx * x_vec.x * x_vec.z + s.yy * y_vec.x * y_vec.z + s.zz * z_vec.x * z_vec.z) +
+		2.0f * (s.xx * x_vec.x * x_vec.z + s.yy * y_vec.x * y_vec.z + s.zz * z_vec.x * z_vec.z) +
 		s.xy * (x_vec.x * y_vec.z + y_vec.x * x_vec.z) +
 		s.xz * (x_vec.x * z_vec.z + z_vec.x * x_vec.z) +
 		s.yz * (y_vec.x * z_vec.z + z_vec.x * y_vec.z);
 	r.yz=
-		2.0f * ( s.xx * x_vec.y * x_vec.z + s.yy * y_vec.y * y_vec.z + s.zz * z_vec.y * z_vec.z) +
+		2.0f * (s.xx * x_vec.y * x_vec.z + s.yy * y_vec.y * y_vec.z + s.zz * z_vec.y * z_vec.z) +
 		s.xy * (x_vec.y * y_vec.z + y_vec.y * x_vec.z) +
 		s.xz * (x_vec.y * z_vec.z + z_vec.y * x_vec.z) +
 		s.yz * (y_vec.y * z_vec.z + z_vec.y * y_vec.z);
 
 	r.x=
-		2.0f * (s.xx * x_vec.x * center.x + s.yy * y_vec.x * center.y + s.zz * z_vec.x * center.z) +
-		s.xy * (x_vec.x * center.y + y_vec.x * center.x) +
-		s.xz * (x_vec.x * center.z + z_vec.x * center.x) +
-		s.yz * (y_vec.x * center.z + z_vec.x * center.y) +
+		2.0f * (s.xx * x_vec.x * shift.x + s.yy * y_vec.x * shift.y + s.zz * z_vec.x * shift.z) +
+		s.xy * (x_vec.x * shift.y + y_vec.x * shift.x) +
+		s.xz * (x_vec.x * shift.z + z_vec.x * shift.x) +
+		s.yz * (y_vec.x * shift.z + z_vec.x * shift.y) +
 		(s.x * x_vec.x + s.y * y_vec.x + s.z * z_vec.x);
 	r.y=
-		2.0f * (s.xx * x_vec.y * center.x + s.yy * y_vec.y * center.y + s.zz * z_vec.y * center.z) +
-		s.xy * (x_vec.y * center.y + y_vec.y * center.x) +
-		s.xz * (x_vec.y * center.z + z_vec.y * center.x) +
-		s.yz * (y_vec.y * center.z + z_vec.y * center.y) +
+		2.0f * (s.xx * x_vec.y * shift.x + s.yy * y_vec.y * shift.y + s.zz * z_vec.y * shift.z) +
+		s.xy * (x_vec.y * shift.y + y_vec.y * shift.x) +
+		s.xz * (x_vec.y * shift.z + z_vec.y * shift.x) +
+		s.yz * (y_vec.y * shift.z + z_vec.y * shift.y) +
 		(s.x * x_vec.y + s.y * y_vec.y + s.z * z_vec.y);
 	r.z=
-		2.0f * (s.xx * x_vec.z * center.x + s.yy * y_vec.z * center.y + s.zz * z_vec.z * center.z) +
-		s.xy * (x_vec.z * center.y + y_vec.z * center.x) +
-		s.xz * (x_vec.z * center.z + z_vec.z * center.x) +
-		s.yz * (y_vec.z * center.z + z_vec.z * center.y) +
+		2.0f * (s.xx * x_vec.z * shift.x + s.yy * y_vec.z * shift.y + s.zz * z_vec.z * shift.z) +
+		s.xy * (x_vec.z * shift.y + y_vec.z * shift.x) +
+		s.xz * (x_vec.z * shift.z + z_vec.z * shift.x) +
+		s.yz * (y_vec.z * shift.z + z_vec.z * shift.y) +
 		(s.x * x_vec.z + s.y * y_vec.z + s.z * z_vec.z);
 
 	r.k=
-		center.x * center.x + center.y * center.y + center.z * center.z +
-		s.xy * center.x * center.y +
-		s.xz * center.x * center.z +
-		s.yz * center.y * center.z +
-		s.x * center.x + s.y * center.y + s.z * center.z +
+		s.xx * shift.x * shift.x + s.yy * shift.y * shift.y + s.zz * shift.z * shift.z +
+		s.xy * shift.x * shift.y +
+		s.xz * shift.x * shift.z +
+		s.yz * shift.y * shift.z +
+		s.x * shift.x + s.y * shift.y + s.z * shift.z +
 		s.k;
 
 	return r;
+}
+
+// Warning!
+// normal and binormal vectors must be perpendicular and must have identity length!
+GPUSurface TransformSurface(const GPUSurface& s, const m_Vec3& center, const m_Vec3& normal, const m_Vec3& binormal)
+{
+	const m_Vec3 tangent= mVec3Cross(normal, binormal);
+
+	return
+		TransformSurface_impl(
+			s,
+			-m_Vec3(mVec3Dot(center, binormal), mVec3Dot(center, tangent), mVec3Dot(center, normal)),
+			binormal,
+			tangent,
+			normal);
 }
 
 void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node);
@@ -188,11 +206,9 @@ void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_in
 void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Sphere& node)
 {
 	GPUSurface surface{};
-	surface.xx= surface.yy = surface.zz= 1.0f;
-	surface.x= -2.0f * node.center.x;
-	surface.y= -2.0f * node.center.y;
-	surface.z= -2.0f * node.center.z;
-	surface.k= node.center.x * node.center.x + node.center.y * node.center.y + node.center.z * node.center.z - node.radius * node.radius;
+	surface.xx= surface.yy= surface.zz= 1.0f;
+	surface.k= - node.radius * node.radius;
+	surface= TransformSurface(surface, node.center, m_Vec3(0.0f, 0.0f, 1.0f), m_Vec3(1.0f, 0.0f, 0.0f));
 
 	const size_t surface_index= out_surfaces.size();
 	out_surfaces.push_back(surface);
@@ -212,50 +228,50 @@ void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_in
 {
 	GPUSurface surface{};
 	surface.xx= surface.yy= 1.0f;
-	surface.x= -2.0f * node.center.x;
-	surface.y= -2.0f * node.center.y;
-	surface.k= node.center.x * node.center.x + node.center.y * node.center.y - node.radius * node.radius;
+	surface.k= - node.radius * node.radius;
+	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 
 	const size_t surface_index= out_surfaces.size();
 	out_surfaces.push_back(surface);
 
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.height * 0.5f), surface_index);
+	// TODO - calculate bounding box more precisely
+	const float circular_radius= std::sqrt(node.radius * node.radius + 0.25f * node.height * node.height);
+
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(circular_radius, circular_radius, circular_radius), surface_index);
 }
 
 void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
 {
-	const float tangent= std::tan(node.angle * 0.5f);
-	const float k2= tangent * tangent;
+	const float k= std::tan(node.angle * 0.5f);
 
 	GPUSurface surface{};
 	surface.xx= surface.yy= 1.0f;
-	surface.zz= -k2;
-	surface.x= -2.0f * node.center.x;
-	surface.y= -2.0f * node.center.y;
-	surface.z= 2.0f * k2 * node.center.z;
-	surface.k= node.center.x * node.center.x + node.center.y * node.center.y - k2 * node.center.z * node.center.z;
+	surface.zz= -k * k;
+	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 
 	const size_t surface_index= out_surfaces.size();
 	out_surfaces.push_back(surface);
 
-	const float top_radius= node.height * std::tan(node.angle);
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f), surface_index);
+	// TODO - calculate bounding box more precisely
+	const float circular_radius= std::sqrt(node.height * node.height + node.height * node.height * k * k);
+
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(circular_radius, circular_radius, circular_radius), surface_index);
 }
 
 void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Paraboloid& node)
 {
 	GPUSurface surface{};
 	surface.xx= surface.yy= 1.0f;
-	surface.x= -2.0f * node.center.x;
-	surface.y= -2.0f * node.center.y;
 	surface.z= -node.factor;
-	surface.k= node.center.x * node.center.x + node.center.y * node.center.y + node.center.z * node.factor;
+	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 
 	const size_t surface_index= out_surfaces.size();
 	out_surfaces.push_back(surface);
 
-	const float top_radius= node.height * node.factor;
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f), surface_index);
+	// TODO - calculate bounding box more precisely
+	const float circular_radius= std::sqrt(node.height * node.height + std::sqrt(node.height) / node.factor);
+
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(circular_radius, circular_radius, circular_radius), surface_index);
 }
 
 void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node)
