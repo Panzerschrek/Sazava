@@ -7,7 +7,14 @@ layout(push_constant) uniform uniforms_block
 };
 
 layout(location=0) in vec3 f_dir;
-layout(location = 0) out vec4 out_color;
+layout(location=1) in flat float f_surface_index;
+
+layout(set= 0, binding= 0, std430) buffer readonly csg_data_block
+{
+	float surfaces_description[];
+};
+
+layout(location=0) out vec4 out_color;
 
 vec3 TextureFetch3d( vec3 coord, float smooth_size )
 {
@@ -19,9 +26,57 @@ vec3 TextureFetch3d( vec3 coord, float smooth_size )
 	return vec3( bit, bit, bit );
 }
 
-
 void main()
 {
-	vec3 c= TextureFetch3d( cam_pos.xyz + f_dir, 0.01 );
-	out_color= vec4( c, 0.5 );
+	int offset= int(f_surface_index) * 16;
+	float xx= surfaces_description[offset+0];
+	float yy= surfaces_description[offset+1];
+	float zz= surfaces_description[offset+2];
+	float xy= surfaces_description[offset+3];
+	float xz= surfaces_description[offset+4];
+	float yz= surfaces_description[offset+5];
+	float x = surfaces_description[offset+6];
+	float y = surfaces_description[offset+7];
+	float z = surfaces_description[offset+8];
+	float k = surfaces_description[offset+9];
+
+	vec3 n= normalize(f_dir);
+	vec3 v= cam_pos.xyz;
+	vec3 xx_yy_zz= vec3( xx, yy, zz );
+	vec3 xy_xz_yz= vec3( xy, xz, yz );
+	vec3 x_y_z= vec3( x, y, z );
+	float a= dot( xx_yy_zz, n * n ) + dot( xy_xz_yz, n.xxy * n.yzz );
+	float b= 2.0 * dot( xx_yy_zz, n * v ) + dot( xy_xz_yz, v.xxy * n.yzz + v.yzz * n.xxy ) + dot( x_y_z, n );
+	float c= dot( xx_yy_zz, v * v ) + dot( xy_xz_yz, v.xxy * v.yzz ) + dot( x_y_z, v ) + k;
+
+	float dist0, dist1;
+	if( a == 0.0 )
+	{
+		if( b == 0.0 )
+		{
+			discard;
+		}
+		dist0= dist1= -c / b;
+	}
+	else
+	{
+		float d= b * b - 4.0 * a * c;
+		if( d < 0.0 )
+			discard;
+
+		float d_root= sqrt(d);
+		float two_a= 2.0 * a;
+		dist0= ( -b - d_root ) / two_a;
+		dist1= ( -b + d_root ) / two_a;
+	}
+
+	float dist_min= min(dist0, dist1);
+	if( dist_min < 0.0 )
+		discard;
+
+	vec3 intersection_pos=v + n * dist_min;
+
+	vec3 color= TextureFetch3d( intersection_pos, 0.01 );
+	out_color= vec4( color, 0.5 );
+	// TODO - set depth
 }

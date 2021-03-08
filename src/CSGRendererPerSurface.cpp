@@ -25,17 +25,36 @@ struct Uniforms
 struct SurfaceVertex
 {
 	float pos[3];
-	float reserved;
+	float surface_index;
 };
 
 using IndexType= uint16_t;
 
+struct GPUSurface
+{
+	// Surface quadratic equation parameters.
+	float xx;
+	float yy;
+	float zz;
+	float xy;
+	float xz;
+	float yz;
+	float x;
+	float y;
+	float z;
+	float k;
+	float reserved[6];
+};
+
+static_assert(sizeof(GPUSurface) == sizeof(float) * 16, "Invalid size");
+
 using VerticesVector= std::vector<SurfaceVertex>;
 using IndicesVector= std::vector<IndexType>;
+using GPUSurfacesVector= std::vector<GPUSurface>;
 
-void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::CSGTreeNode& node);
+void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node);
 
-void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_Vec3& center, const m_Vec3 half_size)
+void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_Vec3& center, const m_Vec3 half_size, const size_t surface_idnex)
 {
 	static const m_Vec3 cube_vertices[8]=
 	{
@@ -65,7 +84,7 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_V
 				cube_vertex.y * half_size.y + center.y,
 				cube_vertex.z * half_size.z + center.z,
 			},
-			0.0f,
+			float(surface_idnex),
 		};
 		out_vertices.push_back(v);
 	}
@@ -74,57 +93,80 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_V
 		out_indices.push_back(IndexType(cube_index + start_index));
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::MulChain& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::MulChain& node)
 {
 	for(const CSGTree::CSGTreeNode& child : node.elements)
-		BuildSceneMeshNode_r(out_vertices, out_indices, child);
+		BuildSceneMeshNode_r(out_vertices, out_indices, out_surfaces, child);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::AddChain& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::AddChain& node)
 {
 	for(const CSGTree::CSGTreeNode& child : node.elements)
-		BuildSceneMeshNode_r(out_vertices, out_indices, child);
+		BuildSceneMeshNode_r(out_vertices, out_indices, out_surfaces, child);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::SubChain& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::SubChain& node)
 {
 	for(const CSGTree::CSGTreeNode& child : node.elements)
-		BuildSceneMeshNode_r(out_vertices, out_indices, child);
+		BuildSceneMeshNode_r(out_vertices, out_indices, out_surfaces, child);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Sphere& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Sphere& node)
 {
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.radius));
+	GPUSurface surface{};
+	surface.xx= surface.yy = surface.zz= 1.0f;
+	surface.x= -2.0f * node.center.x;
+	surface.y= -2.0f * node.center.y;
+	surface.z= -2.0f * node.center.z;
+	surface.k= node.center.x * node.center.x + node.center.y * node.center.y + node.center.z * node.center.z - node.radius * node.radius;
+
+	const size_t surface_index= out_surfaces.size();
+
+	out_surfaces.push_back(surface);
+
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.radius), surface_index);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Cube& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cube& node)
 {
-	AddCube(out_vertices, out_indices, node.center, node.size * 0.5f);
+	// TODO - add surfaces.
+	const size_t surface_index= out_surfaces.size();
+
+	AddCube(out_vertices, out_indices, node.center, node.size * 0.5f, surface_index);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Cylinder& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cylinder& node)
 {
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.height * 0.5f));
+	// TODO - add surfaces.
+	const size_t surface_index= out_surfaces.size();
+
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.height * 0.5f), surface_index);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Cone& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
 {
+	// TODO - add surfaces.
+	const size_t surface_index= out_surfaces.size();
+
 	const float top_radius= node.height * std::tan(node.angle);
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f));
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f), surface_index);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::Paraboloid& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Paraboloid& node)
 {
+	// TODO - add surfaces.
+	const size_t surface_index= out_surfaces.size();
+
 	const float top_radius= node.height * node.factor;
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f));
+	AddCube(out_vertices, out_indices, node.center, m_Vec3(top_radius, top_radius, node.height * 0.5f), surface_index);
 }
 
-void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, const CSGTree::CSGTreeNode& node)
+void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node)
 {
 	std::visit(
 		[&](const auto& el)
 		{
-			BuildSceneMeshNode_impl(out_vertices, out_indices, el);
+			BuildSceneMeshNode_impl(out_vertices, out_indices, out_surfaces, el);
 		},
 		node);
 }
@@ -229,7 +271,7 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 
 		const vk::VertexInputAttributeDescription vk_vertex_input_attribute_description[1]
 		{
-			{0u, 0u, vk::Format::eR32G32B32Sfloat, offsetof(SurfaceVertex, pos)},
+			{0u, 0u, vk::Format::eR32G32B32A32Sfloat, offsetof(SurfaceVertex, pos)},
 		};
 
 		const vk::PipelineVertexInputStateCreateInfo vk_pipiline_vertex_input_state_create_info(
@@ -412,7 +454,8 @@ void CSGRendererPerSurface::BeginFrame(
 {
 	VerticesVector vertices;
 	IndicesVector indices;
-	BuildSceneMeshNode_r(vertices, indices, csg_tree);
+	GPUSurfacesVector surfaces;
+	BuildSceneMeshNode_r(vertices, indices, surfaces, csg_tree);
 
 	command_buffer.updateBuffer(
 		*vertex_buffer_,
@@ -425,6 +468,12 @@ void CSGRendererPerSurface::BeginFrame(
 		0u,
 		vk::DeviceSize(sizeof(IndexType) * indices.size()),
 		indices.data());
+
+	command_buffer.updateBuffer(
+		*csg_data_buffer_gpu_,
+		0u,
+		surfaces.size() * sizeof(GPUSurface),
+		surfaces.data());
 
 	tonemapper_.DoMainPass(
 		command_buffer,
