@@ -18,6 +18,8 @@ namespace Shaders
 struct Uniforms
 {
 	m_Mat4 view_matrix;
+	m_Vec3 cam_pos;
+	float reserved;
 };
 
 struct SurfaceVertex
@@ -441,6 +443,7 @@ void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer, const C
 {
 	Uniforms uniforms{};
 	uniforms.view_matrix= camera_controller.CalculateFullViewMatrix();
+	uniforms.cam_pos= camera_controller.GetCameraPosition();
 
 	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline_);
 
