@@ -54,6 +54,78 @@ using VerticesVector= std::vector<SurfaceVertex>;
 using IndicesVector= std::vector<IndexType>;
 using GPUSurfacesVector= std::vector<GPUSurface>;
 
+GPUSurface TransformSurface( const GPUSurface& s, const m_Vec3& center, const m_Vec3& x_vec, const m_Vec3& y_vec, const m_Vec3& z_vec )
+{
+	GPUSurface r{};
+
+	r.xx=
+		s.xx * (x_vec.x * x_vec.x) +
+		s.yy * (y_vec.x * y_vec.x) +
+		s.zz * (z_vec.x * z_vec.x) +
+		s.xy * x_vec.x * y_vec.x +
+		s.xz * x_vec.x * z_vec.x +
+		s.yz * y_vec.x * z_vec.x;
+	r.yy=
+		s.xx * (x_vec.y * x_vec.y) +
+		s.yy * (y_vec.y * y_vec.y) +
+		s.zz * (z_vec.y * z_vec.y) +
+		s.xy * x_vec.y * y_vec.y +
+		s.xz * x_vec.y * z_vec.y +
+		s.yz * y_vec.y * z_vec.y;
+	r.zz=
+		s.xx * (x_vec.z * x_vec.z) +
+		s.yy * (y_vec.z * y_vec.z) +
+		s.zz * (z_vec.z * z_vec.z) +
+		s.xy * x_vec.z * y_vec.z +
+		s.xz * x_vec.z * z_vec.z +
+		s.yz * y_vec.z * z_vec.z;
+
+	r.xy=
+		2.0f * ( s.xx * x_vec.x * x_vec.y + s.yy * y_vec.x * y_vec.y + s.zz * z_vec.x * z_vec.y) +
+		s.xy * (x_vec.x * y_vec.y + y_vec.x * x_vec.y) +
+		s.xz * (x_vec.x * z_vec.y + z_vec.x * x_vec.y) +
+		s.yz * (y_vec.x * z_vec.y + z_vec.x * y_vec.y);
+	r.xz=
+		2.0f * ( s.xx * x_vec.x * x_vec.z + s.yy * y_vec.x * y_vec.z + s.zz * z_vec.x * z_vec.z) +
+		s.xy * (x_vec.x * y_vec.z + y_vec.x * x_vec.z) +
+		s.xz * (x_vec.x * z_vec.z + z_vec.x * x_vec.z) +
+		s.yz * (y_vec.x * z_vec.z + z_vec.x * y_vec.z);
+	r.yz=
+		2.0f * ( s.xx * x_vec.y * x_vec.z + s.yy * y_vec.y * y_vec.z + s.zz * z_vec.y * z_vec.z) +
+		s.xy * (x_vec.y * y_vec.z + y_vec.y * x_vec.z) +
+		s.xz * (x_vec.y * z_vec.z + z_vec.y * x_vec.z) +
+		s.yz * (y_vec.y * z_vec.z + z_vec.y * y_vec.z);
+
+	r.x=
+		2.0f * (s.xx * x_vec.x * center.x + s.yy * y_vec.x * center.y + s.zz * z_vec.x * center.z) +
+		s.xy * (x_vec.x * center.y + y_vec.x * center.x) +
+		s.xz * (x_vec.x * center.z + z_vec.x * center.x) +
+		s.yz * (y_vec.x * center.z + z_vec.x * center.y) +
+		(s.x * x_vec.x + s.y * y_vec.x + s.z * z_vec.x);
+	r.y=
+		2.0f * (s.xx * x_vec.y * center.x + s.yy * y_vec.y * center.y + s.zz * z_vec.y * center.z) +
+		s.xy * (x_vec.y * center.y + y_vec.y * center.x) +
+		s.xz * (x_vec.y * center.z + z_vec.y * center.x) +
+		s.yz * (y_vec.y * center.z + z_vec.y * center.y) +
+		(s.x * x_vec.y + s.y * y_vec.y + s.z * z_vec.y);
+	r.z=
+		2.0f * (s.xx * x_vec.z * center.x + s.yy * y_vec.z * center.y + s.zz * z_vec.z * center.z) +
+		s.xy * (x_vec.z * center.y + y_vec.z * center.x) +
+		s.xz * (x_vec.z * center.z + z_vec.z * center.x) +
+		s.yz * (y_vec.z * center.z + z_vec.z * center.y) +
+		(s.x * x_vec.z + s.y * y_vec.z + s.z * z_vec.z);
+
+	r.k=
+		center.x * center.x + center.y * center.y + center.z * center.z +
+		s.xy * center.x * center.y +
+		s.xz * center.x * center.z +
+		s.yz * center.y * center.z +
+		s.x * center.x + s.y * center.y + s.z * center.z +
+		s.k;
+
+	return r;
+}
+
 void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node);
 
 void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_Vec3& center, const m_Vec3 half_size, const size_t surface_idnex)
