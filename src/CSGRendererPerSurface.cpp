@@ -339,7 +339,7 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 				vk::StencilOpState(),
 				vk::StencilOpState(),
 				0.0f,
-				1.0f);
+				tonemapper_.GetMaxDepth());
 
 		const vk::PipelineColorBlendAttachmentState pipeline_color_blend_attachment_state(
 			VK_FALSE,

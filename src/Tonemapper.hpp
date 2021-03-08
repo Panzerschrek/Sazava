@@ -13,7 +13,7 @@ public:
 
 	vk::Extent2D GetFramebufferSize() const;
 	vk::RenderPass GetMainRenderPass() const;
-	vk::SampleCountFlagBits GetSampleCount() const;
+	float GetMaxDepth() const;
 
 	void DoMainPass(vk::CommandBuffer command_buffer, const std::function<void()>& draw_function);
 	void EndFrame(vk::CommandBuffer command_buffer);

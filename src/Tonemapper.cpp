@@ -49,6 +49,8 @@ const uint32_t g_brightness_tex_uniform_binding= 1u;
 const uint32_t g_exposure_accumulate_tex_uniform_binding= 2u;
 const uint32_t g_blured_tex_uniform_binding= 3u;
 
+const float g_max_depth= 1.0e16f;
+
 } // namespace
 
 Tonemapper::Tonemapper( WindowVulkan& window_vulkan)
@@ -560,9 +562,9 @@ vk::RenderPass Tonemapper::GetMainRenderPass() const
 	return *main_pass_;
 }
 
-vk::SampleCountFlagBits Tonemapper::GetSampleCount() const
+float Tonemapper::GetMaxDepth() const
 {
-	return vk::SampleCountFlagBits::e1;
+	return g_max_depth;
 }
 
 void Tonemapper::DoMainPass(const vk::CommandBuffer command_buffer, const std::function<void()>& draw_function)
@@ -594,7 +596,7 @@ void Tonemapper::DoMainPass(const vk::CommandBuffer command_buffer, const std::f
 	const vk::ClearValue clear_value[]
 	{
 		{ vk::ClearColorValue(std::array<float,4>{0.2f, 0.1f, 0.1f, 0.5f}) },
-		{ vk::ClearDepthStencilValue(1.0f, 0u) },
+		{ vk::ClearDepthStencilValue(g_max_depth, 0u) },
 	};
 
 	command_buffer.beginRenderPass(

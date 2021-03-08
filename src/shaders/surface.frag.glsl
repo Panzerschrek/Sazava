@@ -97,5 +97,5 @@ void main()
 	vec3 color= tex_value * ( sun_light_dot * sun_color.rgb + ambient_light_color.rgb );
 
 	out_color= vec4( color, 0.5 );
-	// TODO - set depth
+	gl_FragDepth= dist;
 }
