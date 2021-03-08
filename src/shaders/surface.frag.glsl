@@ -74,10 +74,15 @@ void main()
 	}
 
 	float dist_min= min(dist0, dist1);
-	if( dist_min < 0.0 )
+	float dist_max= max(dist0, dist1);
+	if( dist_max < 0.0 )
 		discard;
 
-	vec3 intersection_pos= v + n * dist_min;
+	float dist= dist_min;
+	if( dist_min <= 0.0 )
+		dist= dist_max;
+
+	vec3 intersection_pos= v + n * dist;
 
 	vec3 normal=
 		2.0 * xx_yy_zz * intersection_pos +
