@@ -263,10 +263,42 @@ void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_in
 
 void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cube& node)
 {
-	// TODO - add surfaces.
-	const size_t surface_index= out_surfaces.size();
+	// Represent three pairs of parallel planes of cube using three quadratic surfaces.
+	const m_Vec3 normal(0.0f, 0.0f, 1.0f);
+	const m_Vec3 binormal(1.0, 0.0f, 0.0f);
+	{
+		GPUSurface surface{};
+		surface.xx= 1.0f;
+		surface.k= -0.5f * node.size.x;
+		surface= TransformSurface(surface, node.center, normal, binormal);
 
-	AddCube(out_vertices, out_indices, node.center, node.size * 0.5f, surface_index);
+		const size_t surface_index= out_surfaces.size();
+		out_surfaces.push_back(surface);
+
+		AddCube(out_vertices, out_indices, node.center, node.size * 0.5f, surface_index);
+	}
+	{
+		GPUSurface surface{};
+		surface.yy= 1.0f;
+		surface.k= -0.5f * node.size.y;
+		surface= TransformSurface(surface, node.center, normal, binormal);
+
+		const size_t surface_index= out_surfaces.size();
+		out_surfaces.push_back(surface);
+
+		AddCube(out_vertices, out_indices, node.center, node.size * 0.5f, surface_index);
+	}
+	{
+		GPUSurface surface{};
+		surface.zz= 1.0f;
+		surface.k= -0.5f * node.size.z;
+		surface= TransformSurface(surface, node.center, normal, binormal);
+
+		const size_t surface_index= out_surfaces.size();
+		out_surfaces.push_back(surface);
+
+		AddCube(out_vertices, out_indices, node.center, node.size * 0.5f, surface_index);
+	}
 }
 
 void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cylinder& node)
