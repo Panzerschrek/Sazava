@@ -33,9 +33,13 @@ private:
 	vk::UniqueDescriptorPool descriptor_pool_;
 	vk::UniqueDescriptorSet descriptor_set_;
 
-	std::vector<float> csg_data_buffer_host_;
-	vk::UniqueBuffer csg_data_buffer_gpu_;
-	vk::UniqueDeviceMemory csg_data_buffer_memory_;
+	vk::UniqueBuffer surfaces_data_buffer_gpu_;
+	vk::UniqueDeviceMemory surfaces_data_buffer_memory_;
+	size_t surfaces_buffer_size_= 0;
+
+	vk::UniqueBuffer expressions_data_buffer_gpu_;
+	vk::UniqueDeviceMemory expressions_data_buffer_memory_;
+	size_t expressions_buffer_size_= 0;
 
 	size_t vertex_buffer_vertices_= 0;
 	vk::UniqueBuffer vertex_buffer_;

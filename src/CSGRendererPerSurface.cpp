@@ -213,9 +213,9 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	for (size_t i= 2u; i < node.elements.size(); ++i)
 	{
 		TreeElementsLowLevel::Mul mul_element;
-		mul_element.l= std::move(mul.r);
+		mul_element.l= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(mul));
 		mul_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
-		mul.r= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(mul_element));
+		mul= std::move(mul_element);
 	}
 
 	return std::move(mul);
@@ -230,9 +230,9 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	for (size_t i= 2u; i < node.elements.size(); ++i)
 	{
 		TreeElementsLowLevel::Add add_element;
-		add_element.l= std::move(add.r);
+		add_element.l= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(add));
 		add_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
-		add.r= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(add_element));
+		add= std::move(add_element);
 	}
 
 	return std::move(add);
@@ -247,9 +247,9 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	for (size_t i= 2u; i < node.elements.size(); ++i)
 	{
 		TreeElementsLowLevel::Sub sub_element;
-		sub_element.l= std::move(sub.r);
+		sub_element.l= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(sub));
 		sub_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
-		sub.r= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(sub_element));
+		sub= std::move(sub_element);
 	}
 
 	return std::move(sub);
@@ -313,13 +313,14 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 	return TreeElementsLowLevel::Mul
 	{
-		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
 		std::make_unique<TreeElementsLowLevel::TreeElement>(
 			TreeElementsLowLevel::Mul
 			{
+				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
 				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
-				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[2]),
 			}),
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[2]),
+
 	};
 }
 
@@ -439,25 +440,25 @@ void BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const TreeElem
 
 void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Mul& node)
 {
-	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
 	BUILDCSGExpression_r(out_expression, *node.l);
 	BUILDCSGExpression_r(out_expression, *node.r);
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
 	// TODO - process zero/one nodes
 }
 
 void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Add& node)
 {
-	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Add));
 	BUILDCSGExpression_r(out_expression, *node.l);
 	BUILDCSGExpression_r(out_expression, *node.r);
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Add));
 	// TODO - process zero/one nodes
 }
 
 void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Sub& node)
 {
-	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
 	BUILDCSGExpression_r(out_expression, *node.l);
 	BUILDCSGExpression_r(out_expression, *node.r);
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
 	// TODO - process zero/one nodes
 }
 
@@ -592,11 +593,11 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 {
 	const vk::PhysicalDeviceMemoryProperties& memory_properties= window_vulkan.GetMemoryProperties();
 
-	{ // Create data buffer
+	{ // Create surfaces data buffer
 		const uint32_t buffer_size= 65536u; // Maximum size for vkCmdUpdateBuffer
-		csg_data_buffer_host_.resize(buffer_size / sizeof(float), 0.0f);
+		surfaces_buffer_size_= buffer_size;
 
-		csg_data_buffer_gpu_=
+		surfaces_data_buffer_gpu_=
 			vk_device_.createBufferUnique(
 				vk::BufferCreateInfo(
 					vk::BufferCreateFlags(),
@@ -604,7 +605,7 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 					vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst));
 
 		const vk::MemoryRequirements buffer_memory_requirements=
-			vk_device_.getBufferMemoryRequirements(*csg_data_buffer_gpu_);
+			vk_device_.getBufferMemoryRequirements(*surfaces_data_buffer_gpu_);
 
 		vk::MemoryAllocateInfo vk_memory_allocate_info(buffer_memory_requirements.size);
 		for(uint32_t i= 0u; i < memory_properties.memoryTypeCount; ++i)
@@ -614,14 +615,46 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 				vk_memory_allocate_info.memoryTypeIndex= i;
 		}
 
-		csg_data_buffer_memory_= vk_device_.allocateMemoryUnique(vk_memory_allocate_info);
-		vk_device_.bindBufferMemory(*csg_data_buffer_gpu_, *csg_data_buffer_memory_, 0u);
+		surfaces_data_buffer_memory_= vk_device_.allocateMemoryUnique(vk_memory_allocate_info);
+		vk_device_.bindBufferMemory(*surfaces_data_buffer_gpu_, *surfaces_data_buffer_memory_, 0u);
+	}
+	{ // Create surfaces data buffer
+		const uint32_t buffer_size= 65536u; // Maximum size for vkCmdUpdateBuffer
+		expressions_buffer_size_= buffer_size;
+
+		expressions_data_buffer_gpu_=
+			vk_device_.createBufferUnique(
+				vk::BufferCreateInfo(
+					vk::BufferCreateFlags(),
+					buffer_size,
+					vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst));
+
+		const vk::MemoryRequirements buffer_memory_requirements=
+			vk_device_.getBufferMemoryRequirements(*expressions_data_buffer_gpu_);
+
+		vk::MemoryAllocateInfo vk_memory_allocate_info(buffer_memory_requirements.size);
+		for(uint32_t i= 0u; i < memory_properties.memoryTypeCount; ++i)
+		{
+			if((buffer_memory_requirements.memoryTypeBits & (1u << i)) != 0 &&
+				(memory_properties.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) != vk::MemoryPropertyFlags())
+				vk_memory_allocate_info.memoryTypeIndex= i;
+		}
+
+		expressions_data_buffer_memory_= vk_device_.allocateMemoryUnique(vk_memory_allocate_info);
+		vk_device_.bindBufferMemory(*expressions_data_buffer_gpu_, *expressions_data_buffer_memory_, 0u);
 	}
 	{ // Create descriptor set layout
-		const vk::DescriptorSetLayoutBinding descriptor_set_layout_bindings[1]
+		const vk::DescriptorSetLayoutBinding descriptor_set_layout_bindings[2]
 		{
 			{
 				0u,
+				vk::DescriptorType::eStorageBuffer,
+				1u,
+				vk::ShaderStageFlagBits::eFragment,
+				nullptr,
+			},
+			{
+				1u,
 				vk::DescriptorType::eStorageBuffer,
 				1u,
 				vk::ShaderStageFlagBits::eFragment,
@@ -766,7 +799,7 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 		{
 			{
 				vk::DescriptorType::eStorageBuffer,
-				1u // global storage buffers
+				2u // global storage buffers
 			},
 		};
 
@@ -785,10 +818,15 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 					*descriptor_pool_,
 					1u, &*descriptor_set_layout_)).front());
 
-		const vk::DescriptorBufferInfo descriptor_buffer_info(
-			*csg_data_buffer_gpu_,
+		const vk::DescriptorBufferInfo descriptor_buffer_info_surfaces(
+			*surfaces_data_buffer_gpu_,
 			0u,
-			sizeof(float) * csg_data_buffer_host_.size());
+			surfaces_buffer_size_);
+
+		const vk::DescriptorBufferInfo descriptor_buffer_info_expressions(
+			*expressions_data_buffer_gpu_,
+			0u,
+			expressions_buffer_size_);
 
 		vk_device_.updateDescriptorSets(
 			{
@@ -799,7 +837,17 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 					1u,
 					vk::DescriptorType::eStorageBuffer,
 					nullptr,
-					&descriptor_buffer_info,
+					&descriptor_buffer_info_surfaces,
+					nullptr,
+				},
+				{
+					*descriptor_set_,
+					1u,
+					0u,
+					1u,
+					vk::DescriptorType::eStorageBuffer,
+					nullptr,
+					&descriptor_buffer_info_expressions,
 					nullptr,
 				},
 			},
@@ -871,7 +919,10 @@ void CSGRendererPerSurface::BeginFrame(
 	GPUCSGExpressionBuffer expressions;
 	const auto low_level_tree= BuildLowLevelTree_r(surfaces, csg_tree);
 	BuildSceneMeshNode_r(vertices, indices, expressions, low_level_tree, low_level_tree);
+
+	expressions.push_back(0);
 	BUILDCSGExpression_r(expressions, low_level_tree);
+	expressions[0]= GPUCSGExpressionBufferType(expressions.size());
 
 	command_buffer.updateBuffer(
 		*vertex_buffer_,
@@ -886,10 +937,16 @@ void CSGRendererPerSurface::BeginFrame(
 		indices.data());
 
 	command_buffer.updateBuffer(
-		*csg_data_buffer_gpu_,
+		*surfaces_data_buffer_gpu_,
 		0u,
 		surfaces.size() * sizeof(GPUSurface),
 		surfaces.data());
+
+	command_buffer.updateBuffer(
+		*expressions_data_buffer_gpu_,
+		0u,
+		expressions.size() * sizeof(GPUCSGExpressionBufferType),
+		expressions.data());
 
 	tonemapper_.DoMainPass(
 		command_buffer,

@@ -17,6 +17,11 @@ layout(set= 0, binding= 0, std430) buffer readonly csg_data_block
 	float surfaces_description[];
 };
 
+layout(set= 0, binding= 1, std430) buffer readonly csg_expressions_block
+{
+	int expressions_description[];
+};
+
 layout(location=0) out vec4 out_color;
 
 vec3 TextureFetch3d( vec3 coord, float smooth_size )
@@ -83,6 +88,82 @@ void main()
 		dist= dist_max;
 
 	vec3 intersection_pos= v + n * dist;
+
+	{
+		int expressions_stack[8]; // TODO - replace with "bool"
+		expressions_stack[0]= 0;
+		int stack_size= 0;
+
+		int o= 1, end= expressions_description[0];
+		for( int i= 0; i < 128 && o < end; ++i ) // Limit number of iterations
+		{
+			int operation= expressions_description[o];
+			++o;
+			if( operation == 100 )
+			{
+				int l= expressions_stack[stack_size - 2];
+				int r= expressions_stack[stack_size - 1];
+				expressions_stack[ stack_size - 2 ]= l & r;
+				--stack_size;
+			}
+			else if( operation == 101 )
+			{
+				int l= expressions_stack[stack_size - 2];
+				int r= expressions_stack[stack_size - 1];
+				expressions_stack[ stack_size - 2 ]= l | r;
+				--stack_size;
+			}
+			else if( operation == 102 )
+			{
+				int l= expressions_stack[stack_size - 2];
+				int r= expressions_stack[stack_size - 1];
+				expressions_stack[ stack_size - 2 ]= l & ~r;
+				--stack_size;
+			}
+			else if( operation == 200 )
+			{
+				int surf= expressions_description[o] * 16;
+				++o;
+				float xx= surfaces_description[surf+0];
+				float yy= surfaces_description[surf+1];
+				float zz= surfaces_description[surf+2];
+				float xy= surfaces_description[surf+3];
+				float xz= surfaces_description[surf+4];
+				float yz= surfaces_description[surf+5];
+				float x = surfaces_description[surf+6];
+				float y = surfaces_description[surf+7];
+				float z = surfaces_description[surf+8];
+				float k = surfaces_description[surf+9];
+
+				float val=
+					xx * intersection_pos.x * intersection_pos.x +
+					yy * intersection_pos.y * intersection_pos.y +
+					zz * intersection_pos.z * intersection_pos.z +
+					xy * intersection_pos.x * intersection_pos.y +
+					xz * intersection_pos.x * intersection_pos.z +
+					yz * intersection_pos.y * intersection_pos.z +
+					x * intersection_pos.x +
+					y * intersection_pos.y +
+					z * intersection_pos.z +
+					k;
+
+				if( val <= 0.01 ) // TODO - remove this epsilon, avoid self-intersection by excluding surface from its expression
+					expressions_stack[stack_size]= 1;
+				else
+					expressions_stack[stack_size]= 0;
+
+				++stack_size;
+			}
+			else
+				break;
+
+			if( stack_size == 0 )
+				break;
+		}
+
+		if( expressions_stack[0] == 0 )
+			discard;
+	}
 
 	vec3 normal=
 		2.0 * xx_yy_zz * intersection_pos +
