@@ -534,6 +534,9 @@ void BuildSceneMeshNode_impl(
 	const TreeElementsLowLevel::TreeElement& root,
 	const TreeElementsLowLevel::Leaf& node)
 {
+	SZV_UNUSED(out_expressions);
+	SZV_UNUSED(root);
+
 	AddCube(
 		out_vertices,
 		out_indices,
@@ -551,6 +554,7 @@ void BuildSceneMeshNode_impl(
 {
 	SZV_UNUSED(out_vertices);
 	SZV_UNUSED(out_indices);
+	SZV_UNUSED(out_expressions);
 	SZV_UNUSED(root);
 	SZV_UNUSED(node);
 }
@@ -564,8 +568,8 @@ void BuildSceneMeshNode_impl(
 {
 	SZV_UNUSED(out_vertices);
 	SZV_UNUSED(out_indices);
+	SZV_UNUSED(out_expressions);
 	SZV_UNUSED(root);
-
 	SZV_UNUSED(node);
 }
 
