@@ -61,8 +61,8 @@ struct Add;
 struct Mul;
 struct Sub;
 struct Leaf;
-struct OneLeaf;
-struct ZeroLeaf;
+struct OneLeaf{};
+struct ZeroLeaf{};
 
 using TreeElement= std::variant<
 	Add,
@@ -189,7 +189,198 @@ GPUSurface TransformSurface(const GPUSurface& s, const m_Vec3& center, const m_V
 			normal);
 }
 
-void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node);
+TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node);
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::MulChain& node)
+{
+	TreeElementsLowLevel::Mul mul;
+	mul.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
+	mul.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));
+
+	for (size_t i= 2u; i < node.elements.size(); ++i)
+	{
+		TreeElementsLowLevel::Mul mul_element;
+		mul_element.l= std::move(mul.r);
+		mul_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
+		mul.r= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(mul_element));
+	}
+
+	return std::move(mul);
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::AddChain& node)
+{
+	TreeElementsLowLevel::Add add;
+	add.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
+	add.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));
+
+	for (size_t i= 2u; i < node.elements.size(); ++i)
+	{
+		TreeElementsLowLevel::Add add_element;
+		add_element.l= std::move(add.r);
+		add_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
+		add.r= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(add_element));
+	}
+
+	return std::move(add);
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::SubChain& node)
+{
+	TreeElementsLowLevel::Sub sub;
+	sub.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
+	sub.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));
+
+	for (size_t i= 2u; i < node.elements.size(); ++i)
+	{
+		TreeElementsLowLevel::Sub sub_element;
+		sub_element.l= std::move(sub.r);
+		sub_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
+		sub.r= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(sub_element));
+	}
+
+	return std::move(sub);
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Sphere& node)
+{
+	GPUSurface surface{};
+	surface.xx= surface.yy= surface.zz= 1.0f;
+	surface.k= - node.radius * node.radius;
+	surface= TransformSurface(surface, node.center, m_Vec3(0.0f, 0.0f, 1.0f), m_Vec3(1.0f, 0.0f, 0.0f));
+
+	const size_t surface_index= out_surfaces.size();
+	out_surfaces.push_back(surface);
+
+	TreeElementsLowLevel::Leaf leaf;
+	leaf.surface_index= surface_index;
+	leaf.bb_min= node.center - m_Vec3(node.radius, node.radius, node.radius);
+	leaf.bb_max= node.center + m_Vec3(node.radius, node.radius, node.radius);
+	return leaf;
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cube& node)
+{
+	// Represent three pairs of parallel planes of cube using three quadratic surfaces.
+	const m_Vec3 normal(0.0f, 0.0f, 1.0f);
+	const m_Vec3 binormal(1.0, 0.0f, 0.0f);
+	const m_Vec3 bb_min= node.center - node.size * 0.5f;
+	const m_Vec3 bb_max= node.center + node.size * 0.5f;
+	const size_t surface_index= out_surfaces.size();
+
+	{
+		GPUSurface surface{};
+		surface.xx= 1.0f;
+		surface.k= -0.5f * node.size.x;
+		surface= TransformSurface(surface, node.center, normal, binormal);
+		out_surfaces.push_back(surface);
+	}
+	{
+		GPUSurface surface{};
+		surface.yy= 1.0f;
+		surface.k= -0.5f * node.size.y;
+		surface= TransformSurface(surface, node.center, normal, binormal);
+		out_surfaces.push_back(surface);
+	}
+	{
+		GPUSurface surface{};
+		surface.zz= 1.0f;
+		surface.k= -0.5f * node.size.z;
+		surface= TransformSurface(surface, node.center, normal, binormal);
+		out_surfaces.push_back(surface);
+	}
+
+	TreeElementsLowLevel::Leaf leafs[3];
+	for (size_t i= 0u; i < 3u; ++i)
+	{
+		leafs[i].surface_index= surface_index + i;
+		leafs[i].bb_min= bb_min;
+		leafs[i].bb_max= bb_max;
+	}
+
+	return TreeElementsLowLevel::Mul
+	{
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
+		std::make_unique<TreeElementsLowLevel::TreeElement>(
+			TreeElementsLowLevel::Mul
+			{
+				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
+				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[2]),
+			}),
+	};
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cylinder& node)
+{
+	GPUSurface surface{};
+	surface.xx= surface.yy= 1.0f;
+	surface.k= - node.radius * node.radius;
+	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+
+	const size_t surface_index= out_surfaces.size();
+	out_surfaces.push_back(surface);
+
+	// TODO - calculate bounding box more precisely
+	const float circular_radius= std::sqrt(node.radius * node.radius + 0.25f * node.height * node.height);
+
+	TreeElementsLowLevel::Leaf leaf;
+	leaf.surface_index= surface_index;
+	leaf.bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
+	leaf.bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
+	return leaf;
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
+{
+	const float k= std::tan(node.angle * 0.5f);
+
+	GPUSurface surface{};
+	surface.xx= surface.yy= 1.0f;
+	surface.zz= -k * k;
+	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+
+	const size_t surface_index= out_surfaces.size();
+	out_surfaces.push_back(surface);
+
+	// TODO - calculate bounding box more precisely
+	const float circular_radius= std::sqrt(node.height * node.height + node.height * node.height * k * k);
+
+	TreeElementsLowLevel::Leaf leaf;
+	leaf.surface_index= surface_index;
+	leaf.bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
+	leaf.bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
+	return leaf;
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Paraboloid& node)
+{
+	GPUSurface surface{};
+	surface.xx= surface.yy= 1.0f;
+	surface.z= -node.factor;
+	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+
+	const size_t surface_index= out_surfaces.size();
+	out_surfaces.push_back(surface);
+
+	// TODO - calculate bounding box more precisely
+	const float circular_radius= std::sqrt(node.height * node.height + std::sqrt(node.height) / node.factor);
+
+	TreeElementsLowLevel::Leaf leaf;
+	leaf.surface_index= surface_index;
+	leaf.bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
+	leaf.bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
+	return leaf;
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node)
+{
+	return std::visit(
+		[&](const auto& el)
+		{
+			return BuildLowLevelTreeNode_impl(out_surfaces, el);
+		},
+		node);
+}
 
 void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_Vec3& center, const m_Vec3 half_size, const size_t surface_idnex)
 {
@@ -230,133 +421,56 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_V
 		out_indices.push_back(IndexType(cube_index + start_index));
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::MulChain& node)
+void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::TreeElement& node);
+
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::Mul& node)
 {
-	for(const CSGTree::CSGTreeNode& child : node.elements)
-		BuildSceneMeshNode_r(out_vertices, out_indices, out_surfaces, child);
+	BuildSceneMeshNode_r(out_vertices, out_indices, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, *node.r);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::AddChain& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::Add& node)
 {
-	for(const CSGTree::CSGTreeNode& child : node.elements)
-		BuildSceneMeshNode_r(out_vertices, out_indices, out_surfaces, child);
+	BuildSceneMeshNode_r(out_vertices, out_indices, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, *node.r);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::SubChain& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::Sub& node)
 {
-	for(const CSGTree::CSGTreeNode& child : node.elements)
-		BuildSceneMeshNode_r(out_vertices, out_indices, out_surfaces, child);
+	BuildSceneMeshNode_r(out_vertices, out_indices, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, *node.r);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Sphere& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::Leaf& node)
 {
-	GPUSurface surface{};
-	surface.xx= surface.yy= surface.zz= 1.0f;
-	surface.k= - node.radius * node.radius;
-	surface= TransformSurface(surface, node.center, m_Vec3(0.0f, 0.0f, 1.0f), m_Vec3(1.0f, 0.0f, 0.0f));
-
-	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(surface);
-
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(node.radius, node.radius, node.radius), surface_index);
+	AddCube(
+		out_vertices,
+		out_indices,
+		(node.bb_min + node.bb_max) * 0.5f,
+		(node.bb_max - node.bb_min) * 0.5f,
+		node.surface_index);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cube& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::OneLeaf& node)
 {
-	// Represent three pairs of parallel planes of cube using three quadratic surfaces.
-	const m_Vec3 normal(0.0f, 0.0f, 1.0f);
-	const m_Vec3 binormal(1.0, 0.0f, 0.0f);
-	{
-		GPUSurface surface{};
-		surface.xx= 1.0f;
-		surface.k= -0.5f * node.size.x;
-		surface= TransformSurface(surface, node.center, normal, binormal);
-
-		const size_t surface_index= out_surfaces.size();
-		out_surfaces.push_back(surface);
-
-		AddCube(out_vertices, out_indices, node.center, node.size * 0.5f, surface_index);
-	}
-	{
-		GPUSurface surface{};
-		surface.yy= 1.0f;
-		surface.k= -0.5f * node.size.y;
-		surface= TransformSurface(surface, node.center, normal, binormal);
-
-		const size_t surface_index= out_surfaces.size();
-		out_surfaces.push_back(surface);
-
-		AddCube(out_vertices, out_indices, node.center, node.size * 0.5f, surface_index);
-	}
-	{
-		GPUSurface surface{};
-		surface.zz= 1.0f;
-		surface.k= -0.5f * node.size.z;
-		surface= TransformSurface(surface, node.center, normal, binormal);
-
-		const size_t surface_index= out_surfaces.size();
-		out_surfaces.push_back(surface);
-
-		AddCube(out_vertices, out_indices, node.center, node.size * 0.5f, surface_index);
-	}
+	SZV_UNUSED(out_vertices);
+	SZV_UNUSED(out_indices);
+	SZV_UNUSED(node);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cylinder& node)
+void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::ZeroLeaf& node)
 {
-	GPUSurface surface{};
-	surface.xx= surface.yy= 1.0f;
-	surface.k= - node.radius * node.radius;
-	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
-
-	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(surface);
-
-	// TODO - calculate bounding box more precisely
-	const float circular_radius= std::sqrt(node.radius * node.radius + 0.25f * node.height * node.height);
-
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(circular_radius, circular_radius, circular_radius), surface_index);
+	SZV_UNUSED(out_vertices);
+	SZV_UNUSED(out_indices);
+	SZV_UNUSED(node);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
-{
-	const float k= std::tan(node.angle * 0.5f);
-
-	GPUSurface surface{};
-	surface.xx= surface.yy= 1.0f;
-	surface.zz= -k * k;
-	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
-
-	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(surface);
-
-	// TODO - calculate bounding box more precisely
-	const float circular_radius= std::sqrt(node.height * node.height + node.height * node.height * k * k);
-
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(circular_radius, circular_radius, circular_radius), surface_index);
-}
-
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::Paraboloid& node)
-{
-	GPUSurface surface{};
-	surface.xx= surface.yy= 1.0f;
-	surface.z= -node.factor;
-	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
-
-	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(surface);
-
-	// TODO - calculate bounding box more precisely
-	const float circular_radius= std::sqrt(node.height * node.height + std::sqrt(node.height) / node.factor);
-
-	AddCube(out_vertices, out_indices, node.center, m_Vec3(circular_radius, circular_radius, circular_radius), surface_index);
-}
-
-void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node)
+void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::TreeElement& node)
 {
 	std::visit(
 		[&](const auto& el)
 		{
-			BuildSceneMeshNode_impl(out_vertices, out_indices, out_surfaces, el);
+			BuildSceneMeshNode_impl(out_vertices, out_indices, el);
 		},
 		node);
 }
@@ -584,7 +698,7 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 	}
 
 	{ // Create vertex buffer.
-		vertex_buffer_vertices_= 1024;
+		vertex_buffer_vertices_= 65536u / sizeof(SurfaceVertex);
 
 		vertex_buffer_=
 			vk_device_.createBufferUnique(
@@ -607,7 +721,7 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 			vk_device_.bindBufferMemory(*vertex_buffer_, *vertex_buffer_memory_, 0u);
 	}
 	{ // Create index buffer.
-		index_buffer_indeces_= 1024;
+		index_buffer_indeces_= 65536u / sizeof(IndexType);
 
 		index_buffer_=
 				vk_device_.createBufferUnique(
@@ -645,7 +759,7 @@ void CSGRendererPerSurface::BeginFrame(
 	VerticesVector vertices;
 	IndicesVector indices;
 	GPUSurfacesVector surfaces;
-	BuildSceneMeshNode_r(vertices, indices, surfaces, csg_tree);
+	BuildSceneMeshNode_r(vertices, indices, BuildLowLevelTree_r(surfaces, csg_tree));
 
 	command_buffer.updateBuffer(
 		*vertex_buffer_,
