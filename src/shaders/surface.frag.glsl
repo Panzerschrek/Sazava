@@ -91,7 +91,7 @@ void main()
 
 	{
 		int expressions_stack[8]; // TODO - replace with "bool"
-		expressions_stack[0]= 0;
+		expressions_stack[0]= 1;
 		int stack_size= 0;
 
 		int o= 1, end= expressions_description[0];
@@ -147,11 +147,10 @@ void main()
 					z * intersection_pos.z +
 					k;
 
-				if( val <= 0.01 ) // TODO - remove this epsilon, avoid self-intersection by excluding surface from its expression
-					expressions_stack[stack_size]= 1;
-				else
+				if( val >= 0.01 ) // TODO - remove this epsilon, avoid self-intersection by excluding surface from its expression
 					expressions_stack[stack_size]= 0;
-
+				else
+					expressions_stack[stack_size]= 1;
 				++stack_size;
 			}
 			else

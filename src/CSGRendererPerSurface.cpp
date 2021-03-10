@@ -284,21 +284,21 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	{
 		GPUSurface surface{};
 		surface.xx= 1.0f;
-		surface.k= -0.5f * node.size.x;
+		surface.k= -0.25f * node.size.x * node.size.x;
 		surface= TransformSurface(surface, node.center, normal, binormal);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.yy= 1.0f;
-		surface.k= -0.5f * node.size.y;
+		surface.k= -0.25f * node.size.y * node.size.y;
 		surface= TransformSurface(surface, node.center, normal, binormal);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
-		surface.k= -0.5f * node.size.z;
+		surface.k= -0.25f * node.size.z * node.size.z;
 		surface= TransformSurface(surface, node.center, normal, binormal);
 		out_surfaces.push_back(surface);
 	}
@@ -320,7 +320,6 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
 			}),
 		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[2]),
-
 	};
 }
 
