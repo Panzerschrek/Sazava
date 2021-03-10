@@ -49,8 +49,6 @@ const uint32_t g_brightness_tex_uniform_binding= 1u;
 const uint32_t g_exposure_accumulate_tex_uniform_binding= 2u;
 const uint32_t g_blured_tex_uniform_binding= 3u;
 
-const float g_max_depth= 1.0e16f;
-
 } // namespace
 
 Tonemapper::Tonemapper( WindowVulkan& window_vulkan)
@@ -87,15 +85,12 @@ Tonemapper::Tonemapper( WindowVulkan& window_vulkan)
 	}
 
 	// Select depth buffer format.
+	// We need at least 32-bit float.
 	const vk::Format depth_formats[]
 	{
 		// Depth formats by priority.
 		vk::Format::eD32Sfloat,
-		vk::Format::eD24UnormS8Uint,
-		vk::Format::eX8D24UnormPack32,
 		vk::Format::eD32SfloatS8Uint,
-		vk::Format::eD16Unorm,
-		vk::Format::eD16UnormS8Uint,
 	};
 	vk::Format framebuffer_depth_format= vk::Format::eD16Unorm;
 	for(const vk::Format depth_format_candidate : depth_formats)
@@ -562,11 +557,6 @@ vk::RenderPass Tonemapper::GetMainRenderPass() const
 	return *main_pass_;
 }
 
-float Tonemapper::GetMaxDepth() const
-{
-	return g_max_depth;
-}
-
 void Tonemapper::DoMainPass(const vk::CommandBuffer command_buffer, const std::function<void()>& draw_function)
 {
 	if(!exposure_buffer_prepared_)
@@ -596,7 +586,7 @@ void Tonemapper::DoMainPass(const vk::CommandBuffer command_buffer, const std::f
 	const vk::ClearValue clear_value[]
 	{
 		{ vk::ClearColorValue(std::array<float,4>{0.2f, 0.1f, 0.1f, 0.5f}) },
-		{ vk::ClearDepthStencilValue(g_max_depth, 0u) },
+		{ vk::ClearDepthStencilValue(1.0f, 0u) },
 	};
 
 	command_buffer.beginRenderPass(

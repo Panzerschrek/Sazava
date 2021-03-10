@@ -36,6 +36,8 @@ vec3 TextureFetch3d( vec3 coord, float smooth_size )
 
 void main()
 {
+	// Find itersection between ray from camera and surface, solving quadratic equation relative to "distance" variable.
+	// This variable is not real distance, since input direction vector is not normalized.
 	int offset= int(f_surface_index) * 16;
 	float xx= surfaces_description[offset+0];
 	float yy= surfaces_description[offset+1];
@@ -48,7 +50,7 @@ void main()
 	float z = surfaces_description[offset+8];
 	float k = surfaces_description[offset+9];
 
-	vec3 n= normalize(f_dir);
+	vec3 n= f_dir;
 	vec3 v= cam_pos.xyz;
 	vec3 xx_yy_zz= vec3( xx, yy, zz );
 	vec3 xy_xz_yz= vec3( xy, xz, yz );
@@ -87,7 +89,8 @@ void main()
 	if( dist_min <= 0.0 )
 		dist= dist_max;
 
-	vec3 intersection_pos= v + n * dist;
+	vec3 vec_to_intersection_pos= n * dist;
+	vec3 intersection_pos= v + vec_to_intersection_pos;
 
 	{
 		int expressions_stack[8]; // TODO - replace with "bool"
@@ -178,5 +181,8 @@ void main()
 	vec3 color= tex_value * ( sun_light_dot * sun_color.rgb + ambient_light_color.rgb );
 
 	out_color= vec4( color, 0.5 );
-	gl_FragDepth= dist;
+
+	const float z_far= 256.0;
+	// Store squared length, converted to range [0; z_far * z_far]
+	gl_FragDepth= dot( vec_to_intersection_pos, vec_to_intersection_pos ) * (1.0 / (z_far * z_far));
 }
