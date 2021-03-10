@@ -99,6 +99,19 @@ struct Leaf
 
 } // namespace TreeElementsLowLevel
 
+using GPUCSGExpressionBufferType= uint32_t;
+using GPUCSGExpressionBuffer= std::vector<GPUCSGExpressionBufferType>;
+enum class GPUCSGExpressionCodes : GPUCSGExpressionBufferType
+{
+	Mul= 100,
+	Add= 101,
+	Sub= 102,
+
+	Leaf= 200,
+	OneLeaf= 300,
+	ZeroLeaf= 301,
+};
+
 GPUSurface TransformSurface_impl(
 	const GPUSurface& s,
 	const m_Vec3& shift,
@@ -421,27 +434,105 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_V
 		out_indices.push_back(IndexType(cube_index + start_index));
 }
 
-void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::TreeElement& node);
+void BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::TreeElement& node);
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::Mul& node)
+
+void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Mul& node)
 {
-	BuildSceneMeshNode_r(out_vertices, out_indices, *node.l);
-	BuildSceneMeshNode_r(out_vertices, out_indices, *node.r);
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
+	BUILDCSGExpression_r(out_expression, *node.l);
+	BUILDCSGExpression_r(out_expression, *node.r);
+	// TODO - process zero/one nodes
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::Add& node)
+void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Add& node)
 {
-	BuildSceneMeshNode_r(out_vertices, out_indices, *node.l);
-	BuildSceneMeshNode_r(out_vertices, out_indices, *node.r);
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Add));
+	BUILDCSGExpression_r(out_expression, *node.l);
+	BUILDCSGExpression_r(out_expression, *node.r);
+	// TODO - process zero/one nodes
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::Sub& node)
+void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Sub& node)
 {
-	BuildSceneMeshNode_r(out_vertices, out_indices, *node.l);
-	BuildSceneMeshNode_r(out_vertices, out_indices, *node.r);
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
+	BUILDCSGExpression_r(out_expression, *node.l);
+	BUILDCSGExpression_r(out_expression, *node.r);
+	// TODO - process zero/one nodes
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::Leaf& node)
+void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Leaf& node)
+{
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Leaf));
+	out_expression.push_back(GPUCSGExpressionBufferType(node.surface_index));
+}
+
+void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::OneLeaf& )
+{
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::ZeroLeaf));
+}
+
+void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::ZeroLeaf& )
+{
+	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::OneLeaf));
+}
+
+void BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::TreeElement& node)
+{
+	std::visit(
+		[&](const auto& el)
+		{
+			BUILDCSGExpressionNode_impl(out_expression, el);
+		},
+		node);
+}
+
+void BuildSceneMeshNode_r(
+	VerticesVector& out_vertices,
+	IndicesVector& out_indices,
+	GPUCSGExpressionBuffer& out_expressions,
+	const TreeElementsLowLevel::TreeElement& root,
+	const TreeElementsLowLevel::TreeElement& node);
+
+void BuildSceneMeshNode_impl(
+	VerticesVector& out_vertices,
+	IndicesVector& out_indices,
+	GPUCSGExpressionBuffer& out_expressions,
+	const TreeElementsLowLevel::TreeElement& root,
+	const TreeElementsLowLevel::Mul& node)
+{
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.r);
+}
+
+void BuildSceneMeshNode_impl(
+	VerticesVector& out_vertices,
+	IndicesVector& out_indices,
+	GPUCSGExpressionBuffer& out_expressions,
+	const TreeElementsLowLevel::TreeElement& root,
+	const TreeElementsLowLevel::Add& node)
+{
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.r);
+}
+
+void BuildSceneMeshNode_impl(
+	VerticesVector& out_vertices,
+	IndicesVector& out_indices,
+	GPUCSGExpressionBuffer& out_expressions,
+	const TreeElementsLowLevel::TreeElement& root,
+	const TreeElementsLowLevel::Sub& node)
+{
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.r);
+}
+
+void BuildSceneMeshNode_impl(
+	VerticesVector& out_vertices,
+	IndicesVector& out_indices,
+	GPUCSGExpressionBuffer& out_expressions,
+	const TreeElementsLowLevel::TreeElement& root,
+	const TreeElementsLowLevel::Leaf& node)
 {
 	AddCube(
 		out_vertices,
@@ -451,26 +542,44 @@ void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_in
 		node.surface_index);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::OneLeaf& node)
+void BuildSceneMeshNode_impl(
+	VerticesVector& out_vertices,
+	IndicesVector& out_indices,
+	GPUCSGExpressionBuffer& out_expressions,
+	const TreeElementsLowLevel::TreeElement& root,
+	const TreeElementsLowLevel::OneLeaf& node)
 {
 	SZV_UNUSED(out_vertices);
 	SZV_UNUSED(out_indices);
+	SZV_UNUSED(root);
 	SZV_UNUSED(node);
 }
 
-void BuildSceneMeshNode_impl(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::ZeroLeaf& node)
+void BuildSceneMeshNode_impl(
+	VerticesVector& out_vertices,
+	IndicesVector& out_indices,
+	GPUCSGExpressionBuffer& out_expressions,
+	const TreeElementsLowLevel::TreeElement& root,
+	const TreeElementsLowLevel::ZeroLeaf& node)
 {
 	SZV_UNUSED(out_vertices);
 	SZV_UNUSED(out_indices);
+	SZV_UNUSED(root);
+
 	SZV_UNUSED(node);
 }
 
-void BuildSceneMeshNode_r(VerticesVector& out_vertices, IndicesVector& out_indices, const TreeElementsLowLevel::TreeElement& node)
+void BuildSceneMeshNode_r(
+	VerticesVector& out_vertices,
+	IndicesVector& out_indices,
+	GPUCSGExpressionBuffer& out_expressions,
+	const TreeElementsLowLevel::TreeElement& root,
+	const TreeElementsLowLevel::TreeElement& node)
 {
 	std::visit(
 		[&](const auto& el)
 		{
-			BuildSceneMeshNode_impl(out_vertices, out_indices, el);
+			BuildSceneMeshNode_impl(out_vertices, out_indices, out_expressions, root, el);
 		},
 		node);
 }
@@ -759,7 +868,10 @@ void CSGRendererPerSurface::BeginFrame(
 	VerticesVector vertices;
 	IndicesVector indices;
 	GPUSurfacesVector surfaces;
-	BuildSceneMeshNode_r(vertices, indices, BuildLowLevelTree_r(surfaces, csg_tree));
+	GPUCSGExpressionBuffer expressions;
+	const auto low_level_tree= BuildLowLevelTree_r(surfaces, csg_tree);
+	BuildSceneMeshNode_r(vertices, indices, expressions, low_level_tree, low_level_tree);
+	BUILDCSGExpression_r(expressions, low_level_tree);
 
 	command_buffer.updateBuffer(
 		*vertex_buffer_,
