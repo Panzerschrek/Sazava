@@ -325,64 +325,123 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cylinder& node)
 {
-	GPUSurface surface{};
-	surface.xx= surface.yy= 1.0f;
-	surface.k= - node.radius * node.radius;
-	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
-
 	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(surface);
+
+	{
+		GPUSurface surface{};
+		surface.xx= surface.yy= 1.0f;
+		surface.k= - node.radius * node.radius;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
+	{
+		GPUSurface surface{};
+		surface.zz= 1.0f;
+		surface.k= -0.25f * node.height * node.height;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
 
 	// TODO - calculate bounding box more precisely
 	const float circular_radius= std::sqrt(node.radius * node.radius + 0.25f * node.height * node.height);
+	const m_Vec3 bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
+	const m_Vec3 bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
 
-	TreeElementsLowLevel::Leaf leaf;
-	leaf.surface_index= surface_index;
-	leaf.bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
-	leaf.bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
-	return leaf;
+	TreeElementsLowLevel::Leaf leafs[2];
+	for (size_t i= 0u; i < 2u; ++i)
+	{
+		leafs[i].surface_index= surface_index + i;
+		leafs[i].bb_min= bb_min;
+		leafs[i].bb_max= bb_max;
+	}
+
+	return TreeElementsLowLevel::Mul
+	{
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
+	};
 }
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
 {
 	const float k= std::tan(node.angle * 0.5f);
 
-	GPUSurface surface{};
-	surface.xx= surface.yy= 1.0f;
-	surface.zz= -k * k;
-	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
-
 	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(surface);
+	{
+		GPUSurface surface{};
+		surface.xx= surface.yy= 1.0f;
+		surface.zz= -k * k;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
+	{
+		GPUSurface surface{};
+		surface.zz= 1.0f;
+		surface.z= -node.height;
+		surface.k= 0.0f;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
 
 	// TODO - calculate bounding box more precisely
 	const float circular_radius= std::sqrt(node.height * node.height + node.height * node.height * k * k);
+	const m_Vec3 bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
+	const m_Vec3 bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
 
-	TreeElementsLowLevel::Leaf leaf;
-	leaf.surface_index= surface_index;
-	leaf.bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
-	leaf.bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
-	return leaf;
+	TreeElementsLowLevel::Leaf leafs[2];
+	for (size_t i= 0u; i < 2u; ++i)
+	{
+		leafs[i].surface_index= surface_index + i;
+		leafs[i].bb_min= bb_min;
+		leafs[i].bb_max= bb_max;
+	}
+
+	return TreeElementsLowLevel::Mul
+	{
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
+	};
 }
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Paraboloid& node)
 {
-	GPUSurface surface{};
-	surface.xx= surface.yy= 1.0f;
-	surface.z= -node.factor;
-	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
-
 	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(surface);
+
+	{
+		GPUSurface surface{};
+		surface.xx= surface.yy= 1.0f;
+		surface.z= -node.factor;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
+	{
+		GPUSurface surface{};
+		surface.zz= 1.0f;
+		surface.z= -node.height;
+		surface.k= 0.0f;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
 
 	// TODO - calculate bounding box more precisely
 	const float circular_radius= std::sqrt(node.height * node.height + std::sqrt(node.height) / node.factor);
+	const m_Vec3 bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
+	const m_Vec3 bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
 
-	TreeElementsLowLevel::Leaf leaf;
-	leaf.surface_index= surface_index;
-	leaf.bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
-	leaf.bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
-	return leaf;
+	TreeElementsLowLevel::Leaf leafs[2];
+	for (size_t i= 0u; i < 2u; ++i)
+	{
+		leafs[i].surface_index= surface_index + i;
+		leafs[i].bb_min= bb_min;
+		leafs[i].bb_max= bb_max;
+	}
+
+
+	return TreeElementsLowLevel::Mul
+	{
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
+	};
 }
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node)
