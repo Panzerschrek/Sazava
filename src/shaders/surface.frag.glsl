@@ -10,7 +10,7 @@ layout(push_constant) uniform uniforms_block
 };
 
 layout(location=0) in vec3 f_dir;
-layout(location=1) in flat float f_surface_index;
+layout(location=1) in flat float f_surface_description_offset;
 
 layout(set= 0, binding= 0, std430) buffer readonly csg_data_block
 {
@@ -114,7 +114,7 @@ void main()
 {
 	// Find itersection between ray from camera and surface, solving quadratic equation relative to "distance" variable.
 	// This variable is not real distance, since input direction vector is not normalized.
-	SurfaceDescription s= FetchSurface( int(f_surface_index)  );
+	SurfaceDescription s= FetchSurface( expressions_description[int(f_surface_description_offset)] );
 
 	vec3 n= f_dir;
 	vec3 v= cam_pos.xyz;
@@ -155,8 +155,10 @@ void main()
 	vec3 vec_to_intersection_pos= n * dist;
 	vec3 intersection_pos= v + vec_to_intersection_pos;
 
+	/*
 	if( !IsInsideFigure( intersection_pos ) )
 		discard;
+	*/
 
 	vec3 normal=
 		2.0 * s.xx_yy_zz * intersection_pos +

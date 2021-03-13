@@ -27,7 +27,7 @@ struct Uniforms
 struct SurfaceVertex
 {
 	float pos[3];
-	float surface_index;
+	float surface_description_offset;
 };
 
 using IndexType= uint16_t;
@@ -61,16 +61,12 @@ struct Add;
 struct Mul;
 struct Sub;
 struct Leaf;
-struct OneLeaf{};
-struct ZeroLeaf{};
 
 using TreeElement= std::variant<
 	Add,
 	Mul,
 	Sub,
-	Leaf,
-	OneLeaf,
-	ZeroLeaf>;
+	Leaf >;
 
 struct Add
 {
@@ -454,7 +450,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_sur
 		node);
 }
 
-void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_Vec3& center, const m_Vec3 half_size, const size_t surface_idnex)
+void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_Vec3& center, const m_Vec3 half_size, const size_t surface_description_offset)
 {
 	static const m_Vec3 cube_vertices[8]=
 	{
@@ -484,7 +480,7 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_V
 				cube_vertex.y * half_size.y + center.y,
 				cube_vertex.z * half_size.z + center.z,
 			},
-			float(surface_idnex),
+			float(surface_description_offset),
 		};
 		out_vertices.push_back(v);
 	}
@@ -495,13 +491,11 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_V
 
 void BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::TreeElement& node);
 
-
 void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Mul& node)
 {
 	BUILDCSGExpression_r(out_expression, *node.l);
 	BUILDCSGExpression_r(out_expression, *node.r);
 	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
-	// TODO - process zero/one nodes
 }
 
 void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Add& node)
@@ -509,7 +503,6 @@ void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const T
 	BUILDCSGExpression_r(out_expression, *node.l);
 	BUILDCSGExpression_r(out_expression, *node.r);
 	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Add));
-	// TODO - process zero/one nodes
 }
 
 void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Sub& node)
@@ -517,23 +510,12 @@ void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const T
 	BUILDCSGExpression_r(out_expression, *node.l);
 	BUILDCSGExpression_r(out_expression, *node.r);
 	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
-	// TODO - process zero/one nodes
 }
 
 void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Leaf& node)
 {
 	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Leaf));
 	out_expression.push_back(GPUCSGExpressionBufferType(node.surface_index));
-}
-
-void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::OneLeaf& )
-{
-	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::ZeroLeaf));
-}
-
-void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::ZeroLeaf& )
-{
-	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::OneLeaf));
 }
 
 void BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::TreeElement& node)
@@ -546,105 +528,85 @@ void BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const TreeElem
 		node);
 }
 
+using NodesStack= std::vector<const TreeElementsLowLevel::TreeElement*>;
+
 void BuildSceneMeshNode_r(
 	VerticesVector& out_vertices,
 	IndicesVector& out_indices,
 	GPUCSGExpressionBuffer& out_expressions,
-	const TreeElementsLowLevel::TreeElement& root,
+	NodesStack& nodes_stack,
 	const TreeElementsLowLevel::TreeElement& node);
 
 void BuildSceneMeshNode_impl(
 	VerticesVector& out_vertices,
 	IndicesVector& out_indices,
 	GPUCSGExpressionBuffer& out_expressions,
-	const TreeElementsLowLevel::TreeElement& root,
+	NodesStack& nodes_stack,
 	const TreeElementsLowLevel::Mul& node)
 {
-	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.l);
-	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.r);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, nodes_stack, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, nodes_stack, *node.r);
 }
 
 void BuildSceneMeshNode_impl(
 	VerticesVector& out_vertices,
 	IndicesVector& out_indices,
 	GPUCSGExpressionBuffer& out_expressions,
-	const TreeElementsLowLevel::TreeElement& root,
+	NodesStack& nodes_stack,
 	const TreeElementsLowLevel::Add& node)
 {
-	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.l);
-	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.r);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, nodes_stack, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, nodes_stack, *node.r);
 }
 
 void BuildSceneMeshNode_impl(
 	VerticesVector& out_vertices,
 	IndicesVector& out_indices,
 	GPUCSGExpressionBuffer& out_expressions,
-	const TreeElementsLowLevel::TreeElement& root,
+	NodesStack& nodes_stack,
 	const TreeElementsLowLevel::Sub& node)
 {
-	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.l);
-	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, root, *node.r);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, nodes_stack, *node.l);
+	BuildSceneMeshNode_r(out_vertices, out_indices, out_expressions, nodes_stack, *node.r);
 }
 
 void BuildSceneMeshNode_impl(
 	VerticesVector& out_vertices,
 	IndicesVector& out_indices,
 	GPUCSGExpressionBuffer& out_expressions,
-	const TreeElementsLowLevel::TreeElement& root,
+	NodesStack& nodes_stack,
 	const TreeElementsLowLevel::Leaf& node)
 {
-	SZV_UNUSED(out_expressions);
-	SZV_UNUSED(root);
+	SZV_UNUSED(nodes_stack);
+
+	const size_t offset= out_expressions.size();
+	out_expressions.push_back(GPUCSGExpressionBufferType(node.surface_index));
 
 	AddCube(
 		out_vertices,
 		out_indices,
 		(node.bb_min + node.bb_max) * 0.5f,
 		(node.bb_max - node.bb_min) * 0.5f,
-		node.surface_index);
-}
-
-void BuildSceneMeshNode_impl(
-	VerticesVector& out_vertices,
-	IndicesVector& out_indices,
-	GPUCSGExpressionBuffer& out_expressions,
-	const TreeElementsLowLevel::TreeElement& root,
-	const TreeElementsLowLevel::OneLeaf& node)
-{
-	SZV_UNUSED(out_vertices);
-	SZV_UNUSED(out_indices);
-	SZV_UNUSED(out_expressions);
-	SZV_UNUSED(root);
-	SZV_UNUSED(node);
-}
-
-void BuildSceneMeshNode_impl(
-	VerticesVector& out_vertices,
-	IndicesVector& out_indices,
-	GPUCSGExpressionBuffer& out_expressions,
-	const TreeElementsLowLevel::TreeElement& root,
-	const TreeElementsLowLevel::ZeroLeaf& node)
-{
-	SZV_UNUSED(out_vertices);
-	SZV_UNUSED(out_indices);
-	SZV_UNUSED(out_expressions);
-	SZV_UNUSED(root);
-	SZV_UNUSED(node);
+		offset);
 }
 
 void BuildSceneMeshNode_r(
 	VerticesVector& out_vertices,
 	IndicesVector& out_indices,
 	GPUCSGExpressionBuffer& out_expressions,
-	const TreeElementsLowLevel::TreeElement& root,
+	NodesStack& nodes_stack,
 	const TreeElementsLowLevel::TreeElement& node)
 {
+	nodes_stack.push_back(&node);
+
 	std::visit(
 		[&](const auto& el)
 		{
-			BuildSceneMeshNode_impl(out_vertices, out_indices, out_expressions, root, el);
+			BuildSceneMeshNode_impl(out_vertices, out_indices, out_expressions, nodes_stack, el);
 		},
 		node);
+
+	nodes_stack.pop_back();
 }
 
 } // namespace
@@ -980,11 +942,15 @@ void CSGRendererPerSurface::BeginFrame(
 	GPUSurfacesVector surfaces;
 	GPUCSGExpressionBuffer expressions;
 	const auto low_level_tree= BuildLowLevelTree_r(surfaces, csg_tree);
-	BuildSceneMeshNode_r(vertices, indices, expressions, low_level_tree, low_level_tree);
 
+	NodesStack nodes_stack;
+	BuildSceneMeshNode_r(vertices, indices, expressions, nodes_stack, low_level_tree);
+
+	/*
 	expressions.push_back(0);
 	BUILDCSGExpression_r(expressions, low_level_tree);
 	expressions[0]= GPUCSGExpressionBufferType(expressions.size());
+	*/
 
 	command_buffer.updateBuffer(
 		*vertex_buffer_,
