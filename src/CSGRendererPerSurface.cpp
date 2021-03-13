@@ -500,41 +500,108 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const Bou
 		out_indices.push_back(IndexType(cube_index + start_index));
 }
 
-void BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::TreeElement& node);
-
-void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Mul& node)
+enum class CSGExpressionBuildResult
 {
-	BUILDCSGExpression_r(out_expression, *node.l);
-	BUILDCSGExpression_r(out_expression, *node.r);
-	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
+	Variable,
+	AlwaysZero,
+	AlwaysOne,
+};
+
+CSGExpressionBuildResult BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const BoundingBox& target_bb, const TreeElementsLowLevel::TreeElement& node);
+
+CSGExpressionBuildResult BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const BoundingBox& target_bb, const TreeElementsLowLevel::Mul& node)
+{
+	const size_t prev_size= out_expression.size();
+	const CSGExpressionBuildResult l_result= BUILDCSGExpression_r(out_expression, target_bb, *node.l);
+	const CSGExpressionBuildResult r_result= BUILDCSGExpression_r(out_expression, target_bb, *node.r);
+
+	if (l_result == CSGExpressionBuildResult::Variable && r_result == CSGExpressionBuildResult::Variable)
+	{
+		out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
+		return CSGExpressionBuildResult::Variable;
+	}
+	else if (l_result == CSGExpressionBuildResult::AlwaysZero || r_result == CSGExpressionBuildResult::AlwaysZero)
+	{
+		out_expression.resize(prev_size);
+		return CSGExpressionBuildResult::AlwaysZero;
+	}
+	else if (l_result == CSGExpressionBuildResult::AlwaysOne)
+		return r_result;
+	else if (r_result == CSGExpressionBuildResult::AlwaysOne)
+		return l_result;
+	else SZV_ASSERT(false);
+	return CSGExpressionBuildResult::Variable;
 }
 
-void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Add& node)
+CSGExpressionBuildResult BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const BoundingBox& target_bb, const TreeElementsLowLevel::Add& node)
 {
-	BUILDCSGExpression_r(out_expression, *node.l);
-	BUILDCSGExpression_r(out_expression, *node.r);
-	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Add));
+	const size_t prev_size= out_expression.size();
+	const CSGExpressionBuildResult l_result= BUILDCSGExpression_r(out_expression, target_bb, *node.l);
+	const CSGExpressionBuildResult r_result= BUILDCSGExpression_r(out_expression, target_bb, *node.r);
+	if (l_result == CSGExpressionBuildResult::Variable && r_result == CSGExpressionBuildResult::Variable)
+	{
+		out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Add));
+		return CSGExpressionBuildResult::Variable;
+	}
+	else if (l_result == CSGExpressionBuildResult::AlwaysOne || r_result == CSGExpressionBuildResult::AlwaysOne)
+	{
+		out_expression.resize(prev_size);
+		return CSGExpressionBuildResult::AlwaysOne;
+	}
+	else if (l_result == CSGExpressionBuildResult::AlwaysZero)
+		return r_result;
+	else if (r_result == CSGExpressionBuildResult::AlwaysZero)
+		return l_result;
+	else SZV_ASSERT(false);
+	return CSGExpressionBuildResult::Variable;
 }
 
-void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Sub& node)
+CSGExpressionBuildResult BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const BoundingBox& target_bb, const TreeElementsLowLevel::Sub& node)
 {
-	BUILDCSGExpression_r(out_expression, *node.l);
-	BUILDCSGExpression_r(out_expression, *node.r);
-	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
+	const size_t prev_size= out_expression.size();
+	const CSGExpressionBuildResult l_result= BUILDCSGExpression_r(out_expression, target_bb, *node.l);
+	const CSGExpressionBuildResult r_result= BUILDCSGExpression_r(out_expression, target_bb, *node.r);
+	if (l_result == CSGExpressionBuildResult::Variable && r_result == CSGExpressionBuildResult::Variable)
+	{
+		out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
+		return CSGExpressionBuildResult::Variable;
+	}
+	else if(l_result == CSGExpressionBuildResult::AlwaysZero || r_result == CSGExpressionBuildResult::AlwaysOne)
+	{
+		out_expression.resize(prev_size);
+		return CSGExpressionBuildResult::AlwaysZero;
+	}
+	else if (r_result == CSGExpressionBuildResult::AlwaysZero)
+		return l_result;
+	else if (l_result == CSGExpressionBuildResult::AlwaysOne)
+	{
+		out_expression.resize(prev_size);
+		out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::OneLeaf));
+		BUILDCSGExpression_r(out_expression, target_bb, *node.r);
+		out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
+	}
+	else SZV_ASSERT(false);
+	return CSGExpressionBuildResult::Variable;
 }
 
-void BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::Leaf& node)
+CSGExpressionBuildResult BUILDCSGExpressionNode_impl(GPUCSGExpressionBuffer& out_expression, const BoundingBox& target_bb, const TreeElementsLowLevel::Leaf& node)
 {
+	if (node.bb.max.x < target_bb.min.x || node.bb.min.x > target_bb.max.x ||
+		node.bb.max.y < target_bb.min.y || node.bb.min.y > target_bb.max.y ||
+		node.bb.max.z < target_bb.min.z || node.bb.min.z > target_bb.max.z )
+		return CSGExpressionBuildResult::AlwaysZero;
+
 	out_expression.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Leaf));
 	out_expression.push_back(GPUCSGExpressionBufferType(node.surface_index));
+	return CSGExpressionBuildResult::Variable;
 }
 
-void BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const TreeElementsLowLevel::TreeElement& node)
+CSGExpressionBuildResult BUILDCSGExpression_r(GPUCSGExpressionBuffer& out_expression, const BoundingBox& target_bb, const TreeElementsLowLevel::TreeElement& node)
 {
-	std::visit(
+	return std::visit(
 		[&](const auto& el)
 		{
-			BUILDCSGExpressionNode_impl(out_expression, el);
+			return BUILDCSGExpressionNode_impl(out_expression, target_bb, el);
 		},
 		node);
 }
@@ -594,36 +661,56 @@ void BuildSceneMeshNode_impl(
 	const size_t expression_size_offset= out_expressions.size();
 	out_expressions.push_back(0); // Reserve place for size.
 
-	SZV_ASSERT(!nodes_stack.empty() && std::get_if<TreeElementsLowLevel::Leaf>(nodes_stack.back()) == &node);
+	const size_t expression_start_offset= out_expressions.size();
 	out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::OneLeaf));
+
+	const auto process_sub= [&](const CSGExpressionBuildResult res)
+	{
+		if(res == CSGExpressionBuildResult::Variable)
+			out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
+		else if(res == CSGExpressionBuildResult::AlwaysZero){}
+		else if(res == CSGExpressionBuildResult::AlwaysOne)
+		{
+			out_expressions.resize(expression_start_offset);
+			out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::ZeroLeaf));
+		}
+		else SZV_ASSERT(false);
+	};
+
+	const auto process_mul= [&](const CSGExpressionBuildResult res)
+	{
+		if(res == CSGExpressionBuildResult::Variable)
+			out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
+		else if(res == CSGExpressionBuildResult::AlwaysZero)
+		{
+			out_expressions.resize(expression_start_offset);
+			out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::ZeroLeaf));
+		}
+		else if(res == CSGExpressionBuildResult::AlwaysOne) {}
+		else SZV_ASSERT(false);
+	};
+
+	SZV_ASSERT(!nodes_stack.empty() && std::get_if<TreeElementsLowLevel::Leaf>(nodes_stack.back()) == &node);
 	for(size_t i= nodes_stack.size() - 1u; i > 0u; --i)
 	{
 		const TreeElementsLowLevel::TreeElement* const el= nodes_stack[i - 1u];
 		if(const auto add= std::get_if<TreeElementsLowLevel::Add>(el))
 		{
 			const bool this_is_left= add->l.get() == nodes_stack[i];
-			BUILDCSGExpression_r(out_expressions, this_is_left ? *add->r : *add->l);
-			out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
+			process_sub(BUILDCSGExpression_r(out_expressions, node.bb, this_is_left ? *add->r : *add->l));
 		}
 		else if(const auto mul= std::get_if<TreeElementsLowLevel::Mul>(el))
 		{
 			const bool this_is_left= mul->l.get() == nodes_stack[i];
-			BUILDCSGExpression_r(out_expressions, this_is_left ? *mul->r : *mul->l);
-			out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
+			process_mul(BUILDCSGExpression_r(out_expressions, node.bb, this_is_left ? *mul->r : *mul->l));
 		}
 		else if(const auto sub= std::get_if<TreeElementsLowLevel::Sub>(el))
 		{
 			const bool this_is_left= sub->l.get() == nodes_stack[i];
 			if (this_is_left)
-			{
-				BUILDCSGExpression_r(out_expressions, *sub->r);
-				out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
-			}
+				process_sub(BUILDCSGExpression_r(out_expressions, node.bb, *sub->r));
 			else
-			{
-				BUILDCSGExpression_r(out_expressions, *sub->l);
-				out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
-			}
+				process_mul(BUILDCSGExpression_r(out_expressions, node.bb, *sub->l));
 		}
 		else SZV_ASSERT(false);
 	}
