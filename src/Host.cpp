@@ -1,7 +1,6 @@
 #include "Host.hpp"
 #include "Assert.hpp"
 #include "CSGRendererPerSurface.hpp"
-#include "CSGRendererStraightforward.hpp"
 #include <thread>
 
 
