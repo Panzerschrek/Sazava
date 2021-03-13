@@ -222,6 +222,26 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	return leaf;
 }
 
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Ellipsoid& node)
+{
+	GPUSurface surface{};
+	surface.xx= 1.0f / (node.radius.x * node.radius.x);
+	surface.yy= 1.0f / (node.radius.y * node.radius.y);
+	surface.zz= 1.0f / (node.radius.z * node.radius.z);
+	surface.k= -1.0f;
+	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+
+	const size_t surface_index= out_surfaces.size();
+	out_surfaces.push_back(surface);
+
+	const BoundingBox bb{ -node.radius, node.radius };
+
+	TreeElementsLowLevel::Leaf leaf;
+	leaf.surface_index= surface_index;
+	leaf.bb= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+	return leaf;
+}
+
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cube& node)
 {
 	// Represent three pairs of parallel planes of cube using three quadratic surfaces.

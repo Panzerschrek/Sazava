@@ -13,6 +13,7 @@ struct MulChain;
 struct AddChain;
 struct SubChain;
 struct Sphere;
+struct Ellipsoid;
 struct Cube;
 struct Cylinder;
 struct Cone;
@@ -23,6 +24,7 @@ using CSGTreeNode= std::variant<
 	AddChain,
 	SubChain,
 	Sphere,
+	Ellipsoid,
 	Cube,
 	Cylinder,
 	Cone,
@@ -47,6 +49,14 @@ struct Sphere
 {
 	m_Vec3 center;
 	float radius;
+};
+
+struct Ellipsoid
+{
+	m_Vec3 center;
+	m_Vec3 radius;
+	m_Vec3 normal;
+	m_Vec3 binormal;
 };
 
 struct Cube

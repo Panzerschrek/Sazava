@@ -54,6 +54,24 @@ CSGTree::CSGTreeNode GetTestCSGTree()
 			} },
 			CSGTree::Paraboloid{ { 2.0f, 6.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, 0.5f, 0.5f },
 			CSGTree::Cone{ { 2.5f, 8.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 3.1415926535f / 5.0f, 2.5f },
+			CSGTree::Ellipsoid{ { -5.0f, 5.0f, 4.0f }, { 0.4f, 0.3f, 0.2f }, { std::sqrt(0.5f), 0.0f, std::sqrt(0.5f) }, { 0.0f, 1.0f, 0.0f } },
+			CSGTree::Ellipsoid{ { -5.0f, 5.0f, 1.0f }, { 1.0f, 1.0f, 0.2f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+			CSGTree::Ellipsoid{ { -5.0f, 5.0f, 1.0f }, { 0.2f, 0.2f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+			CSGTree::AddChain
+			{ {
+				CSGTree::Cylinder{ { -3.0f, 6.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 0.45f, 1.0f },
+				CSGTree::Ellipsoid{ { -3.0f, 6.0f, 0.6f }, { 0.5f, 0.5f, 0.1f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+				CSGTree::Ellipsoid{ { -3.0f, 6.0f, 0.8f }, { 0.5f, 0.5f, 0.1f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+				CSGTree::Ellipsoid{ { -3.0f, 6.0f, 1.0f }, { 0.5f, 0.5f, 0.1f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+				CSGTree::Ellipsoid{ { -3.0f, 6.0f, 1.2f }, { 0.5f, 0.5f, 0.1f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+				CSGTree::Ellipsoid{ { -3.0f, 6.0f, 1.4f }, { 0.5f, 0.5f, 0.1f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+			} },
+			CSGTree::SubChain
+			{ {
+				CSGTree::Ellipsoid{ { -3.0f, 8.0f, 1.0f }, { 1.0f, 1.0f, 0.2f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } },
+				CSGTree::Cylinder{ { -3.0f, 8.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, 0.9f, 0.5f },
+				CSGTree::Cube{ { -3.0f, 8.0f, 0.0f }, { 2.0f, 2.0f, 2.0f } },
+			} },
 			// Test multiple intersected additions.
 			CSGTree::AddChain
 			{ {
