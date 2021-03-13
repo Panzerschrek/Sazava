@@ -137,9 +137,8 @@ void main()
 	if( a == 0.0 )
 	{
 		if( b == 0.0 )
-		{
 			discard;
-		}
+
 		dist0= dist1= -c / b;
 	}
 	else

@@ -203,6 +203,57 @@ GPUSurface TransformSurface(const GPUSurface& s, const m_Vec3& center, const m_V
 			normal);
 }
 
+// Warning!
+// normal and binormal vectors must be perpendicular and must have identity length!
+BoundingBox TransformBoundingBox(const BoundingBox& bb, const m_Vec3& center, const m_Vec3& normal, const m_Vec3& binormal)
+{
+	m_Mat4 rotate, translate, full_transform;
+
+	const m_Vec3 tangent= mVec3Cross(normal, binormal);
+
+	rotate.MakeIdentity();
+	rotate.value[ 0]= binormal.x;
+	rotate.value[ 1]= binormal.y;
+	rotate.value[ 2]= binormal.z;
+	rotate.value[ 4]= tangent.x;
+	rotate.value[ 5]= tangent.y;
+	rotate.value[ 6]= tangent.z;
+	rotate.value[ 8]= normal.x;
+	rotate.value[ 9]= normal.y;
+	rotate.value[10]= normal.z;
+
+	translate.Translate(center);
+
+	full_transform= rotate * translate;
+
+	const m_Vec3 bb_vertices[8]=
+	{
+		m_Vec3(bb.min.x, bb.min.y, bb.min.z),
+		m_Vec3(bb.min.x, bb.min.y, bb.max.z),
+		m_Vec3(bb.min.x, bb.max.y, bb.min.z),
+		m_Vec3(bb.min.x, bb.max.y, bb.max.z),
+		m_Vec3(bb.max.x, bb.min.y, bb.min.z),
+		m_Vec3(bb.max.x, bb.min.y, bb.max.z),
+		m_Vec3(bb.max.x, bb.max.y, bb.min.z),
+		m_Vec3(bb.max.x, bb.max.y, bb.max.z),
+	};
+
+	const float inf= 1.0e24f;
+	BoundingBox res{ { +inf, +inf, +inf }, { -inf, -inf, -inf } };
+	for (const m_Vec3& v : bb_vertices )
+	{
+		const m_Vec3 v_transformed= v * full_transform;
+		res.min.x= std::min( res.min.x, v_transformed.x );
+		res.min.y= std::min( res.min.y, v_transformed.y );
+		res.min.z= std::min( res.min.z, v_transformed.z );
+		res.max.x= std::max( res.max.x, v_transformed.x );
+		res.max.y= std::max( res.max.y, v_transformed.y );
+		res.max.z= std::max( res.max.z, v_transformed.z );
+	}
+
+	return res;
+}
+
 TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node);
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::MulChain& node)
@@ -258,18 +309,22 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Sphere& node)
 {
+	const m_Vec3 normal(0.0f, 0.0f, 1.0f);
+	const m_Vec3 binormal(1.0f, 0.0f, 0.0f);
+
 	GPUSurface surface{};
 	surface.xx= surface.yy= surface.zz= 1.0f;
 	surface.k= - node.radius * node.radius;
-	surface= TransformSurface(surface, node.center, m_Vec3(0.0f, 0.0f, 1.0f), m_Vec3(1.0f, 0.0f, 0.0f));
+	surface= TransformSurface(surface, node.center, normal, binormal);
 
 	const size_t surface_index= out_surfaces.size();
 	out_surfaces.push_back(surface);
 
+	const BoundingBox bb{ { -node.radius, -node.radius, -node.radius }, { +node.radius, +node.radius, +node.radius } };
+
 	TreeElementsLowLevel::Leaf leaf;
 	leaf.surface_index= surface_index;
-	leaf.bb.min= node.center - m_Vec3(node.radius, node.radius, node.radius);
-	leaf.bb.max= node.center + m_Vec3(node.radius, node.radius, node.radius);
+	leaf.bb= TransformBoundingBox(bb, node.center, normal, binormal);
 	return leaf;
 }
 
@@ -278,7 +333,6 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	// Represent three pairs of parallel planes of cube using three quadratic surfaces.
 	const m_Vec3 normal(0.0f, 0.0f, 1.0f);
 	const m_Vec3 binormal(1.0, 0.0f, 0.0f);
-	const BoundingBox bb{ node.center - node.size * 0.5f, node.center + node.size * 0.5f };
 	const size_t surface_index= out_surfaces.size();
 
 	{
@@ -303,11 +357,18 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		out_surfaces.push_back(surface);
 	}
 
+	const BoundingBox bb
+	{
+		{ -node.size.x * 0.5f, -node.size.y * 0.5f, -node.size.z * 0.5f },
+		{ +node.size.x * 0.5f, +node.size.y * 0.5f, +node.size.z * 0.5f },
+	};
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, normal, binormal);
+
 	TreeElementsLowLevel::Leaf leafs[3];
 	for (size_t i= 0u; i < 3u; ++i)
 	{
 		leafs[i].surface_index= surface_index + i;
-		leafs[i].bb= bb;
+		leafs[i].bb= bb_transformed;
 	}
 
 	return TreeElementsLowLevel::Mul
@@ -341,19 +402,18 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		out_surfaces.push_back(surface);
 	}
 
-	// TODO - calculate bounding box more precisely
-	const float circular_radius= std::sqrt(node.radius * node.radius + 0.25f * node.height * node.height);
 	const BoundingBox bb
 	{
-		node.center - m_Vec3(circular_radius, circular_radius, circular_radius),
-		node.center + m_Vec3(circular_radius, circular_radius, circular_radius)
+		{ -node.radius, -node.radius, -node.height * 0.5f },
+		{ +node.radius, +node.radius, +node.height * 0.5f },
 	};
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
 	{
 		leafs[i].surface_index= surface_index + i;
-		leafs[i].bb= bb;
+		leafs[i].bb= bb_transformed;
 	}
 
 	return TreeElementsLowLevel::Mul
@@ -384,19 +444,19 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		out_surfaces.push_back(surface);
 	}
 
-	// TODO - calculate bounding box more precisely
-	const float circular_radius= std::sqrt(node.height * node.height + node.height * node.height * k * k);
+	const float top_radius= k * node.height;
 	const BoundingBox bb
 	{
-		node.center - m_Vec3(circular_radius, circular_radius, circular_radius),
-		node.center + m_Vec3(circular_radius, circular_radius, circular_radius)
+		{ -top_radius, -top_radius, 0.0f },
+		{ +top_radius, +top_radius, node.height },
 	};
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
 	{
 		leafs[i].surface_index= surface_index + i;
-		leafs[i].bb= bb;
+		leafs[i].bb= bb_transformed;
 	}
 
 	return TreeElementsLowLevel::Mul
@@ -426,19 +486,19 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		out_surfaces.push_back(surface);
 	}
 
-	// TODO - calculate bounding box more precisely
-	const float circular_radius= std::sqrt(node.height * node.height + std::sqrt(node.height) / node.factor);
+	const float top_radius= std::sqrt( node.factor * node.height );
 	const BoundingBox bb
 	{
-		node.center - m_Vec3(circular_radius, circular_radius, circular_radius),
-		node.center + m_Vec3(circular_radius, circular_radius, circular_radius)
+		{ -top_radius, -top_radius, 0.0f },
+		{ +top_radius, +top_radius, node.height },
 	};
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
 	{
 		leafs[i].surface_index= surface_index + i;
-		leafs[i].bb= bb;
+		leafs[i].bb= bb_transformed;
 	}
 
 	return TreeElementsLowLevel::Mul
