@@ -54,6 +54,12 @@ using VerticesVector= std::vector<SurfaceVertex>;
 using IndicesVector= std::vector<IndexType>;
 using GPUSurfacesVector= std::vector<GPUSurface>;
 
+struct BoundingBox
+{
+	m_Vec3 min;
+	m_Vec3 max;
+};
+
 namespace TreeElementsLowLevel
 {
 
@@ -89,8 +95,7 @@ struct Sub
 struct Leaf
 {
 	size_t surface_index;
-	m_Vec3 bb_min;
-	m_Vec3 bb_max;
+	BoundingBox bb;
 };
 
 } // namespace TreeElementsLowLevel
@@ -263,8 +268,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 	TreeElementsLowLevel::Leaf leaf;
 	leaf.surface_index= surface_index;
-	leaf.bb_min= node.center - m_Vec3(node.radius, node.radius, node.radius);
-	leaf.bb_max= node.center + m_Vec3(node.radius, node.radius, node.radius);
+	leaf.bb.min= node.center - m_Vec3(node.radius, node.radius, node.radius);
+	leaf.bb.max= node.center + m_Vec3(node.radius, node.radius, node.radius);
 	return leaf;
 }
 
@@ -273,8 +278,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	// Represent three pairs of parallel planes of cube using three quadratic surfaces.
 	const m_Vec3 normal(0.0f, 0.0f, 1.0f);
 	const m_Vec3 binormal(1.0, 0.0f, 0.0f);
-	const m_Vec3 bb_min= node.center - node.size * 0.5f;
-	const m_Vec3 bb_max= node.center + node.size * 0.5f;
+	const BoundingBox bb{ node.center - node.size * 0.5f, node.center + node.size * 0.5f };
 	const size_t surface_index= out_surfaces.size();
 
 	{
@@ -303,8 +307,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	for (size_t i= 0u; i < 3u; ++i)
 	{
 		leafs[i].surface_index= surface_index + i;
-		leafs[i].bb_min= bb_min;
-		leafs[i].bb_max= bb_max;
+		leafs[i].bb= bb;
 	}
 
 	return TreeElementsLowLevel::Mul
@@ -340,15 +343,17 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 	// TODO - calculate bounding box more precisely
 	const float circular_radius= std::sqrt(node.radius * node.radius + 0.25f * node.height * node.height);
-	const m_Vec3 bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
-	const m_Vec3 bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
+	const BoundingBox bb
+	{
+		node.center - m_Vec3(circular_radius, circular_radius, circular_radius),
+		node.center + m_Vec3(circular_radius, circular_radius, circular_radius)
+	};
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
 	{
 		leafs[i].surface_index= surface_index + i;
-		leafs[i].bb_min= bb_min;
-		leafs[i].bb_max= bb_max;
+		leafs[i].bb= bb;
 	}
 
 	return TreeElementsLowLevel::Mul
@@ -381,15 +386,17 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 	// TODO - calculate bounding box more precisely
 	const float circular_radius= std::sqrt(node.height * node.height + node.height * node.height * k * k);
-	const m_Vec3 bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
-	const m_Vec3 bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
+	const BoundingBox bb
+	{
+		node.center - m_Vec3(circular_radius, circular_radius, circular_radius),
+		node.center + m_Vec3(circular_radius, circular_radius, circular_radius)
+	};
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
 	{
 		leafs[i].surface_index= surface_index + i;
-		leafs[i].bb_min= bb_min;
-		leafs[i].bb_max= bb_max;
+		leafs[i].bb= bb;
 	}
 
 	return TreeElementsLowLevel::Mul
@@ -421,17 +428,18 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 	// TODO - calculate bounding box more precisely
 	const float circular_radius= std::sqrt(node.height * node.height + std::sqrt(node.height) / node.factor);
-	const m_Vec3 bb_min= node.center - m_Vec3(circular_radius, circular_radius, circular_radius);
-	const m_Vec3 bb_max= node.center + m_Vec3(circular_radius, circular_radius, circular_radius);
+	const BoundingBox bb
+	{
+		node.center - m_Vec3(circular_radius, circular_radius, circular_radius),
+		node.center + m_Vec3(circular_radius, circular_radius, circular_radius)
+	};
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
 	{
 		leafs[i].surface_index= surface_index + i;
-		leafs[i].bb_min= bb_min;
-		leafs[i].bb_max= bb_max;
+		leafs[i].bb= bb;
 	}
-
 
 	return TreeElementsLowLevel::Mul
 	{
@@ -450,7 +458,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_sur
 		node);
 }
 
-void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_Vec3& center, const m_Vec3 half_size, const size_t surface_description_offset)
+void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const BoundingBox& bb, const size_t surface_description_offset)
 {
 	static const m_Vec3 cube_vertices[8]=
 	{
@@ -469,6 +477,9 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const m_V
 		2, 7, 3,  2, 6, 7,
 		1, 3, 7,  1, 7, 5,
 	};
+
+	const m_Vec3 half_size= (bb.max - bb.min) * 0.5f;
+	const m_Vec3 center= (bb.min + bb.max) * 0.5f;
 
 	const size_t start_index= out_vertices.size();
 	for(const m_Vec3& cube_vertex : cube_vertices)
@@ -577,9 +588,7 @@ void BuildSceneMeshNode_impl(
 	NodesStack& nodes_stack,
 	const TreeElementsLowLevel::Leaf& node)
 {
-	SZV_UNUSED(nodes_stack);
-
-	const size_t offset= out_expressions.size();
+	const size_t start_offset= out_expressions.size();
 	out_expressions.push_back(GPUCSGExpressionBufferType(node.surface_index));
 
 	const size_t expression_size_offset= out_expressions.size();
@@ -621,12 +630,7 @@ void BuildSceneMeshNode_impl(
 
 	out_expressions[expression_size_offset]= GPUCSGExpressionBufferType(out_expressions.size());
 
-	AddCube(
-		out_vertices,
-		out_indices,
-		(node.bb_min + node.bb_max) * 0.5f,
-		(node.bb_max - node.bb_min) * 0.5f,
-		offset);
+	AddCube(out_vertices, out_indices, node.bb, start_offset);
 }
 
 void BuildSceneMeshNode_r(
@@ -980,10 +984,8 @@ void CSGRendererPerSurface::BeginFrame(
 	IndicesVector indices;
 	GPUSurfacesVector surfaces;
 	GPUCSGExpressionBuffer expressions;
-	const auto low_level_tree= BuildLowLevelTree_r(surfaces, csg_tree);
-
 	NodesStack nodes_stack;
-	BuildSceneMeshNode_r(vertices, indices, expressions, nodes_stack, low_level_tree);
+	BuildSceneMeshNode_r(vertices, indices, expressions, nodes_stack, BuildLowLevelTree_r(surfaces, csg_tree));
 
 	command_buffer.updateBuffer(
 		*vertex_buffer_,
