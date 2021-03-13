@@ -60,7 +60,9 @@ bool IsInsideFigure(vec3 pos)
 	bool expressions_stack[16];
 	int stack_size= 0;
 
-	int offset= 1, end_offset= expressions_description[0];
+	int
+		offset= int(f_surface_description_offset) + 2,
+		end_offset= expressions_description[ int(f_surface_description_offset) + 1 ];
 	while( offset < end_offset )
 	{
 		int operation= expressions_description[offset];
@@ -98,8 +100,12 @@ bool IsInsideFigure(vec3 pos)
 				dot( s.x_y_z, pos ) +
 				s.k;
 
-			// TODO - remove this epsilon, avoid self-intersection by excluding surface from its expression.
-			expressions_stack[stack_size]= val < 0.01;
+			expressions_stack[stack_size]= val < 0.0;
+			++stack_size;
+		}
+		else if( operation == 300 )
+		{
+			expressions_stack[stack_size]= true;
 			++stack_size;
 		}
 
@@ -155,10 +161,8 @@ void main()
 	vec3 vec_to_intersection_pos= n * dist;
 	vec3 intersection_pos= v + vec_to_intersection_pos;
 
-	/*
 	if( !IsInsideFigure( intersection_pos ) )
 		discard;
-	*/
 
 	vec3 normal=
 		2.0 * s.xx_yy_zz * intersection_pos +

@@ -582,6 +582,45 @@ void BuildSceneMeshNode_impl(
 	const size_t offset= out_expressions.size();
 	out_expressions.push_back(GPUCSGExpressionBufferType(node.surface_index));
 
+	const size_t expression_size_offset= out_expressions.size();
+	out_expressions.push_back(0); // Reserve place for size.
+
+	SZV_ASSERT(!nodes_stack.empty() && std::get_if<TreeElementsLowLevel::Leaf>(nodes_stack.back()) == &node);
+	out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::OneLeaf));
+	for(size_t i= nodes_stack.size() - 1u; i > 0u; --i)
+	{
+		const TreeElementsLowLevel::TreeElement* const el= nodes_stack[i - 1u];
+		if(const auto add= std::get_if<TreeElementsLowLevel::Add>(el))
+		{
+			const bool this_is_left= add->l.get() == nodes_stack[i];
+			BUILDCSGExpression_r(out_expressions, this_is_left ? *add->r : *add->l);
+			out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
+		}
+		else if(const auto mul= std::get_if<TreeElementsLowLevel::Mul>(el))
+		{
+			const bool this_is_left= mul->l.get() == nodes_stack[i];
+			BUILDCSGExpression_r(out_expressions, this_is_left ? *mul->r : *mul->l);
+			out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
+		}
+		else if(const auto sub= std::get_if<TreeElementsLowLevel::Sub>(el))
+		{
+			const bool this_is_left= sub->l.get() == nodes_stack[i];
+			if (this_is_left)
+			{
+				BUILDCSGExpression_r(out_expressions, *sub->r);
+				out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Sub));
+			}
+			else
+			{
+				BUILDCSGExpression_r(out_expressions, *sub->l);
+				out_expressions.push_back(GPUCSGExpressionBufferType(GPUCSGExpressionCodes::Mul));
+			}
+		}
+		else SZV_ASSERT(false);
+	}
+
+	out_expressions[expression_size_offset]= GPUCSGExpressionBufferType(out_expressions.size());
+
 	AddCube(
 		out_vertices,
 		out_indices,
@@ -945,12 +984,6 @@ void CSGRendererPerSurface::BeginFrame(
 
 	NodesStack nodes_stack;
 	BuildSceneMeshNode_r(vertices, indices, expressions, nodes_stack, low_level_tree);
-
-	/*
-	expressions.push_back(0);
-	BUILDCSGExpression_r(expressions, low_level_tree);
-	expressions[0]= GPUCSGExpressionBufferType(expressions.size());
-	*/
 
 	command_buffer.updateBuffer(
 		*vertex_buffer_,
