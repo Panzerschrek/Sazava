@@ -162,7 +162,14 @@ void main()
 	vec3 intersection_pos= v + vec_to_intersection_pos;
 
 	if( !IsInsideFigure( intersection_pos ) )
-		discard;
+	{
+		dist= dist_max;
+		vec_to_intersection_pos= n * dist;
+		intersection_pos= v + vec_to_intersection_pos;
+
+		if( !IsInsideFigure( intersection_pos ) )
+			discard;
+	}
 
 	vec3 normal=
 		2.0 * s.xx_yy_zz * intersection_pos +
@@ -171,9 +178,14 @@ void main()
 		s.x_y_z;
 
 	normal= normalize(normal);
+
+	float dir_normal_dot= dot( normal, n );
+	if( dir_normal_dot > 0.0 )
+		normal= -normal;
+
 	float sun_light_dot= max( dot( normal, dir_to_sun_normalized.xyz ), 0.0 );
 
-	float smooth_size= dist * 0.02 / max( 0.1, -dot( normal, n ) );
+	float smooth_size= dist * 0.02 / max( 0.1, abs(dir_normal_dot) );
 	vec3 tex_value= TextureFetch3d( intersection_pos, smooth_size );
 
 	vec3 color= tex_value * ( sun_light_dot * sun_color.rgb + ambient_light_color.rgb );
