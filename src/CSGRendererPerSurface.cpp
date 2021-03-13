@@ -191,16 +191,16 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 		const vk::PipelineMultisampleStateCreateInfo vk_pipeline_multisample_state_create_info;
 
 		const vk::PipelineDepthStencilStateCreateInfo vk_pipeline_depth_state_create_info(
-				vk::PipelineDepthStencilStateCreateFlags(),
-				VK_TRUE,
-				VK_TRUE,
-				vk::CompareOp::eLess,
-				VK_FALSE,
-				VK_FALSE,
-				vk::StencilOpState(),
-				vk::StencilOpState(),
-				0.0f,
-				1.0f);
+			vk::PipelineDepthStencilStateCreateFlags(),
+			VK_TRUE,
+			VK_TRUE,
+			vk::CompareOp::eLess,
+			VK_FALSE,
+			VK_FALSE,
+			vk::StencilOpState(),
+			vk::StencilOpState(),
+			0.0f,
+			1.0f);
 
 		const vk::PipelineColorBlendAttachmentState pipeline_color_blend_attachment_state(
 			VK_FALSE,
@@ -356,7 +356,7 @@ void CSGRendererPerSurface::BeginFrame(
 	VerticesVector vertices;
 	IndicesVector indices;
 	GPUSurfacesVector surfaces;
-	GPUCSGExpressionBuffer expressions;
+	CSGExpressionGPUBuffer expressions;
 	BuildSceneMeshTree(vertices, indices, expressions, BuildLowLevelTree(surfaces, csg_tree));
 
 	command_buffer.updateBuffer(
@@ -380,7 +380,7 @@ void CSGRendererPerSurface::BeginFrame(
 	command_buffer.updateBuffer(
 		*expressions_data_buffer_gpu_,
 		0u,
-		expressions.size() * sizeof(GPUCSGExpressionBufferType),
+		expressions.size() * sizeof(CSGExpressionGPUBufferType),
 		expressions.data());
 
 	tonemapper_.DoMainPass(
@@ -433,7 +433,7 @@ void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer, const C
 
 	const vk::DeviceSize offsets= 0u;
 	command_buffer.bindVertexBuffers(0u, 1u, &*vertex_buffer_, &offsets);
-		command_buffer.bindIndexBuffer(*index_buffer_, 0u, sizeof(IndexType) == 2 ? vk::IndexType::eUint16 : vk::IndexType::eUint32);
+	command_buffer.bindIndexBuffer(*index_buffer_, 0u, sizeof(IndexType) == 2 ? vk::IndexType::eUint16 : vk::IndexType::eUint32);
 
 	command_buffer.drawIndexed(uint32_t(index_count), 1u, 0u, 0u, 0u);
 }
