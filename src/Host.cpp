@@ -55,6 +55,67 @@ CSGTree::CSGTreeNode GetTestCSGTree()
 			} },
 			CSGTree::Paraboloid{ { 2.0f, 6.0f, 0.0f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f, 0.0f }, 0.5f, 0.5f },
 			CSGTree::Cone{ { 2.5f, 8.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 3.1415926535f / 5.0f, 2.5f },
+			// Test multiple intersected additions.
+			CSGTree::AddChain
+			{ {
+				CSGTree::Cube{ { 0.0f, -3.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } },
+				CSGTree::Sphere{ { -0.2f, -3.3f, -0.4f }, 0.5f },
+				CSGTree::Cone{ { 0.0f, -3.3f, -0.0f }, { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, 3.1415926535f / 4.0f, 1.0f },
+				CSGTree::Cylinder{ { 0.2f, -2.7f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 0.25f, 1.0f },
+				CSGTree::Paraboloid{ { -0.2f, -2.7f, 0.4f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 0.1f, 0.5f },
+			} },
+			// Test substraction of substraction.
+			CSGTree::SubChain
+			{ {
+				CSGTree::Cube{ { -3.0f, -3.0f, 0.0f }, { 0.8f, 1.2f, 1.0f } },
+				CSGTree::SubChain
+				{ {
+					CSGTree::Sphere{ { -3.0f, -3.0f, 0.3f }, 0.3f },
+					CSGTree::Cylinder{ { -3.0f, -2.0f, 0.3f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, 0.0625f, 2.0f },
+				} },
+			} },
+			// Test subtraction of intersection.
+			CSGTree::SubChain
+			{ {
+				CSGTree::Cube{ { 3.0f, -3.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } },
+				CSGTree::MulChain
+				{ {
+					CSGTree::Sphere{ { 2.9f, -3.0f, 0.2f }, 0.4f },
+					CSGTree::Sphere{ { 3.1f, -3.0f, 0.2f }, 0.4f },
+				} },
+				CSGTree::AddChain
+				{ {
+					CSGTree::Cube{ { 2.8f, -3.0f, -0.4f }, { 0.1f, 0.1f, 0.4f } },
+					CSGTree::Cube{ { 3.2f, -3.0f, -0.4f }, { 0.1f, 0.1f, 0.8f } },
+				} },
+			} },
+			// Add empty cubes intersection to test zero leaf node.
+			CSGTree::MulChain
+			{ {
+				CSGTree::Cube{ { 0.0f, 0.0f, 10.0f }, { 1.0f, 1.0f, 1.0f } },
+				CSGTree::Cube{ { 0.0f, 0.0f, 20.0f }, { 1.0f, 1.0f, 1.0f } },
+			} },
+			// Test too long subtraction chain.
+			CSGTree::SubChain
+			{ {
+				CSGTree::Cube{ { 5.0f, -2.0f, 0.0f }, { 1.0f, 1.0f, 0.1f } },
+				CSGTree::Sphere{ { 4.5f, -1.6f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 4.8f, -1.6f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 5.1f, -1.6f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 5.4f, -1.6f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 4.5f, -1.9f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 4.8f, -1.9f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 5.1f, -1.9f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 5.4f, -1.9f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 4.5f, -2.2f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 4.8f, -2.2f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 5.1f, -2.2f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 5.4f, -2.2f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 4.5f, -2.5f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 4.8f, -2.5f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 5.1f, -2.5f, 0.05f }, 0.05f },
+				CSGTree::Sphere{ { 5.4f, -2.5f, 0.05f }, 0.05f },
+			} },
 		} },
 	};
 }
