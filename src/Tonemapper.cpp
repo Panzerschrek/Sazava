@@ -759,7 +759,7 @@ void Tonemapper::DoMainPass(const vk::CommandBuffer command_buffer, const std::f
 				1u, &*bloom_buffer.descriptor_set,
 				0u, nullptr);
 
-			const float bloom_size= 0.0625f;
+			const float bloom_size= 0.03125f;
 
 			UniformsBloom uniforms;
 			if(&bloom_buffer == &bloom_buffers_[0])
@@ -807,7 +807,7 @@ void Tonemapper::EndFrame(const vk::CommandBuffer command_buffer)
 
 	const float deformation_factor= 10.0f;
 	const float color_deformation_factor= 0.25f;
-	const float bloom_scale= 0.25f;
+	const float bloom_scale= 0.125f;
 
 	Uniforms uniforms;
 	uniforms.fragment.deformation_factor[0]= deformation_factor * (1.0f - 0.1f * color_deformation_factor);
