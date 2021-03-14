@@ -1,4 +1,4 @@
-#include "CSGRendererPerSurface.hpp"
+#include "CSGRenderer.hpp"
 #include "Assert.hpp"
 #include "CSGDataGPU.hpp"
 
@@ -27,7 +27,7 @@ struct Uniforms
 
 } // namespace
 
-CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
+CSGRenderer::CSGRenderer(WindowVulkan& window_vulkan)
 	: vk_device_(window_vulkan.GetVulkanDevice())
 	, tonemapper_(window_vulkan)
 {
@@ -342,13 +342,13 @@ CSGRendererPerSurface::CSGRendererPerSurface(WindowVulkan& window_vulkan)
 	}
 }
 
-CSGRendererPerSurface::~CSGRendererPerSurface()
+CSGRenderer::~CSGRenderer()
 {
 	// Sync before destruction.
 	vk_device_.waitIdle();
 }
 
-void CSGRendererPerSurface::BeginFrame(
+void CSGRenderer::BeginFrame(
 	const vk::CommandBuffer command_buffer,
 	const CameraController& camera_controller,
 	const CSGTree::CSGTreeNode& csg_tree)
@@ -391,12 +391,12 @@ void CSGRendererPerSurface::BeginFrame(
 		});
 }
 
-void CSGRendererPerSurface::EndFrame(const vk::CommandBuffer command_buffer)
+void CSGRenderer::EndFrame(const vk::CommandBuffer command_buffer)
 {
 	tonemapper_.EndFrame(command_buffer);
 }
 
-void CSGRendererPerSurface::Draw(const vk::CommandBuffer command_buffer, const CameraController& camera_controller, const size_t index_count)
+void CSGRenderer::Draw(const vk::CommandBuffer command_buffer, const CameraController& camera_controller, const size_t index_count)
 {
 	Uniforms uniforms{};
 	uniforms.view_matrix= camera_controller.CalculateFullViewMatrix();
