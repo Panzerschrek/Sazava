@@ -505,6 +505,61 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::HyperbolicParaboloid& node)
+{
+	const size_t surface_index= out_surfaces.size();
+
+	{ // Hyperbolic paraboloid itself.
+		GPUSurface surface{};
+		surface.xx= +1.0f;
+		surface.yy= -1.0f;
+		surface.z= 1.0f;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
+	{ // Pair of bounding planes.
+		GPUSurface surface{};
+		surface.yy= 1.0f;
+		surface.k= -0.5f * node.height;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
+	{ // Single bounding plane.
+		GPUSurface surface{};
+		surface.z= -1.0f;
+		surface.k= -0.5f * node.height;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
+
+	const float half_size_x= std::sqrt(node.height);
+	const float half_size_y= half_size_x * std::sqrt(0.5f);
+	const BoundingBox bb
+	{
+		{ -half_size_x, -half_size_y, -0.5f * node.height },
+		{ +half_size_x, +half_size_y, +0.5f * node.height },
+	};
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+
+	TreeElementsLowLevel::Leaf leafs[3];
+	for (size_t i= 0u; i < 3u; ++i)
+	{
+		leafs[i].surface_index= surface_index + i;
+		leafs[i].bb= bb_transformed;
+	}
+
+	return TreeElementsLowLevel::Mul
+	{
+		std::make_unique<TreeElementsLowLevel::TreeElement>(
+			TreeElementsLowLevel::Mul
+			{
+				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
+				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
+			}),
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[2]),
+	};
+}
+
 TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node)
 {
 	return std::visit(

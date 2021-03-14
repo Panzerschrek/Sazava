@@ -20,6 +20,7 @@ struct EllipticCylinder;
 struct Cone;
 struct Paraboloid;
 struct Hyperboloid;
+struct HyperbolicParaboloid;
 
 using CSGTreeNode= std::variant<
 	MulChain,
@@ -32,7 +33,8 @@ using CSGTreeNode= std::variant<
 	EllipticCylinder,
 	Cone,
 	Paraboloid,
-	Hyperboloid>;
+	Hyperboloid,
+	HyperbolicParaboloid>;
 
 struct MulChain
 {
@@ -125,6 +127,19 @@ struct Hyperboloid
 	float radius; // At zero
 	float height;
 };
+
+struct HyperbolicParaboloid
+{
+	m_Vec3 center;
+
+	// Vectors must be normalized and perpendicular!
+	// TODO - replace vectors with something else
+	m_Vec3 normal; // main axis of the cone
+	m_Vec3 binormal;
+	float height;
+	// TODO - add more parameters.
+};
+
 } // namespace CSGTree
 
 } // namespac SZV

@@ -79,6 +79,7 @@ CSGTree::CSGTreeNode GetTestCSGTree()
 			CSGTree::Hyperboloid{ { 6.0f, 9.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 1.0f, -0.125f, 1.0f },
 			CSGTree::Hyperboloid{ { 5.0f, 8.0f, 4.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.25f, +0.125f, 4.0f },
 			CSGTree::Hyperboloid{ { 5.0f, 8.0f, 2.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, 0.25f, -0.125f, 4.0f },
+			CSGTree::HyperbolicParaboloid{ { 8.0f, 8.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 1.0f / 3.0f },
 			// Test multiple intersected additions.
 			CSGTree::AddChain
 			{ {
