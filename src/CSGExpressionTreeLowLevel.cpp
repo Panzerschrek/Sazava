@@ -337,6 +337,47 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::EllipticCylinder& node)
+{
+	const size_t surface_index= out_surfaces.size();
+
+	{
+		GPUSurface surface{};
+		surface.xx= 1.0f / (node.radius.x * node.radius.x);
+		surface.yy= 1.0f / (node.radius.y * node.radius.y);
+		surface.k= -1.0f;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
+	{
+		GPUSurface surface{};
+		surface.zz= 1.0f;
+		surface.k= -0.25f * node.height * node.height;
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		out_surfaces.push_back(surface);
+	}
+
+	const BoundingBox bb
+	{
+		{ -node.radius.x, -node.radius.y, -node.height * 0.5f },
+		{ +node.radius.x, +node.radius.y, +node.height * 0.5f },
+	};
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+
+	TreeElementsLowLevel::Leaf leafs[2];
+	for (size_t i= 0u; i < 2u; ++i)
+	{
+		leafs[i].surface_index= surface_index + i;
+		leafs[i].bb= bb_transformed;
+	}
+
+	return TreeElementsLowLevel::Mul
+	{
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
+	};
+}
+
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
 {
 	const float k= std::tan(node.angle * 0.5f);

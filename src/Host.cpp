@@ -72,6 +72,9 @@ CSGTree::CSGTreeNode GetTestCSGTree()
 				CSGTree::Cylinder{ { -3.0f, 8.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, 0.9f, 0.5f },
 				CSGTree::Cube{ { -3.0f, 8.0f, 0.0f }, { 2.0f, 2.0f, 2.0f } },
 			} },
+			CSGTree::EllipticCylinder{ { 2.0f, -6.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.75f, 0.5f }, 1.0f },
+			CSGTree::EllipticCylinder{ { 0.5f, -6.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.5f, 0.75f }, 1.0f },
+			CSGTree::EllipticCylinder{ { 4.0f, -6.0f, -2.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.5f }, 0.5f },
 			// Test multiple intersected additions.
 			CSGTree::AddChain
 			{ {

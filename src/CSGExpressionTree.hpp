@@ -16,6 +16,7 @@ struct Sphere;
 struct Ellipsoid;
 struct Cube;
 struct Cylinder;
+struct EllipticCylinder;
 struct Cone;
 struct Paraboloid;
 
@@ -27,6 +28,7 @@ using CSGTreeNode= std::variant<
 	Ellipsoid,
 	Cube,
 	Cylinder,
+	EllipticCylinder,
 	Cone,
 	Paraboloid >;
 
@@ -72,6 +74,16 @@ struct Cylinder
 	m_Vec3 normal;
 	m_Vec3 binormal;
 	float radius;
+	float height;
+};
+
+struct EllipticCylinder
+{
+	// Vectors must be normalized and perpendicular!
+	m_Vec3 center;
+	m_Vec3 normal;
+	m_Vec3 binormal;
+	m_Vec2 radius;
 	float height;
 };
 
