@@ -60,53 +60,68 @@ bool IsInsideFigure(vec3 pos)
 	bool expressions_stack[16];
 	int stack_size= 0;
 
+	const int
+		op_code_mul= 0,
+		op_code_add= 1,
+		op_code_sub= 2,
+		op_code_leaf= 3,
+		op_code_one_leaf= 4;
+
 	int
 		offset= int(f_surface_description_offset) + 2,
 		end_offset= expressions_description[ int(f_surface_description_offset) + 1 ];
 	while( offset < end_offset )
 	{
-		int operation= expressions_description[offset];
+		int op= expressions_description[offset];
 		++offset;
-		if( operation == 100 )
+		switch( op )
 		{
-			bool l= expressions_stack[stack_size - 2];
-			bool r= expressions_stack[stack_size - 1];
-			expressions_stack[stack_size - 2]= l && r;
-			--stack_size;
-		}
-		else if( operation == 101 )
-		{
-			bool l= expressions_stack[stack_size - 2];
-			bool r= expressions_stack[stack_size - 1];
-			expressions_stack[stack_size - 2]= l || r;
-			--stack_size;
-		}
-		else if( operation == 102 )
-		{
-			bool l= expressions_stack[stack_size - 2];
-			bool r= expressions_stack[stack_size - 1];
-			expressions_stack[stack_size - 2]= l && !r;
-			--stack_size;
-		}
-		else if( operation == 200 )
-		{
-			int surface_index= expressions_description[offset];
-			++offset;
-			SurfaceDescription s= FetchSurface( surface_index );
+		case op_code_mul:
+			{
+				bool l= expressions_stack[stack_size - 2];
+				bool r= expressions_stack[stack_size - 1];
+				expressions_stack[stack_size - 2]= l && r;
+				--stack_size;
+			}
+			break;
+		case op_code_add:
+			{
+				bool l= expressions_stack[stack_size - 2];
+				bool r= expressions_stack[stack_size - 1];
+				expressions_stack[stack_size - 2]= l || r;
+				--stack_size;
+			}
+			break;
+		case op_code_sub:
+			{
+				bool l= expressions_stack[stack_size - 2];
+				bool r= expressions_stack[stack_size - 1];
+				expressions_stack[stack_size - 2]= l && !r;
+				--stack_size;
+			}
+			break;
+		case op_code_leaf:
+			{
+				int surface_index= expressions_description[offset];
+				++offset;
+				SurfaceDescription s= FetchSurface( surface_index );
 
-			float val=
-				dot( s.xx_yy_zz, pos * pos ) +
-				dot( s.xy_xz_yz, pos.xxy * pos.yzz ) +
-				dot( s.x_y_z, pos ) +
-				s.k;
+				float val=
+					dot( s.xx_yy_zz, pos * pos ) +
+					dot( s.xy_xz_yz, pos.xxy * pos.yzz ) +
+					dot( s.x_y_z, pos ) +
+					s.k;
 
-			expressions_stack[stack_size]= val < 0.0;
-			++stack_size;
-		}
-		else if( operation == 300 )
-		{
-			expressions_stack[stack_size]= true;
-			++stack_size;
+				expressions_stack[stack_size]= val < 0.0;
+				++stack_size;
+			}
+			break;
+		case op_code_one_leaf:
+			{
+				expressions_stack[stack_size]= true;
+				++stack_size;
+			}
+			break;
 		}
 
 		if( stack_size == 0 )

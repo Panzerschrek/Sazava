@@ -10,12 +10,12 @@ namespace
 // If this changed, surface shader must be chaged too!
 enum class GPUCSGExpressionCodes : CSGExpressionGPUBufferType
 {
-	Mul= 100,
-	Add= 101,
-	Sub= 102,
+	Mul= 0,
+	Add= 1,
+	Sub= 2,
 
-	Leaf= 200,
-	OneLeaf= 300,
+	Leaf= 3,
+	OneLeaf= 4,
 };
 
 enum class CSGExpressionBuildResult
