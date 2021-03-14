@@ -16,7 +16,6 @@ enum class GPUCSGExpressionCodes : CSGExpressionGPUBufferType
 
 	Leaf= 200,
 	OneLeaf= 300,
-	ZeroLeaf= 301,
 };
 
 enum class CSGExpressionBuildResult
@@ -212,8 +211,9 @@ void BuildSceneMeshNode_impl(
 	const size_t expression_size_offset= out_expressions.size();
 	out_expressions.push_back(0); // Reserve place for size.
 
-	const size_t expression_start_offset= out_expressions.size();
 	out_expressions.push_back(CSGExpressionGPUBufferType(GPUCSGExpressionCodes::OneLeaf));
+
+	bool discard= false;
 
 	const auto process_sub= [&](const CSGExpressionBuildResult res)
 	{
@@ -221,10 +221,7 @@ void BuildSceneMeshNode_impl(
 			out_expressions.push_back(CSGExpressionGPUBufferType(GPUCSGExpressionCodes::Sub));
 		else if(res == CSGExpressionBuildResult::AlwaysZero){}
 		else if(res == CSGExpressionBuildResult::AlwaysOne)
-		{
-			out_expressions.resize(expression_start_offset);
-			out_expressions.push_back(CSGExpressionGPUBufferType(GPUCSGExpressionCodes::ZeroLeaf));
-		}
+			discard= true;
 		else SZV_ASSERT(false);
 	};
 
@@ -233,10 +230,7 @@ void BuildSceneMeshNode_impl(
 		if(res == CSGExpressionBuildResult::Variable)
 			out_expressions.push_back(CSGExpressionGPUBufferType(GPUCSGExpressionCodes::Mul));
 		else if(res == CSGExpressionBuildResult::AlwaysZero)
-		{
-			out_expressions.resize(expression_start_offset);
-			out_expressions.push_back(CSGExpressionGPUBufferType(GPUCSGExpressionCodes::ZeroLeaf));
-		}
+			discard= true;
 		else if(res == CSGExpressionBuildResult::AlwaysOne) {}
 		else SZV_ASSERT(false);
 	};
@@ -264,6 +258,12 @@ void BuildSceneMeshNode_impl(
 				process_mul(BUILDCSGExpression_r(out_expressions, node.bb, *sub->l));
 		}
 		else SZV_ASSERT(false);
+	}
+
+	if(discard)
+	{
+		out_expressions.resize(start_offset);
+		return;
 	}
 
 	out_expressions[expression_size_offset]= CSGExpressionGPUBufferType(out_expressions.size());

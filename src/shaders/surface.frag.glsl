@@ -108,11 +108,6 @@ bool IsInsideFigure(vec3 pos)
 			expressions_stack[stack_size]= true;
 			++stack_size;
 		}
-		else if( operation == 301 )
-		{
-			expressions_stack[stack_size]= false;
-			++stack_size;
-		}
 
 		if( stack_size == 0 )
 			break;
