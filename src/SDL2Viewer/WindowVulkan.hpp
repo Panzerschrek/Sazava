@@ -1,12 +1,11 @@
 #pragma once
 #include "SystemWindow.hpp"
-#include <vulkan/vulkan.hpp>
-#include <functional>
+#include "../Lib/I_WindowVulkan.hpp"
 
 namespace SZV
 {
 
-class WindowVulkan final
+class WindowVulkan final : public I_WindowVulkan
 {
 public:
 	using DrawFunction= std::function<void(vk::CommandBuffer)>;

@@ -1,6 +1,6 @@
 #pragma once
-#include "CameraController.hpp"
-#include "CSGRenderer.hpp"
+#include "../Lib/CameraController.hpp"
+#include "../Lib/CSGRenderer.hpp"
 #include "SystemWindow.hpp"
 #include "WindowVulkan.hpp"
 #include <chrono>

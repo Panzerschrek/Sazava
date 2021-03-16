@@ -27,7 +27,7 @@ struct Uniforms
 
 } // namespace
 
-CSGRenderer::CSGRenderer(WindowVulkan& window_vulkan)
+CSGRenderer::CSGRenderer(I_WindowVulkan& window_vulkan)
 	: vk_device_(window_vulkan.GetVulkanDevice())
 	, tonemapper_(window_vulkan)
 {

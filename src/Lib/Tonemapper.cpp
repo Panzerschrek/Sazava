@@ -51,7 +51,7 @@ const uint32_t g_blured_tex_uniform_binding= 3u;
 
 } // namespace
 
-Tonemapper::Tonemapper( WindowVulkan& window_vulkan)
+Tonemapper::Tonemapper(I_WindowVulkan& window_vulkan)
 	: vk_device_(window_vulkan.GetVulkanDevice())
 	, queue_family_index_(window_vulkan.GetQueueFamilyIndex())
 {
@@ -838,7 +838,7 @@ void Tonemapper::EndFrame(const vk::CommandBuffer command_buffer)
 	command_buffer.draw(6u, 1u, 0u, 0u);
 }
 
-Tonemapper::Pipeline Tonemapper::CreateMainPipeline(WindowVulkan& window_vulkan)
+Tonemapper::Pipeline Tonemapper::CreateMainPipeline(I_WindowVulkan& window_vulkan)
 {
 	const vk::Extent2D& viewport_size= window_vulkan.GetViewportSize();
 

@@ -1,6 +1,6 @@
 #include "WindowVulkan.hpp"
-#include "Assert.hpp"
-#include "Log.hpp"
+#include "../Lib/Assert.hpp"
+#include "../Lib/Log.hpp"
 #include "SystemWindow.hpp"
 #include <SDL_vulkan.h>
 #include <algorithm>
