@@ -12,7 +12,7 @@ endif()
 
 # Add main executable
 file(GLOB_RECURSE SOURCES "*.cpp" "*.hpp")
-add_executable(Sazava ${SOURCES} ${SHADERS} ${SHADERS_COMPILED})
+add_executable(Sazava ${SOURCES})
 target_include_directories(
 	Sazava
 		PRIVATE

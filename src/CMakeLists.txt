@@ -23,4 +23,4 @@ endif()
 
 add_subdirectory(Lib)
 add_subdirectory(SDL2Viewer)
-
+add_subdirectory(QtEditor)
