@@ -22,5 +22,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 add_subdirectory(Lib)
+add_subdirectory(SDL2ViewerLib)
 add_subdirectory(SDL2Viewer)
 add_subdirectory(QtEditor)
