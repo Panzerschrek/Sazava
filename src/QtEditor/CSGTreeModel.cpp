@@ -7,28 +7,28 @@ namespace
 {
 
 using ElementsVector= std::vector<CSGTree::CSGTreeNode>;
-const ElementsVector* GetElementsVectorImpl(const CSGTree::MulChain& node) { return &node.elements; }
-const ElementsVector* GetElementsVectorImpl(const CSGTree::AddChain& node) { return &node.elements; }
-const ElementsVector* GetElementsVectorImpl(const CSGTree::SubChain& node) { return &node.elements; }
-template<class T> const ElementsVector* GetElementsVectorImpl(const T&) { return nullptr; }
-const ElementsVector* GetElementsVector(const CSGTree::CSGTreeNode& node)
+ElementsVector* GetElementsVectorImpl(CSGTree::MulChain& node) { return &node.elements; }
+ElementsVector* GetElementsVectorImpl(CSGTree::AddChain& node) { return &node.elements; }
+ElementsVector* GetElementsVectorImpl(CSGTree::SubChain& node) { return &node.elements; }
+template<class T> ElementsVector* GetElementsVectorImpl(T&) { return nullptr; }
+ElementsVector* GetElementsVector(CSGTree::CSGTreeNode& node)
 {
 	return std::visit(
-		[&](const auto& el)
+		[&](auto& el)
 		{
 			return GetElementsVectorImpl(el);
 		},
 		node);
 }
 
-const CSGTree::CSGTreeNode* FindParent(const CSGTree::CSGTreeNode& child, const CSGTree::CSGTreeNode& current_node)
+CSGTree::CSGTreeNode* FindParent(const CSGTree::CSGTreeNode& child, CSGTree::CSGTreeNode& current_node)
 {
 	return std::visit(
-		[&](const auto& el) -> const CSGTree::CSGTreeNode*
+		[&](auto& el) -> CSGTree::CSGTreeNode*
 		{
 			if (const auto vec= GetElementsVectorImpl(el))
 			{
-				for (const auto& vec_el : *vec)
+				for (auto& vec_el : *vec)
 				{
 					if(&vec_el == &child)
 						return &current_node;
@@ -73,9 +73,49 @@ void CSGTreeModel::SetTree(CSGTree::CSGTreeNode tree)
 	endResetModel();
 }
 
+void CSGTreeModel::DeleteNode(const QModelIndex& index)
+{
+	if(!index.isValid())
+		return;
+
+	const auto element_ptr= reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
+
+	if(const auto parent= FindParent(*element_ptr, root_))
+	{
+		if(const auto vec= GetElementsVector(*parent))
+		{
+			const auto index_in_parent= int(element_ptr - vec->data());
+
+			beginRemoveRows(CSGTreeModel::parent(index), index_in_parent, index_in_parent);
+			vec->erase(vec->begin() + index_in_parent);
+			endRemoveRows();
+		}
+	}
+}
+
+void CSGTreeModel::AddNode(const QModelIndex& index, CSGTree::CSGTreeNode node)
+{
+	if(!index.isValid())
+		return;
+
+	const auto element_ptr= reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
+
+	if(const auto parent= FindParent(*element_ptr, root_))
+	{
+		if(const auto vec= GetElementsVector(*parent))
+		{
+			const auto index_in_parent= int(element_ptr - vec->data());
+			// Reset model because indexes are invalidated after insertion into vector. TODO - maybe invalidate only small part of model?
+			beginResetModel();
+			vec->insert(vec->begin() + index_in_parent, std::move(node));
+			endResetModel();
+		}
+	}
+}
+
 QModelIndex CSGTreeModel::index(const int row, const int column, const QModelIndex& parent) const
 {
-	const auto element_ptr= parent.isValid() ? reinterpret_cast<const CSGTree::CSGTreeNode*>(parent.internalPointer()) : &root_;
+	const auto element_ptr= parent.isValid() ? reinterpret_cast<CSGTree::CSGTreeNode*>(parent.internalPointer()) : &const_cast<CSGTree::CSGTreeNode&>(root_);
 	if(const auto vec= GetElementsVector(*element_ptr))
 		return createIndex(row, column, reinterpret_cast<uintptr_t>(&(*vec)[row]));
 	return QModelIndex();
@@ -86,8 +126,8 @@ QModelIndex CSGTreeModel::parent(const QModelIndex& child) const
 	if(!child.isValid())
 		return QModelIndex();
 
-	const auto element_ptr= reinterpret_cast<const CSGTree::CSGTreeNode*>(child.internalPointer());
-	const auto parent= FindParent(*element_ptr, root_);
+	const auto element_ptr= reinterpret_cast<CSGTree::CSGTreeNode*>(child.internalPointer());
+	const auto parent= FindParent(*element_ptr, const_cast<CSGTree::CSGTreeNode&>(root_));
 	if(parent == nullptr)
 		return QModelIndex();
 
@@ -99,7 +139,7 @@ QModelIndex CSGTreeModel::parent(const QModelIndex& child) const
 
 int CSGTreeModel::rowCount(const QModelIndex& parent) const
 {
-	const auto element_ptr= parent.isValid() ? reinterpret_cast<const CSGTree::CSGTreeNode*>(parent.internalPointer()) : &root_;
+	const auto element_ptr= parent.isValid() ? reinterpret_cast<CSGTree::CSGTreeNode*>(parent.internalPointer()) : &const_cast<CSGTree::CSGTreeNode&>(root_);
 	if (const auto vec= GetElementsVector(*element_ptr))
 		return int(vec->size());
 	return 0;

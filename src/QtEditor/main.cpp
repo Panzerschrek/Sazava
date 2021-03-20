@@ -2,9 +2,10 @@
 #include "CSGTreeModel.hpp"
 #include <QtCore/QTimer>
 #include <QtWidgets/QApplication>
+#include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QWidget>
-#include <QtWidgets/QBoxLayout>
 
 namespace SZV
 {
@@ -27,10 +28,15 @@ public:
 		csg_tree_view_.setModel(&csg_tree_model_);
 		csg_tree_view_.setSelectionBehavior(QAbstractItemView::SelectRows);
 		csg_tree_view_.setSelectionMode(QAbstractItemView::SingleSelection);
+		csg_tree_view_.setContextMenuPolicy(Qt::CustomContextMenu);
+		connect(
+			&csg_tree_view_,
+			&QAbstractItemView::customContextMenuRequested,
+			this,
+			&HostWrapper::OnContextMenu);
 
 		setLayout(&layout_);
 		layout_.addWidget(&csg_tree_view_);
-
 
 		csg_tree_model_.SetTree(
 			CSGTree::AddChain
@@ -54,12 +60,42 @@ private:
 			close();
 	}
 
+	void OnContextMenu(const QPoint& p)
+	{
+		current_selection_= csg_tree_view_.indexAt(p);
+
+		const auto menu=new QMenu(this);
+
+		const auto delete_action= new QAction("delete", this);
+		connect(delete_action, &QAction::triggered, this, &HostWrapper::OnDeleteNode);
+
+		const auto add_action= new QAction("add", this);
+		connect(add_action, &QAction::triggered, this, &HostWrapper::OnAddNode);
+
+		menu->addAction(delete_action);
+		menu->addAction(add_action);
+
+		menu->popup(csg_tree_view_.viewport()->mapToGlobal(p));
+	}
+
+	void OnDeleteNode()
+	{
+		csg_tree_model_.DeleteNode(current_selection_);
+	}
+
+	void OnAddNode()
+	{
+		CSGTree::Paraboloid node{};
+		csg_tree_model_.AddNode(current_selection_, node);
+	}
+
 private:
 	Host host_;
 	QTimer timer_;
 	QVBoxLayout layout_;
 	QTreeView csg_tree_view_;
 	CSGTreeModel csg_tree_model_;
+	QModelIndex current_selection_;
 };
 
 int Main(int argc, char* argv[])
