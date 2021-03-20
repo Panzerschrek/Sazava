@@ -1,5 +1,6 @@
 #include "Tonemapper.hpp"
 #include "Log.hpp"
+#include <cmath>
 
 
 namespace SZV
