@@ -21,7 +21,7 @@ class HostWrapper final : public QWidget
 public:
 
 	HostWrapper()
-		: layout_(this), csg_tree_view_(this)
+		: layout_(this), csg_tree_view_(this), csg_tree_model_(host_.GetCSGTree())
 	{
 		connect(&timer_, &QTimer::timeout, this, &HostWrapper::Loop);
 		timer_.start(20);
@@ -44,21 +44,6 @@ public:
 
 		setLayout(&layout_);
 		layout_.addWidget(&csg_tree_view_);
-
-		csg_tree_model_.SetTree(
-			CSGTree::AddChain
-			{ {
-				CSGTree::Cube{ { 0.0f, 2.0f, 0.0f }, { 1.9f, 1.8f, 1.7f } },
-				CSGTree::Sphere{ { 0.0f, 2.0f, 0.5f }, 1.0f },
-				CSGTree::Sphere{ { 0.0f, 2.0f, -0.2f }, 0.5f },
-				CSGTree::MulChain
-				{ {
-						CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.75f, 3.0f },
-						CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.75f, 3.0f },
-				} },
-				CSGTree::Cone{ { 5.0f, 5.0f, 3.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 25.0f, 1.0f },
-				CSGTree::Cube{ { 0.8f, 2.8f, -0.6f }, { 0.5f, 0.5f, 0.6f } },
-			} } );
 	}
 
 private:

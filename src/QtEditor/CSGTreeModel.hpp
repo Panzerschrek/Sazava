@@ -8,7 +8,7 @@ namespace SZV
 class CSGTreeModel final : public QAbstractItemModel
 {
 public:
-	void SetTree(CSGTree::CSGTreeNode tree);
+	explicit CSGTreeModel(CSGTree::CSGTreeNode& root);
 
 	void DeleteNode(const QModelIndex& index);
 	void AddNode(const QModelIndex& index, CSGTree::CSGTreeNode node);
@@ -24,7 +24,7 @@ private:
 	using Path= QVector<size_t>;
 
 private:
-	CSGTree::CSGTreeNode root_;
+	CSGTree::CSGTreeNode& root_;
 };
 
 } // namespace SZV

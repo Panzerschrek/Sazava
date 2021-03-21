@@ -154,6 +154,7 @@ Host::Host()
 	, camera_controller_(CalculateAspect(window_vulkan_.GetViewportSize()))
 	, init_time_(Clock::now())
 	, prev_tick_time_(init_time_)
+	, csg_tree_(GetTestCSGTree())
 {
 }
 
@@ -176,7 +177,7 @@ bool Host::Loop()
 	}
 
 	const auto command_buffer= window_vulkan_.BeginFrame();
-	csg_renderer_.BeginFrame(command_buffer, camera_controller_, GetTestCSGTree());
+	csg_renderer_.BeginFrame(command_buffer, camera_controller_, csg_tree_);
 
 	window_vulkan_.EndFrame(
 		{
@@ -204,9 +205,9 @@ bool Host::Loop()
 	return quit_requested_;
 }
 
-void Host::CommandQuit()
+CSGTree::CSGTreeNode& Host::GetCSGTree()
 {
-	quit_requested_= true;
+	return csg_tree_;
 }
 
 } // namespace SZV

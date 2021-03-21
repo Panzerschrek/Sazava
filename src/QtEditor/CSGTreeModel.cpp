@@ -66,12 +66,9 @@ QString GetElementTypeName(const CSGTree::CSGTreeNode& node)
 
 } // namespace
 
-void CSGTreeModel::SetTree(CSGTree::CSGTreeNode tree)
-{
-	beginResetModel();
-	root_= std::move(tree);
-	endResetModel();
-}
+CSGTreeModel::CSGTreeModel(CSGTree::CSGTreeNode& root)
+	: root_(root)
+{}
 
 void CSGTreeModel::DeleteNode(const QModelIndex& index)
 {
