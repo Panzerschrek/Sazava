@@ -225,16 +225,16 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Ellipsoid& node)
 {
 	GPUSurface surface{};
-	surface.xx= 1.0f / (node.radius.x * node.radius.x);
-	surface.yy= 1.0f / (node.radius.y * node.radius.y);
-	surface.zz= 1.0f / (node.radius.z * node.radius.z);
+	surface.xx= 4.0f / (node.size.x * node.size.x);
+	surface.yy= 4.0f / (node.size.y * node.size.y);
+	surface.zz= 4.0f / (node.size.z * node.size.z);
 	surface.k= -1.0f;
 	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 
 	const size_t surface_index= out_surfaces.size();
 	out_surfaces.push_back(surface);
 
-	const BoundingBox bb{ -node.radius, node.radius };
+	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
 
 	TreeElementsLowLevel::Leaf leaf;
 	leaf.surface_index= surface_index;
@@ -343,8 +343,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 	{
 		GPUSurface surface{};
-		surface.xx= 1.0f / (node.radius.x * node.radius.x);
-		surface.yy= 1.0f / (node.radius.y * node.radius.y);
+		surface.xx= 4.0f / (node.size.x * node.size.x);
+		surface.yy= 4.0f / (node.size.y * node.size.y);
 		surface.k= -1.0f;
 		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 		out_surfaces.push_back(surface);
@@ -352,16 +352,12 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
-		surface.k= -0.25f * node.height * node.height;
+		surface.k= -0.25f * node.size.z * node.size.z;
 		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 		out_surfaces.push_back(surface);
 	}
 
-	const BoundingBox bb
-	{
-		{ -node.radius.x, -node.radius.y, -node.height * 0.5f },
-		{ +node.radius.x, +node.radius.y, +node.height * 0.5f },
-	};
+	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
 	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
 
 	TreeElementsLowLevel::Leaf leafs[2];

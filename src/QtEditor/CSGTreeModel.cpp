@@ -157,7 +157,7 @@ QVariant CSGTreeModel::data(const QModelIndex &index, const int role) const
 	if(ptr == nullptr)
 		return QVariant();
 
-	return GetElementTypeName(*ptr) + QString("  ") + QString::number(index.internalId());
+	return GetElementTypeName(*ptr);
 }
 
 } // namespace SZV

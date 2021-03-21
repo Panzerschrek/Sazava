@@ -60,7 +60,7 @@ struct Sphere
 struct Ellipsoid
 {
 	m_Vec3 center;
-	m_Vec3 radius;
+	m_Vec3 size;
 	m_Vec3 normal;
 	m_Vec3 binormal;
 };
@@ -87,8 +87,7 @@ struct EllipticCylinder
 	m_Vec3 center;
 	m_Vec3 normal;
 	m_Vec3 binormal;
-	m_Vec2 radius;
-	float height;
+	m_Vec3 size;
 };
 
 struct Cone
