@@ -12,7 +12,7 @@ public:
 	CSGTreeNodeEditWidget(CSGTree::CSGTreeNode& node, QWidget* parent = nullptr);
 
 private:
-	enum class ValueKind{ Linear, Angular };
+	enum class ValueKind{ Pos, Size, Angle };
 
 	void AddValueControl(QGridLayout& layout, float& value, ValueKind kind, const QString& caption);
 	void AddPosControl(QGridLayout& layout, m_Vec3& pos);

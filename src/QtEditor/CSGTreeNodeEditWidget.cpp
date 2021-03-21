@@ -26,13 +26,19 @@ void CSGTreeNodeEditWidget::AddValueControl(QGridLayout& layout, float& value, c
 
 	switch(kind)
 	{
-	case ValueKind::Linear:
+	case ValueKind::Pos:
 		box->setSingleStep(0.125f);
 		box->setDecimals(3);
-		box->setMinimum(-1024.0f);
 		box->setMaximum(+1024.0f);
+		box->setMinimum(-1024.0f);
 		break;
-	case ValueKind::Angular:
+	case ValueKind::Size:
+		box->setSingleStep(0.125f);
+		box->setDecimals(3);
+		box->setMaximum(+1024.0f);
+		box->setMinimum(0.125f);
+		break;
+	case ValueKind::Angle:
 		box->setSingleStep(1.0f);
 		box->setDecimals(1);
 		box->setMinimum(-180.0f);
@@ -55,16 +61,16 @@ void CSGTreeNodeEditWidget::AddValueControl(QGridLayout& layout, float& value, c
 
 void CSGTreeNodeEditWidget::AddPosControl(QGridLayout& layout, m_Vec3& pos)
 {
-	AddValueControl(layout, pos.x, ValueKind::Linear, "X:");
-	AddValueControl(layout, pos.y, ValueKind::Linear, "Y:");
-	AddValueControl(layout, pos.z, ValueKind::Linear, "Z:");
+	AddValueControl(layout, pos.x, ValueKind::Pos, "X:");
+	AddValueControl(layout, pos.y, ValueKind::Pos, "Y:");
+	AddValueControl(layout, pos.z, ValueKind::Pos, "Z:");
 }
 
 void CSGTreeNodeEditWidget::AddSizeControl(QGridLayout& layout, m_Vec3& size)
 {
-	AddValueControl(layout, size.x, ValueKind::Linear, "Size X:");
-	AddValueControl(layout, size.y, ValueKind::Linear, "Size Y:");
-	AddValueControl(layout, size.z, ValueKind::Linear, "Size Z:");
+	AddValueControl(layout, size.x, ValueKind::Size, "Size X:");
+	AddValueControl(layout, size.y, ValueKind::Size, "Size Y:");
+	AddValueControl(layout, size.z, ValueKind::Size, "Size Z:");
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::MulChain& node)
@@ -96,6 +102,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Ellipsoid& node)
 {
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
+	AddSizeControl(*layout, node.size);
 	setLayout(layout);
 }
 
@@ -118,6 +125,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::EllipticCylinder& node)
 {
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
+	AddSizeControl(*layout, node.size);
 	setLayout(layout);
 }
 
@@ -125,7 +133,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Cone& node)
 {
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
-	AddValueControl(*layout, node.angle, ValueKind::Angular, "Angle:");
+	AddValueControl(*layout, node.angle, ValueKind::Angle, "Angle:");
 	setLayout(layout);
 }
 
