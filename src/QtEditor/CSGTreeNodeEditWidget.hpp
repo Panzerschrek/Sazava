@@ -1,6 +1,7 @@
 #pragma once
 #include "../Lib/CSGExpressionTree.hpp"
 #include <QtWidgets/QWidget>
+#include <QtWidgets/QGridLayout>
 
 namespace SZV
 {
@@ -11,7 +12,11 @@ public:
 	CSGTreeNodeEditWidget(CSGTree::CSGTreeNode& node, QWidget* parent = nullptr);
 
 private:
-	void AddPosControl(QLayout& layout, m_Vec3& pos);
+	enum class ValueKind{ Linear, Angular };
+
+	void AddValueControl(QGridLayout& layout, float& value, ValueKind kind, const QString& caption);
+	void AddPosControl(QGridLayout& layout, m_Vec3& pos);
+	void AddSizeControl(QGridLayout& layout, m_Vec3& size);
 
 	void AddWidgets(CSGTree::MulChain& node);
 	void AddWidgets(CSGTree::AddChain& node);

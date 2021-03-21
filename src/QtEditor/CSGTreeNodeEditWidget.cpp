@@ -1,6 +1,6 @@
 #include "CSGTreeNodeEditWidget.hpp"
-#include <QtWidgets/QGridLayout>
 #include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QLabel>
 
 namespace SZV
 {
@@ -16,29 +16,55 @@ CSGTreeNodeEditWidget::CSGTreeNodeEditWidget(CSGTree::CSGTreeNode& node, QWidget
 			node);
 }
 
-void CSGTreeNodeEditWidget::AddPosControl(QLayout& layout, m_Vec3& pos)
+void CSGTreeNodeEditWidget::AddValueControl(QGridLayout& layout, float& value, const ValueKind kind, const QString& caption)
 {
-	const auto add_control=
-	[&](float* const value_ptr)
-	{
-		const auto box= new QDoubleSpinBox(this);
+	const auto value_ptr= &value;
 
-		box->setValue(*value_ptr);
+	const auto label= new QLabel(caption);
+
+	const auto box= new QDoubleSpinBox(this);
+
+	switch(kind)
+	{
+	case ValueKind::Linear:
 		box->setSingleStep(0.125f);
 		box->setDecimals(3);
+		box->setMinimum(-1024.0f);
+		box->setMaximum(+1024.0f);
+		break;
+	case ValueKind::Angular:
+		box->setSingleStep(1.0f);
+		box->setDecimals(1);
+		box->setMinimum(-180.0f);
+		box->setMaximum(+180.0f);
+		box->setWrapping(true);
+		break;
+	}
+	box->setValue(*value_ptr);
 
-		connect(
-			box,
-			static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
-			this,
-			[value_ptr](const double value){ *value_ptr= float(value); });
+	connect(
+		box,
+		static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+		this,
+		[value_ptr](const double value){ *value_ptr= float(value); });
 
-		layout.addWidget(box);
-	};
+	const int row= layout.rowCount();
+	layout.addWidget(label, row, 0);
+	layout.addWidget(box, row, 1);
+}
 
-	add_control(&pos.x);
-	add_control(&pos.y);
-	add_control(&pos.z);
+void CSGTreeNodeEditWidget::AddPosControl(QGridLayout& layout, m_Vec3& pos)
+{
+	AddValueControl(layout, pos.x, ValueKind::Linear, "X:");
+	AddValueControl(layout, pos.y, ValueKind::Linear, "Y:");
+	AddValueControl(layout, pos.z, ValueKind::Linear, "Z:");
+}
+
+void CSGTreeNodeEditWidget::AddSizeControl(QGridLayout& layout, m_Vec3& size)
+{
+	AddValueControl(layout, size.x, ValueKind::Linear, "Size X:");
+	AddValueControl(layout, size.y, ValueKind::Linear, "Size Y:");
+	AddValueControl(layout, size.z, ValueKind::Linear, "Size Z:");
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::MulChain& node)
@@ -61,63 +87,65 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::SubChain& node)
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Sphere& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	setLayout(layout);
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Ellipsoid& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	setLayout(layout);
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Cube& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
+	AddSizeControl(*layout, node.size);
 	setLayout(layout);
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Cylinder& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	setLayout(layout);
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::EllipticCylinder& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	setLayout(layout);
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Cone& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
+	AddValueControl(*layout, node.angle, ValueKind::Angular, "Angle:");
 	setLayout(layout);
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Paraboloid& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	setLayout(layout);
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Hyperboloid& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	setLayout(layout);
 }
 
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::HyperbolicParaboloid& node)
 {
-	const auto layout= new QVBoxLayout(this);
+	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	setLayout(layout);
 }

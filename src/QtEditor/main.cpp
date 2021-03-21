@@ -56,6 +56,7 @@ public:
 						CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.75f, 3.0f },
 						CSGTree::Cylinder{ { -4.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 0.75f, 3.0f },
 				} },
+				CSGTree::Cone{ { 5.0f, 5.0f, 3.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, 25.0f, 1.0f },
 				CSGTree::Cube{ { 0.8f, 2.8f, -0.6f }, { 0.5f, 0.5f, 0.6f } },
 			} } );
 	}
@@ -116,7 +117,7 @@ private:
 private:
 	Host host_;
 	QTimer timer_;
-	QVBoxLayout layout_;
+	QHBoxLayout layout_;
 	QTreeView csg_tree_view_;
 	CSGTreeModel csg_tree_model_;
 	QModelIndex current_selection_;
