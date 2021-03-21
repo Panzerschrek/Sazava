@@ -1,5 +1,6 @@
 #include  "../SDL2ViewerLib/Host.hpp"
 #include "CSGTreeModel.hpp"
+#include "CSGTreeNodeEditWidget.hpp"
 #include <QtCore/QTimer>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QBoxLayout>
@@ -34,6 +35,12 @@ public:
 			&QAbstractItemView::customContextMenuRequested,
 			this,
 			&HostWrapper::OnContextMenu);
+
+		connect(
+			&csg_tree_view_,
+			&QAbstractItemView::clicked,
+			this,
+			&HostWrapper::OnNodeActivated);
 
 		setLayout(&layout_);
 		layout_.addWidget(&csg_tree_view_);
@@ -89,6 +96,23 @@ private:
 		csg_tree_model_.AddNode(current_selection_, node);
 	}
 
+	void OnNodeActivated(const QModelIndex& index)
+	{
+		if(edit_widget_ != nullptr)
+		{
+			layout_.removeWidget(edit_widget_);
+			delete edit_widget_;
+			edit_widget_= nullptr;
+		}
+
+		if(!index.isValid())
+			return;
+
+		auto node= reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
+		edit_widget_= new CSGTreeNodeEditWidget(*node, this);
+		layout_.addWidget(edit_widget_);
+	}
+
 private:
 	Host host_;
 	QTimer timer_;
@@ -96,6 +120,7 @@ private:
 	QTreeView csg_tree_view_;
 	CSGTreeModel csg_tree_model_;
 	QModelIndex current_selection_;
+	CSGTreeNodeEditWidget* edit_widget_= nullptr;
 };
 
 int Main(int argc, char* argv[])
