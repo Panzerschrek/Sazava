@@ -26,6 +26,7 @@ public:
 		connect(&timer_, &QTimer::timeout, this, &HostWrapper::Loop);
 		timer_.start(20);
 
+		csg_tree_view_.setHeaderHidden(true);
 		csg_tree_view_.setModel(&csg_tree_model_);
 		csg_tree_view_.setSelectionBehavior(QAbstractItemView::SelectRows);
 		csg_tree_view_.setSelectionMode(QAbstractItemView::SingleSelection);

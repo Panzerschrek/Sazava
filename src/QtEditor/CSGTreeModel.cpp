@@ -112,7 +112,10 @@ void CSGTreeModel::AddNode(const QModelIndex& index, CSGTree::CSGTreeNode node)
 
 QModelIndex CSGTreeModel::index(const int row, const int column, const QModelIndex& parent) const
 {
-	const auto element_ptr= parent.isValid() ? reinterpret_cast<CSGTree::CSGTreeNode*>(parent.internalPointer()) : &const_cast<CSGTree::CSGTreeNode&>(root_);
+	if(!parent.isValid())
+		return createIndex(row, column, reinterpret_cast<uintptr_t>(&root_));
+
+	const auto element_ptr= reinterpret_cast<CSGTree::CSGTreeNode*>(parent.internalPointer());
 	if(const auto vec= GetElementsVector(*element_ptr))
 		return createIndex(row, column, reinterpret_cast<uintptr_t>(&(*vec)[row]));
 	return QModelIndex();
@@ -128,17 +131,24 @@ QModelIndex CSGTreeModel::parent(const QModelIndex& child) const
 	if(parent == nullptr)
 		return QModelIndex();
 
-	const auto vec= GetElementsVector(*parent);
-	const auto index_in_parent= element_ptr - vec->data();
+	if(const auto parent_of_parent= FindParent(*parent, const_cast<CSGTree::CSGTreeNode&>(root_)))
+	{
+		if(const auto vec= GetElementsVector(*parent_of_parent))
+			return createIndex(int(parent - vec->data()), 0, reinterpret_cast<uintptr_t>(parent));
+	}
 
-	return createIndex(int(index_in_parent), 0, reinterpret_cast<uintptr_t>(parent));
+	return createIndex(0, 0, reinterpret_cast<uintptr_t>(parent));
 }
 
 int CSGTreeModel::rowCount(const QModelIndex& parent) const
 {
-	const auto element_ptr= parent.isValid() ? reinterpret_cast<CSGTree::CSGTreeNode*>(parent.internalPointer()) : &const_cast<CSGTree::CSGTreeNode&>(root_);
+	if(!parent.isValid())
+		return 1;
+
+	const auto element_ptr= reinterpret_cast<CSGTree::CSGTreeNode*>(parent.internalPointer());
 	if (const auto vec= GetElementsVector(*element_ptr))
 		return int(vec->size());
+
 	return 0;
 }
 
