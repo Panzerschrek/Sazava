@@ -20,7 +20,7 @@ target_include_directories(
 		)
 target_link_libraries(
 	SDL2ViewerLib
-		PRIVATE
+		PUBLIC
 			SazavaLib
 			${SDL2_LIBRARIES}
 	)
