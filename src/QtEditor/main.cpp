@@ -66,8 +66,16 @@ private:
 		const auto add_action= new QAction("add", this);
 		connect(add_action, &QAction::triggered, this, &HostWrapper::OnAddNode);
 
+		const auto move_up_action= new QAction("move up", this);
+		connect(move_up_action, &QAction::triggered, this, &HostWrapper::OnMoveUpNode);
+
+		const auto move_down_action= new QAction("move down", this);
+		connect(move_down_action, &QAction::triggered, this, &HostWrapper::OnMoveDownNode);
+
 		menu->addAction(delete_action);
 		menu->addAction(add_action);
+		menu->addAction(move_up_action);
+		menu->addAction(move_down_action);
 
 		menu->popup(csg_tree_view_.viewport()->mapToGlobal(p));
 	}
@@ -81,6 +89,16 @@ private:
 	{
 		CSGTree::Paraboloid node{};
 		csg_tree_model_.AddNode(current_selection_, node);
+	}
+
+	void OnMoveUpNode()
+	{
+		csg_tree_model_.MoveUpNode(current_selection_);
+	}
+
+	void OnMoveDownNode()
+	{
+		csg_tree_model_.MoveDownNode(current_selection_);
 	}
 
 	void OnNodeActivated(const QModelIndex& index)

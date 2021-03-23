@@ -12,6 +12,8 @@ public:
 
 	void DeleteNode(const QModelIndex& index);
 	void AddNode(const QModelIndex& index, CSGTree::CSGTreeNode node);
+	void MoveUpNode(const QModelIndex& index);
+	void MoveDownNode(const QModelIndex& index);
 
 public: // QAbstractItemModel
 	QModelIndex index(int row, int column, const QModelIndex& parent) const override;

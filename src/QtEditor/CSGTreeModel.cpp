@@ -110,6 +110,54 @@ void CSGTreeModel::AddNode(const QModelIndex& index, CSGTree::CSGTreeNode node)
 	}
 }
 
+void CSGTreeModel::MoveUpNode(const QModelIndex& index)
+{
+	if(!index.isValid())
+		return;
+
+	const auto element_ptr= reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
+
+	if(const auto parent= FindParent(*element_ptr, root_))
+	{
+		ElementsVector& vec= *GetElementsVector(*parent);
+
+		const size_t index_in_parent= size_t(element_ptr - vec.data());
+		if(index_in_parent > 0u)
+		{
+			std::swap(vec[index_in_parent - 1u], vec[index_in_parent]);
+
+			const auto parent_index= CSGTreeModel::parent(index);
+			emit dataChanged(
+				CSGTreeModel::index(int(index_in_parent - 1), 0, parent_index),
+				CSGTreeModel::index(int(index_in_parent    ), 0, parent_index));
+		}
+	}
+}
+
+void CSGTreeModel::MoveDownNode(const QModelIndex& index)
+{
+	if(!index.isValid())
+		return;
+
+	const auto element_ptr= reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
+
+	if(const auto parent= FindParent(*element_ptr, root_))
+	{
+		ElementsVector& vec= *GetElementsVector(*parent);
+
+		const size_t index_in_parent= size_t(element_ptr - vec.data());
+		if(index_in_parent + 1u < vec.size())
+		{
+			std::swap(vec[index_in_parent], vec[index_in_parent + 1u]);
+
+			const auto parent_index= CSGTreeModel::parent(index);
+			emit dataChanged(
+				CSGTreeModel::index(int(index_in_parent    ), 0, parent_index),
+				CSGTreeModel::index(int(index_in_parent + 1), 0, parent_index));
+		}
+	}
+}
+
 QModelIndex CSGTreeModel::index(const int row, const int column, const QModelIndex& parent) const
 {
 	if(!parent.isValid())
