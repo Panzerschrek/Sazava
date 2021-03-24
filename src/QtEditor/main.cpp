@@ -7,6 +7,7 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QWidget>
 
@@ -15,6 +16,41 @@ namespace SZV
 
 namespace
 {
+
+class NewNodeListWidget final : public QWidget
+{
+public:
+	NewNodeListWidget(CSGTreeModel& csg_tree_model, QWidget* const parent)
+		: QWidget(parent)
+		, button_box_("box", this)
+		, button_sphere_("sphere", this)
+		, csg_tree_model_(csg_tree_model)
+	{
+		connect(&button_box_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddBox);
+		connect(&button_sphere_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddSphere);
+
+		layout_.addWidget(&button_box_);
+		layout_.addWidget(&button_sphere_);
+		setLayout(&layout_);
+	}
+
+private:
+	void OnAddBox()
+	{
+	}
+
+	void OnAddSphere()
+	{
+	}
+
+private:
+	QPushButton button_box_;
+	QPushButton button_sphere_;
+	QHBoxLayout layout_;
+	CSGTreeModel& csg_tree_model_;
+	QModelIndex current_selection_;
+	CSGTreeNodeEditWidget* edit_widget_= nullptr;
+};
 
 class CSGNodesTreeWidget final : public QWidget
 {
@@ -113,6 +149,7 @@ public:
 		: QWidget(parent)
 		, csg_tree_model_(host_.GetCSGTree())
 		, layout_(this)
+		, new_node_list_widget_(csg_tree_model_, this)
 		, csg_nodes_tree_widget_(csg_tree_model_, this)
 	{
 		setMinimumSize(300, 480);
@@ -120,6 +157,7 @@ public:
 		connect(&timer_, &QTimer::timeout, this, &HostWrapper::Loop);
 		timer_.start(20);
 
+		layout_.addWidget(&new_node_list_widget_);
 		layout_.addWidget(&csg_nodes_tree_widget_);
 		setLayout(&layout_);
 	}
@@ -135,7 +173,8 @@ private:
 	Host host_;
 	QTimer timer_;
 	CSGTreeModel csg_tree_model_;
-	QHBoxLayout layout_;
+	QVBoxLayout layout_;
+	NewNodeListWidget new_node_list_widget_;
 	CSGNodesTreeWidget csg_nodes_tree_widget_;
 };
 
