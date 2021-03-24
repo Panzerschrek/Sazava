@@ -4,7 +4,9 @@
 #include <QtCore/QTimer>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
+#include <QtWidgets/QMenuBar>
 #include <QtWidgets/QTreeView>
 #include <QtWidgets/QWidget>
 
@@ -14,18 +16,12 @@ namespace SZV
 namespace
 {
 
-// Workaround for old Qt without QVulkanWindow. Reuse code from SDL2 Viewer to create Vulkan window.
-
-class HostWrapper final : public QWidget
+class CSGNodesTreeWidget final : public QWidget
 {
 public:
-
-	HostWrapper()
-		: layout_(this), csg_tree_view_(this), csg_tree_model_(host_.GetCSGTree())
+	CSGNodesTreeWidget(CSGTreeModel& csg_tree_model, QWidget* const parent)
+		: QWidget(parent), csg_tree_model_(csg_tree_model)
 	{
-		connect(&timer_, &QTimer::timeout, this, &HostWrapper::Loop);
-		timer_.start(20);
-
 		csg_tree_view_.setHeaderHidden(true);
 		csg_tree_view_.setModel(&csg_tree_model_);
 		csg_tree_view_.setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -35,47 +31,29 @@ public:
 			&csg_tree_view_,
 			&QAbstractItemView::customContextMenuRequested,
 			this,
-			&HostWrapper::OnContextMenu);
+			&CSGNodesTreeWidget::OnContextMenu);
 
 		connect(
 			&csg_tree_view_,
 			&QAbstractItemView::clicked,
 			this,
-			&HostWrapper::OnNodeActivated);
+			&CSGNodesTreeWidget::OnNodeActivated);
 
 		setLayout(&layout_);
 		layout_.addWidget(&csg_tree_view_);
 	}
 
 private:
-	void Loop()
-	{
-		if(host_.Loop())
-			close();
-	}
-
 	void OnContextMenu(const QPoint& p)
 	{
 		current_selection_= csg_tree_view_.indexAt(p);
 
-		const auto menu=new QMenu(this);
+		const auto menu= new QMenu(this);
 
-		const auto delete_action= new QAction("delete", this);
-		connect(delete_action, &QAction::triggered, this, &HostWrapper::OnDeleteNode);
-
-		const auto add_action= new QAction("add", this);
-		connect(add_action, &QAction::triggered, this, &HostWrapper::OnAddNode);
-
-		const auto move_up_action= new QAction("move up", this);
-		connect(move_up_action, &QAction::triggered, this, &HostWrapper::OnMoveUpNode);
-
-		const auto move_down_action= new QAction("move down", this);
-		connect(move_down_action, &QAction::triggered, this, &HostWrapper::OnMoveDownNode);
-
-		menu->addAction(delete_action);
-		menu->addAction(add_action);
-		menu->addAction(move_up_action);
-		menu->addAction(move_down_action);
+		menu->addAction("delete", this, &CSGNodesTreeWidget::OnDeleteNode);
+		menu->addAction("add", this, &CSGNodesTreeWidget::OnAddNode);
+		menu->addAction("move up", this, &CSGNodesTreeWidget::OnMoveUpNode);
+		menu->addAction("move down", this, &CSGNodesTreeWidget::OnMoveDownNode);
 
 		menu->popup(csg_tree_view_.viewport()->mapToGlobal(p));
 	}
@@ -119,20 +97,71 @@ private:
 	}
 
 private:
-	Host host_;
-	QTimer timer_;
-	QHBoxLayout layout_;
+	QVBoxLayout layout_;
 	QTreeView csg_tree_view_;
-	CSGTreeModel csg_tree_model_;
+	CSGTreeModel& csg_tree_model_;
 	QModelIndex current_selection_;
 	CSGTreeNodeEditWidget* edit_widget_= nullptr;
+};
+
+// Workaround for old Qt without QVulkanWindow. Reuse code from SDL2 Viewer to create Vulkan window.
+
+class HostWrapper final : public QWidget
+{
+public:
+	explicit HostWrapper(QWidget* const parent)
+		: QWidget(parent)
+		, csg_tree_model_(host_.GetCSGTree())
+		, layout_(this)
+		, csg_nodes_tree_widget_(csg_tree_model_, this)
+	{
+		setMinimumSize(300, 480);
+
+		connect(&timer_, &QTimer::timeout, this, &HostWrapper::Loop);
+		timer_.start(20);
+
+		layout_.addWidget(&csg_nodes_tree_widget_);
+		setLayout(&layout_);
+	}
+
+private:
+	void Loop()
+	{
+		if(host_.Loop())
+			close();
+	}
+
+private:
+	Host host_;
+	QTimer timer_;
+	CSGTreeModel csg_tree_model_;
+	QHBoxLayout layout_;
+	CSGNodesTreeWidget csg_nodes_tree_widget_;
+};
+
+class MainWindow final : public QMainWindow
+{
+public:
+	explicit MainWindow()
+		: host_wrapper_(this)
+	{
+		const auto menu_bar = new QMenuBar(this);
+		const auto file_menu = menu_bar->addMenu("file");
+		file_menu->addAction("quit", this, &QWidget::close);
+		setMenuBar(menu_bar);
+
+		setCentralWidget(&host_wrapper_);
+	}
+
+private:
+	HostWrapper host_wrapper_;
 };
 
 int Main(int argc, char* argv[])
 {
 	QApplication app(argc, argv);
 
-	HostWrapper window;
+	MainWindow window;
 	window.show();
 
 	return app.exec();
