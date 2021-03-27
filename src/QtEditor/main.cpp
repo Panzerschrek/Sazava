@@ -82,8 +82,6 @@ public:
 private:
 	void OnContextMenu(const QPoint& p)
 	{
-		current_selection_= csg_tree_view_.indexAt(p);
-
 		const auto menu= new QMenu(this);
 
 		menu->addAction("delete", this, &CSGNodesTreeWidget::OnDeleteNode);
@@ -96,23 +94,23 @@ private:
 
 	void OnDeleteNode()
 	{
-		csg_tree_model_.DeleteNode(current_selection_);
+		csg_tree_model_.DeleteNode(csg_tree_view_.currentIndex());
 	}
 
 	void OnAddNode()
 	{
 		CSGTree::Paraboloid node{};
-		csg_tree_model_.AddNode(current_selection_, node);
+		csg_tree_model_.AddNode(csg_tree_view_.currentIndex(), node);
 	}
 
 	void OnMoveUpNode()
 	{
-		csg_tree_model_.MoveUpNode(current_selection_);
+		csg_tree_model_.MoveUpNode(csg_tree_view_.currentIndex());
 	}
 
 	void OnMoveDownNode()
 	{
-		csg_tree_model_.MoveDownNode(current_selection_);
+		csg_tree_model_.MoveDownNode(csg_tree_view_.currentIndex());
 	}
 
 	void OnNodeActivated(const QModelIndex& index)
@@ -136,7 +134,6 @@ private:
 	QVBoxLayout layout_;
 	QTreeView csg_tree_view_;
 	CSGTreeModel& csg_tree_model_;
-	QModelIndex current_selection_;
 	CSGTreeNodeEditWidget* edit_widget_= nullptr;
 };
 
