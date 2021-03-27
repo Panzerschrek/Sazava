@@ -1,6 +1,7 @@
 #include  "../SDL2ViewerLib/Host.hpp"
 #include "CSGTreeModel.hpp"
 #include "CSGTreeNodeEditWidget.hpp"
+#include "NewNodeListWidget.hpp"
 #include <QtCore/QTimer>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QBoxLayout>
@@ -17,40 +18,47 @@ namespace SZV
 namespace
 {
 
-class NewNodeListWidget final : public QWidget
+m_Vec3 GetNodePos(const CSGTree::CSGTreeNode& node);
+
+template<typename T>
+m_Vec3 GetNodePosImpl(const T& t){ return t.center; }
+
+m_Vec3 GetNodePosImpl(const CSGTree::MulChain& node)
 {
-public:
-	NewNodeListWidget(CSGTreeModel& csg_tree_model, QWidget* const parent)
-		: QWidget(parent)
-		, button_box_("box", this)
-		, button_sphere_("sphere", this)
-		, csg_tree_model_(csg_tree_model)
-	{
-		connect(&button_box_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddBox);
-		connect(&button_sphere_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddSphere);
+	if(!node.elements.empty())
+		return GetNodePos(node.elements.front());
+	return m_Vec3(0.0f, 0.0f, 0.0f);
+}
 
-		layout_.addWidget(&button_box_);
-		layout_.addWidget(&button_sphere_);
-		setLayout(&layout_);
-	}
+m_Vec3 GetNodePosImpl(const CSGTree::AddChain& node)
+{
+	if(!node.elements.empty())
+		return GetNodePos(node.elements.front());
+	return m_Vec3(0.0f, 0.0f, 0.0f);
+}
 
-private:
-	void OnAddBox()
-	{
-	}
+m_Vec3 GetNodePosImpl(const CSGTree::SubChain& node)
+{
+	if(!node.elements.empty())
+		return GetNodePos(node.elements.front());
+	return m_Vec3(0.0f, 0.0f, 0.0f);
+}
 
-	void OnAddSphere()
-	{
-	}
+m_Vec3 GetNodePos(const CSGTree::CSGTreeNode& node)
+{
+	return std::visit([](const auto& n){ return GetNodePosImpl(n); }, node);
+}
 
-private:
-	QPushButton button_box_;
-	QPushButton button_sphere_;
-	QHBoxLayout layout_;
-	CSGTreeModel& csg_tree_model_;
-	QModelIndex current_selection_;
-	CSGTreeNodeEditWidget* edit_widget_= nullptr;
-};
+void SetNodePosImpl(CSGTree::MulChain&, const m_Vec3&){}
+void SetNodePosImpl(CSGTree::AddChain&, const m_Vec3&){}
+void SetNodePosImpl(CSGTree::SubChain&, const m_Vec3&){}
+
+template<typename T> void SetNodePosImpl(T& node, const m_Vec3& pos){ node.center= pos; }
+
+void SetNodePos(CSGTree::CSGTreeNode& node, const m_Vec3& pos)
+{
+	std::visit([&](auto& n){ SetNodePosImpl(n, pos); }, node);
+}
 
 class CSGNodesTreeWidget final : public QWidget
 {
@@ -79,13 +87,24 @@ public:
 		layout_.addWidget(&csg_tree_view_);
 	}
 
+	void AddNode(CSGTree::CSGTreeNode node_template)
+	{
+		const auto index= csg_tree_view_.currentIndex();
+		if(!index.isValid())
+			return;
+
+		const m_Vec3 current_pos= GetNodePos(*reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer()));
+
+		SetNodePos(node_template, current_pos);
+		csg_tree_model_.AddNode(index, std::move(node_template));
+	}
+
 private:
 	void OnContextMenu(const QPoint& p)
 	{
 		const auto menu= new QMenu(this);
 
 		menu->addAction("delete", this, &CSGNodesTreeWidget::OnDeleteNode);
-		menu->addAction("add", this, &CSGNodesTreeWidget::OnAddNode);
 		menu->addAction("move up", this, &CSGNodesTreeWidget::OnMoveUpNode);
 		menu->addAction("move down", this, &CSGNodesTreeWidget::OnMoveDownNode);
 
@@ -95,12 +114,6 @@ private:
 	void OnDeleteNode()
 	{
 		csg_tree_model_.DeleteNode(csg_tree_view_.currentIndex());
-	}
-
-	void OnAddNode()
-	{
-		CSGTree::Paraboloid node{};
-		csg_tree_model_.AddNode(csg_tree_view_.currentIndex(), node);
 	}
 
 	void OnMoveUpNode()
@@ -146,7 +159,10 @@ public:
 		: QWidget(parent)
 		, csg_tree_model_(host_.GetCSGTree())
 		, layout_(this)
-		, new_node_list_widget_(csg_tree_model_, this)
+		, new_node_list_widget_(
+			this,
+			[this](CSGTree::CSGTreeNode node){ csg_nodes_tree_widget_.AddNode(std::move(node)); }
+			)
 		, csg_nodes_tree_widget_(csg_tree_model_, this)
 	{
 		setMinimumSize(300, 480);
