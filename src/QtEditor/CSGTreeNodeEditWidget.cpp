@@ -135,6 +135,8 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Hyperboloid& node)
 {
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
+	AddSizeControl(*layout, node.size);
+	AddValueControl(*layout, node.focus_distance, ValueKind::Pos, "Focus distance: ");
 	setLayout(layout);
 }
 

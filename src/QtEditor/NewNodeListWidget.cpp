@@ -120,9 +120,8 @@ void NewNodeListWidget::OnAddParaboloid()
 void NewNodeListWidget::OnAddHyperboloid()
 {
 	CSGTree::Hyperboloid hyperboloid{};
-	hyperboloid.factor= 1.5f;
-	hyperboloid.height= 1.0f;
-	hyperboloid.radius= 0.125f;
+	hyperboloid.size= m_Vec3( 1.0f, 1.0f, 1.0f );
+	hyperboloid.focus_distance= 0.125f;
 	hyperboloid.normal= m_Vec3(0.0f, 0.0f, 1.0f);
 	hyperboloid.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(hyperboloid);

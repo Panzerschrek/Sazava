@@ -98,14 +98,13 @@ struct Paraboloid
 struct Hyperboloid
 {
 	m_Vec3 center;
+	m_Vec3 size;
 
 	// Vectors must be normalized and perpendicular!
 	// TODO - replace vectors with something else
 	m_Vec3 normal; // main axis of the cone
 	m_Vec3 binormal;
-	float factor;
-	float radius; // At zero
-	float height;
+	float focus_distance;
 };
 
 struct HyperbolicParaboloid
