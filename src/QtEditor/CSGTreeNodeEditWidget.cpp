@@ -91,13 +91,6 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::SubChain& node)
 	(void)node;
 }
 
-void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Sphere& node)
-{
-	const auto layout= new QGridLayout(this);
-	AddPosControl(*layout, node.center);
-	setLayout(layout);
-}
-
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Ellipsoid& node)
 {
 	const auto layout= new QGridLayout(this);

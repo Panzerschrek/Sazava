@@ -9,7 +9,6 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	, button_mul_chain_("mut chain", this)
 	, button_add_chain_("add chain", this)
 	, button_sub_chain_("sub chain", this)
-	, button_sphere_("sphere", this)
 	, button_ellipsoid_("ellipsoid", this)
 	, button_cube_("cube", this)
 	, button_cylinder_("cylinder", this)
@@ -22,7 +21,6 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	connect(&button_mul_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddMulChain);
 	connect(&button_add_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddAddChain);
 	connect(&button_sub_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddSubChain);
-	connect(&button_sphere_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddSphere);
 	connect(&button_ellipsoid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddEllipsoid);
 	connect(&button_cube_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCube);
 	connect(&button_cylinder_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCylinder);
@@ -35,7 +33,6 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	layout_.addWidget(&button_mul_chain_);
 	layout_.addWidget(&button_add_chain_);
 	layout_.addWidget(&button_sub_chain_);
-	layout_.addWidget(&button_sphere_);
 	layout_.addWidget(&button_ellipsoid_);
 	layout_.addWidget(&button_cube_);
 	layout_.addWidget(&button_cylinder_);
@@ -52,8 +49,8 @@ void NewNodeListWidget::OnAddMulChain()
 {
 	CSGTree::MulChain mul_chain
 	{ {
-		CSGTree::Sphere{ { 0.0f, 0.0f, +0.25f }, 1.0f },
-		CSGTree::Sphere{ { 0.0f, 0.0f, -0.25f }, 1.0f },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
 	} };
 	node_add_callback_(std::move(mul_chain));
 }
@@ -62,8 +59,8 @@ void NewNodeListWidget::OnAddAddChain()
 {
 	CSGTree::AddChain add_chain
 	{ {
-		CSGTree::Sphere{ { 0.0f, 0.0f, +0.25f }, 1.0f },
-		CSGTree::Sphere{ { 0.0f, 0.0f, -0.25f }, 1.0f },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
 	} };
 	node_add_callback_(std::move(add_chain));
 }
@@ -72,23 +69,16 @@ void NewNodeListWidget::OnAddSubChain()
 {
 	CSGTree::SubChain sub_chain
 	{ {
-		CSGTree::Sphere{ { 0.0f, 0.0f, +0.25f }, 1.0f },
-		CSGTree::Sphere{ { 0.0f, 0.0f, -0.25f }, 1.0f },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
 	} };
 	node_add_callback_(std::move(sub_chain));
-}
-
-void NewNodeListWidget::OnAddSphere()
-{
-	CSGTree::Sphere sphere{};
-	sphere.radius= 1.0f;
-	node_add_callback_(sphere);
 }
 
 void NewNodeListWidget::OnAddEllipsoid()
 {
 	CSGTree::Ellipsoid ellipsoid{};
-	ellipsoid.size= m_Vec3(0.8f, 1.0f, 1.2f);
+	ellipsoid.size= m_Vec3(1.0f, 1.0f, 1.0f);
 	ellipsoid.normal= m_Vec3(0.0f, 0.0f, 1.0f);
 	ellipsoid.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(ellipsoid);

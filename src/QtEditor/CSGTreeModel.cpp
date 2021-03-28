@@ -45,7 +45,6 @@ CSGTree::CSGTreeNode* FindParent(const CSGTree::CSGTreeNode& child, CSGTree::CSG
 QString GetElementTypeNameImpl(const CSGTree::MulChain&) { return "mul"; }
 QString GetElementTypeNameImpl(const CSGTree::AddChain&) { return "add"; }
 QString GetElementTypeNameImpl(const CSGTree::SubChain&) { return "sub"; }
-QString GetElementTypeNameImpl(const CSGTree::Sphere&) { return "shpere"; }
 QString GetElementTypeNameImpl(const CSGTree::Ellipsoid&) { return "ellipsoid"; }
 QString GetElementTypeNameImpl(const CSGTree::Cube&) { return "cube"; }
 QString GetElementTypeNameImpl(const CSGTree::Cylinder&) { return "cylinder"; }

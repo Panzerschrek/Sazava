@@ -12,7 +12,6 @@ namespace CSGTree
 struct MulChain;
 struct AddChain;
 struct SubChain;
-struct Sphere;
 struct Ellipsoid;
 struct Cube; // TODO - rename to "Box"
 struct Cylinder;
@@ -26,7 +25,6 @@ using CSGTreeNode= std::variant<
 	MulChain,
 	AddChain,
 	SubChain,
-	Sphere,
 	Ellipsoid,
 	Cube,
 	Cylinder,
@@ -49,12 +47,6 @@ struct AddChain
 struct SubChain
 {
 	std::vector<CSGTreeNode> elements;
-};
-
-struct Sphere
-{
-	m_Vec3 center;
-	float radius;
 };
 
 struct Ellipsoid

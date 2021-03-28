@@ -216,27 +216,6 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	return std::move(sub);
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Sphere& node)
-{
-	const m_Vec3 normal(0.0f, 0.0f, 1.0f);
-	const m_Vec3 binormal(1.0f, 0.0f, 0.0f);
-
-	GPUSurface surface{};
-	surface.xx= surface.yy= surface.zz= 1.0f;
-	surface.k= - node.radius * node.radius;
-	surface= TransformSurface(surface, node.center, normal, binormal);
-
-	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(surface);
-
-	const BoundingBox bb{ { -node.radius, -node.radius, -node.radius }, { +node.radius, +node.radius, +node.radius } };
-
-	TreeElementsLowLevel::Leaf leaf;
-	leaf.surface_index= surface_index;
-	leaf.bb= TransformBoundingBox(bb, node.center, normal, binormal);
-	return leaf;
-}
-
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Ellipsoid& node)
 {
 	GPUSurface surface{};
