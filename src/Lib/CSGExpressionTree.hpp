@@ -14,7 +14,7 @@ struct AddChain;
 struct SubChain;
 struct Sphere;
 struct Ellipsoid;
-struct Cube;
+struct Cube; // TODO - rename to "Box"
 struct Cylinder;
 struct EllipticCylinder;
 struct Cone;
