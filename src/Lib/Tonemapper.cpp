@@ -28,7 +28,6 @@ struct Uniforms
 
 	struct
 	{
-		float deformation_factor[4];
 		float bloom_scale;
 		float padding[3];
 	} fragment;
@@ -108,11 +107,7 @@ Tonemapper::Tonemapper(I_WindowVulkan& window_vulkan)
 	}
 
 	// Calculate image sizes.
-	// Use bigger framebuffer, because we use lenses distortion effect.
-	framebuffer_size_.width = viewport_size.width  * 4u / 3u;
-	framebuffer_size_.height= viewport_size.height * 4u / 3u;
-	framebuffer_size_.width = (framebuffer_size_.width  + 7u) & ~7u;
-	framebuffer_size_.height= (framebuffer_size_.height + 7u) & ~7u;
+	framebuffer_size_ = viewport_size;
 
 	// Use powert of two sizes, because we needs iterative downsampling and it works properly only for power of two images.
 	const vk::Extent2D aux_image_size_log2(
@@ -806,15 +801,9 @@ void Tonemapper::EndFrame(const vk::CommandBuffer command_buffer)
 		1u, &*main_descriptor_set_,
 		0u, nullptr);
 
-	const float deformation_factor= 10.0f;
-	const float color_deformation_factor= 0.25f;
 	const float bloom_scale= 0.125f;
 
 	Uniforms uniforms;
-	uniforms.fragment.deformation_factor[0]= deformation_factor * (1.0f - 0.1f * color_deformation_factor);
-	uniforms.fragment.deformation_factor[1]= deformation_factor;
-	uniforms.fragment.deformation_factor[2]= deformation_factor * (1.0f + 0.1f * color_deformation_factor);
-	uniforms.fragment.deformation_factor[3]= 0.0f;
 	uniforms.fragment.bloom_scale= bloom_scale;
 
 	const float c_exposure_change_speed= 8.0f;

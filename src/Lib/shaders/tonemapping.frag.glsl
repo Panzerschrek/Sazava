@@ -6,8 +6,7 @@ layout(binding= 3) uniform sampler2D blured_tex;
 
 layout(push_constant) uniform uniforms_block
 {
-	layout(offset = 16) vec4 deform_factor;
-	vec4 bloom_scale; // .x used
+	layout(offset = 16) vec4 bloom_scale; // .x used
 };
 
 layout(location= 0) in vec2 f_tex_coord; // In range [-1; 1]
@@ -29,26 +28,10 @@ vec3 tonemapping_function(vec3 x, float exposure)
 
 void main()
 {
-	float scale_base= dot(f_tex_coord, f_tex_coord);
-	vec2 tex_coord_r= f_tex_coord * ((scale_base + deform_factor.r) * (0.5 / (2.0 + deform_factor.r))) + vec2(0.5, 0.5);
-	vec2 tex_coord_g= f_tex_coord * ((scale_base + deform_factor.g) * (0.5 / (2.0 + deform_factor.g))) + vec2(0.5, 0.5);
-	vec2 tex_coord_b= f_tex_coord * ((scale_base + deform_factor.b) * (0.5 / (2.0 + deform_factor.b))) + vec2(0.5, 0.5);
-
-	vec3 color=
-		vec3(
-			texture(tex, tex_coord_r).r,
-			texture(tex, tex_coord_g).g,
-			texture(tex, tex_coord_b).b
-			);
-	vec3 blured_color=
-		vec3(
-			texture(blured_tex, tex_coord_r).r,
-			texture(blured_tex, tex_coord_g).g,
-			texture(blured_tex, tex_coord_b).b
-			);
+	vec3 color= texture(tex, f_tex_coord).rgb;
+	vec3 blured_color= texture(blured_tex, f_tex_coord).rgb;
 
 	color= tonemapping_function(color + blured_color * bloom_scale.x, f_exposure);
 
 	out_color= vec4(color, 1.0);
-	//out_color= texture(tex, tex_coord_r);
 }

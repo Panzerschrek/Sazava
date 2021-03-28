@@ -66,7 +66,7 @@ void CameraController::Update(const float time_delta_s, const InputState& input_
 
 m_Mat4 CameraController::CalculateViewMatrix() const
 {
-	const float fov_deg= 90.0;
+	const float fov_deg= 75.0;
 
 	const float fov= fov_deg * (g_pi / 180.0f);
 
