@@ -152,6 +152,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_sur
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::MulChain& node)
 {
+	if(node.elements.empty())
+		return TreeElementsLowLevel::OneLeaf{};
+	else if(node.elements.size() == 1u)
+		return BuildLowLevelTree_r(out_surfaces, node.elements.front());
+
 	TreeElementsLowLevel::Mul mul;
 	mul.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
 	mul.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));
@@ -169,6 +174,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::AddChain& node)
 {
+	if(node.elements.empty())
+		return TreeElementsLowLevel::OneLeaf{};
+	else if(node.elements.size() == 1u)
+		return BuildLowLevelTree_r(out_surfaces, node.elements.front());
+
 	TreeElementsLowLevel::Add add;
 	add.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
 	add.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));
@@ -186,6 +196,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::SubChain& node)
 {
+	if(node.elements.empty())
+		return TreeElementsLowLevel::OneLeaf{};
+	else if(node.elements.size() == 1u)
+		return BuildLowLevelTree_r(out_surfaces, node.elements.front());
+
 	TreeElementsLowLevel::Sub sub;
 	sub.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
 	sub.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));

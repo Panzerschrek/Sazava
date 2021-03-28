@@ -148,6 +148,11 @@ CSGExpressionBuildResult BUILDCSGExpressionNode_impl(CSGExpressionGPUBuffer& out
 	return CSGExpressionBuildResult::Variable;
 }
 
+CSGExpressionBuildResult BUILDCSGExpressionNode_impl(CSGExpressionGPUBuffer&, const BoundingBox&, const TreeElementsLowLevel::OneLeaf&)
+{
+	return CSGExpressionBuildResult::AlwaysOne;
+}
+
 CSGExpressionBuildResult BUILDCSGExpression_r(CSGExpressionGPUBuffer& out_expression, const BoundingBox& target_bb, const TreeElementsLowLevel::TreeElement& node)
 {
 	return std::visit(
@@ -270,6 +275,8 @@ void BuildSceneMeshNode_impl(
 
 	AddCube(out_vertices, out_indices, node.bb, start_offset);
 }
+
+void BuildSceneMeshNode_impl(VerticesVector&, IndicesVector&, CSGExpressionGPUBuffer&, NodesStack&, const TreeElementsLowLevel::OneLeaf&){}
 
 void BuildSceneMeshNode_r(
 	VerticesVector& out_vertices,

@@ -6,6 +6,9 @@ namespace SZV
 NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node_add_callback)
 	: QWidget(parent)
 	, node_add_callback_(std::move(node_add_callback))
+	, button_mul_chain_("mut chain", this)
+	, button_add_chain_("add chain", this)
+	, button_sub_chain_("sub chain", this)
 	, button_sphere_("sphere", this)
 	, button_ellipsoid_("ellipsoid", this)
 	, button_cube_("cube", this)
@@ -16,6 +19,9 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	, button_hyperboloid_("hyperboloid", this)
 	, button_hyperbolic_paraboloid_("hyperbolic paraboloid", this)
 {
+	connect(&button_mul_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddMulChain);
+	connect(&button_add_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddAddChain);
+	connect(&button_sub_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddSubChain);
 	connect(&button_sphere_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddSphere);
 	connect(&button_ellipsoid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddEllipsoid);
 	connect(&button_cube_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCube);
@@ -26,6 +32,9 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	connect(&button_hyperboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddHyperboloid);
 	connect(&button_hyperbolic_paraboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddHyperbolicParaboloid);
 
+	layout_.addWidget(&button_mul_chain_);
+	layout_.addWidget(&button_add_chain_);
+	layout_.addWidget(&button_sub_chain_);
 	layout_.addWidget(&button_sphere_);
 	layout_.addWidget(&button_ellipsoid_);
 	layout_.addWidget(&button_cube_);
@@ -37,6 +46,36 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	layout_.addWidget(&button_hyperbolic_paraboloid_);
 
 	setLayout(&layout_);
+}
+
+void NewNodeListWidget::OnAddMulChain()
+{
+	CSGTree::MulChain mul_chain
+	{ {
+		CSGTree::Sphere{ { 0.0f, 0.0f, +0.25f }, 1.0f },
+		CSGTree::Sphere{ { 0.0f, 0.0f, -0.25f }, 1.0f },
+	} };
+	node_add_callback_(std::move(mul_chain));
+}
+
+void NewNodeListWidget::OnAddAddChain()
+{
+	CSGTree::AddChain add_chain
+	{ {
+		CSGTree::Sphere{ { 0.0f, 0.0f, +0.25f }, 1.0f },
+		CSGTree::Sphere{ { 0.0f, 0.0f, -0.25f }, 1.0f },
+	} };
+	node_add_callback_(std::move(add_chain));
+}
+
+void NewNodeListWidget::OnAddSubChain()
+{
+	CSGTree::SubChain sub_chain
+	{ {
+		CSGTree::Sphere{ { 0.0f, 0.0f, +0.25f }, 1.0f },
+		CSGTree::Sphere{ { 0.0f, 0.0f, -0.25f }, 1.0f },
+	} };
+	node_add_callback_(std::move(sub_chain));
 }
 
 void NewNodeListWidget::OnAddSphere()

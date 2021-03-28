@@ -13,7 +13,11 @@ public:
 	using NodeAddCallback= std::function<void(CSGTree::CSGTreeNode)>;
 
 	explicit NewNodeListWidget(QWidget* const parent, NodeAddCallback node_add_callback);
+
 private:
+	void OnAddMulChain();
+	void OnAddAddChain();
+	void OnAddSubChain();
 	void OnAddSphere();
 	void OnAddEllipsoid();
 	void OnAddCube();
@@ -26,6 +30,9 @@ private:
 
 private:
 	const NodeAddCallback node_add_callback_;
+	QPushButton button_mul_chain_;
+	QPushButton button_add_chain_;
+	QPushButton button_sub_chain_;
 	QPushButton button_sphere_;
 	QPushButton button_ellipsoid_;
 	QPushButton button_cube_;
