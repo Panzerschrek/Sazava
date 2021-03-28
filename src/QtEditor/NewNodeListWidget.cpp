@@ -112,8 +112,7 @@ void NewNodeListWidget::OnAddCone()
 void NewNodeListWidget::OnAddParaboloid()
 {
 	CSGTree::Paraboloid paraboloid{};
-	paraboloid.factor= 1.5f;
-	paraboloid.height= 1.0f;
+	paraboloid.size= m_Vec3( 1.0f, 1.0f, 1.0f );
 	paraboloid.normal= m_Vec3(0.0f, 0.0f, 1.0f);
 	paraboloid.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(paraboloid);

@@ -127,6 +127,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Paraboloid& node)
 {
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
+	AddSizeControl(*layout, node.size);
 	setLayout(layout);
 }
 
