@@ -15,7 +15,6 @@ struct SubChain;
 struct Ellipsoid;
 struct Cube; // TODO - rename to "Box"
 struct Cylinder;
-struct EllipticCylinder;
 struct Cone;
 struct Paraboloid;
 struct Hyperboloid;
@@ -28,7 +27,6 @@ using CSGTreeNode= std::variant<
 	Ellipsoid,
 	Cube,
 	Cylinder,
-	EllipticCylinder,
 	Cone,
 	Paraboloid,
 	Hyperboloid,
@@ -64,16 +62,6 @@ struct Cube
 };
 
 struct Cylinder
-{
-	// Vectors must be normalized and perpendicular!
-	m_Vec3 center;
-	m_Vec3 normal;
-	m_Vec3 binormal;
-	float radius;
-	float height;
-};
-
-struct EllipticCylinder
 {
 	// Vectors must be normalized and perpendicular!
 	m_Vec3 center;

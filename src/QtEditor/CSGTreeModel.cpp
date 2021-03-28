@@ -48,7 +48,6 @@ QString GetElementTypeNameImpl(const CSGTree::SubChain&) { return "sub"; }
 QString GetElementTypeNameImpl(const CSGTree::Ellipsoid&) { return "ellipsoid"; }
 QString GetElementTypeNameImpl(const CSGTree::Cube&) { return "cube"; }
 QString GetElementTypeNameImpl(const CSGTree::Cylinder&) { return "cylinder"; }
-QString GetElementTypeNameImpl(const CSGTree::EllipticCylinder&) { return "elliptic cylinder"; }
 QString GetElementTypeNameImpl(const CSGTree::Cone&) { return "cone"; }
 QString GetElementTypeNameImpl(const CSGTree::Paraboloid&) { return "paraboloid"; }
 QString GetElementTypeNameImpl(const CSGTree::Hyperboloid&) { return "hyperboloid"; }

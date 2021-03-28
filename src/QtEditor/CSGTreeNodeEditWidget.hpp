@@ -24,7 +24,6 @@ private:
 	void AddWidgets(CSGTree::Ellipsoid& node);
 	void AddWidgets(CSGTree::Cube& node);
 	void AddWidgets(CSGTree::Cylinder& node);
-	void AddWidgets(CSGTree::EllipticCylinder& node);
 	void AddWidgets(CSGTree::Cone& node);
 	void AddWidgets(CSGTree::Paraboloid& node);
 	void AddWidgets(CSGTree::Hyperboloid& node);

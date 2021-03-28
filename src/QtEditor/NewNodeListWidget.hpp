@@ -21,7 +21,6 @@ private:
 	void OnAddEllipsoid();
 	void OnAddCube();
 	void OnAddCylinder();
-	void OnAddEllipticCylinder();
 	void OnAddCone();
 	void OnAddParaboloid();
 	void OnAddHyperboloid();
@@ -35,7 +34,6 @@ private:
 	QPushButton button_ellipsoid_;
 	QPushButton button_cube_;
 	QPushButton button_cylinder_;
-	QPushButton button_elliptic_cylinder_;
 	QPushButton button_cone_;
 	QPushButton button_paraboloid_;
 	QPushButton button_hyperboloid_;

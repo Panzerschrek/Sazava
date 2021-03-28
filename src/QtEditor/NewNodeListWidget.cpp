@@ -12,7 +12,6 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	, button_ellipsoid_("ellipsoid", this)
 	, button_cube_("cube", this)
 	, button_cylinder_("cylinder", this)
-	, button_elliptic_cylinder_("elliptic cylinder", this)
 	, button_cone_("cone", this)
 	, button_paraboloid_("paraboloid", this)
 	, button_hyperboloid_("hyperboloid", this)
@@ -24,7 +23,6 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	connect(&button_ellipsoid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddEllipsoid);
 	connect(&button_cube_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCube);
 	connect(&button_cylinder_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCylinder);
-	connect(&button_elliptic_cylinder_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddEllipticCylinder);
 	connect(&button_cone_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCone);
 	connect(&button_paraboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddParaboloid);
 	connect(&button_hyperboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddHyperboloid);
@@ -36,7 +34,6 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	layout_.addWidget(&button_ellipsoid_);
 	layout_.addWidget(&button_cube_);
 	layout_.addWidget(&button_cylinder_);
-	layout_.addWidget(&button_elliptic_cylinder_);
 	layout_.addWidget(&button_cone_);
 	layout_.addWidget(&button_paraboloid_);
 	layout_.addWidget(&button_hyperboloid_);
@@ -93,18 +90,8 @@ void NewNodeListWidget::OnAddCube()
 
 void NewNodeListWidget::OnAddCylinder()
 {
-	CSGTree::Cylinder cylinder{};
-	cylinder.height= 1.0f;
-	cylinder.radius= 1.0f;
-	cylinder.normal= m_Vec3(0.0f, 0.0f, 1.0f);
-	cylinder.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
-	node_add_callback_(cylinder);
-}
-
-void NewNodeListWidget::OnAddEllipticCylinder()
-{
-	CSGTree::EllipticCylinder elliptic_cylinder{};
-	elliptic_cylinder.size= m_Vec3(0.8f, 1.2f, 1.5f);
+	CSGTree::Cylinder elliptic_cylinder{};
+	elliptic_cylinder.size= m_Vec3(1.0f, 1.0f, 1.0f);
 	elliptic_cylinder.normal= m_Vec3(0.0f, 0.0f, 1.0f);
 	elliptic_cylinder.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(elliptic_cylinder);
