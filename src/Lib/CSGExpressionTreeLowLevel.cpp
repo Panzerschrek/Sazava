@@ -236,32 +236,30 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	return leaf;
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cube& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Box& node)
 {
-	// Represent three pairs of parallel planes of cube using three quadratic surfaces.
-	const m_Vec3 normal(0.0f, 0.0f, 1.0f);
-	const m_Vec3 binormal(1.0, 0.0f, 0.0f);
+	// Represent three pairs of parallel planes of box using three quadratic surfaces.
 	const size_t surface_index= out_surfaces.size();
 
 	{
 		GPUSurface surface{};
 		surface.xx= 1.0f;
 		surface.k= -0.25f * node.size.x * node.size.x;
-		surface= TransformSurface(surface, node.center, normal, binormal);
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.yy= 1.0f;
 		surface.k= -0.25f * node.size.y * node.size.y;
-		surface= TransformSurface(surface, node.center, normal, binormal);
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -0.25f * node.size.z * node.size.z;
-		surface= TransformSurface(surface, node.center, normal, binormal);
+		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
 		out_surfaces.push_back(surface);
 	}
 
@@ -270,7 +268,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		{ -node.size.x * 0.5f, -node.size.y * 0.5f, -node.size.z * 0.5f },
 		{ +node.size.x * 0.5f, +node.size.y * 0.5f, +node.size.z * 0.5f },
 	};
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, normal, binormal);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
 
 	TreeElementsLowLevel::Leaf leafs[3];
 	for (size_t i= 0u; i < 3u; ++i)

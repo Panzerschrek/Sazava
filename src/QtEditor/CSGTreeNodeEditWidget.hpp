@@ -22,7 +22,7 @@ private:
 	void AddWidgets(CSGTree::AddChain& node);
 	void AddWidgets(CSGTree::SubChain& node);
 	void AddWidgets(CSGTree::Ellipsoid& node);
-	void AddWidgets(CSGTree::Cube& node);
+	void AddWidgets(CSGTree::Box& node);
 	void AddWidgets(CSGTree::Cylinder& node);
 	void AddWidgets(CSGTree::Cone& node);
 	void AddWidgets(CSGTree::Paraboloid& node);

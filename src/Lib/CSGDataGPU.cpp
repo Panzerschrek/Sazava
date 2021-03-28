@@ -27,11 +27,11 @@ enum class CSGExpressionBuildResult
 
 using NodesStack= std::vector<const TreeElementsLowLevel::TreeElement*>;
 
-void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const BoundingBox& bb, const size_t surface_description_offset)
+void AddBox(VerticesVector& out_vertices, IndicesVector& out_indices, const BoundingBox& bb, const size_t surface_description_offset)
 {
 	const size_t start_index= out_vertices.size();
 
-	const m_Vec3 cube_vertices[8]=
+	const m_Vec3 box_vertices[8]=
 	{
 		{ bb.max.x, bb.max.y, bb.max.z }, { bb.min.x, bb.max.y, bb.max.z },
 		{ bb.max.x, bb.min.y, bb.max.z }, { bb.min.x, bb.min.y, bb.max.z },
@@ -39,13 +39,13 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const Bou
 		{ bb.max.x, bb.min.y, bb.min.z }, { bb.min.x, bb.min.y, bb.min.z },
 	};
 
-	for(const m_Vec3& cube_vertex : cube_vertices)
+	for(const m_Vec3& box_vertex : box_vertices)
 	{
-		const SurfaceVertex v{ { cube_vertex.x, cube_vertex.y, cube_vertex.z }, float(surface_description_offset) };
+		const SurfaceVertex v{ { box_vertex.x, box_vertex.y, box_vertex.z }, float(surface_description_offset) };
 		out_vertices.push_back(v);
 	}
 
-	static const IndexType cube_indices[12 * 3]=
+	static const IndexType box_indices[12 * 3]=
 	{
 		0, 1, 5,  0, 5, 4,
 		0, 4, 6,  0, 6, 2,
@@ -55,8 +55,8 @@ void AddCube(VerticesVector& out_vertices, IndicesVector& out_indices, const Bou
 		1, 3, 7,  1, 7, 5,
 	};
 
-	for(const size_t cube_index : cube_indices)
-		out_indices.push_back(IndexType(cube_index + start_index));
+	for(const size_t box_index : box_indices)
+		out_indices.push_back(IndexType(box_index + start_index));
 }
 
 CSGExpressionBuildResult BUILDCSGExpression_r(CSGExpressionGPUBuffer& out_expression, const BoundingBox& target_bb, const TreeElementsLowLevel::TreeElement& node);
@@ -273,7 +273,7 @@ void BuildSceneMeshNode_impl(
 
 	out_expressions[expression_size_offset]= CSGExpressionGPUBufferType(out_expressions.size());
 
-	AddCube(out_vertices, out_indices, node.bb, start_offset);
+	AddBox(out_vertices, out_indices, node.bb, start_offset);
 }
 
 void BuildSceneMeshNode_impl(VerticesVector&, IndicesVector&, CSGExpressionGPUBuffer&, NodesStack&, const TreeElementsLowLevel::OneLeaf&){}

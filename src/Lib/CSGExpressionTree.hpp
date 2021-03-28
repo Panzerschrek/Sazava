@@ -13,7 +13,7 @@ struct MulChain;
 struct AddChain;
 struct SubChain;
 struct Ellipsoid;
-struct Cube; // TODO - rename to "Box"
+struct Box;
 struct Cylinder;
 struct Cone;
 struct Paraboloid;
@@ -25,7 +25,7 @@ using CSGTreeNode= std::variant<
 	AddChain,
 	SubChain,
 	Ellipsoid,
-	Cube,
+	Box,
 	Cylinder,
 	Cone,
 	Paraboloid,
@@ -55,19 +55,22 @@ struct Ellipsoid
 	m_Vec3 binormal;
 };
 
-struct Cube
+struct Box
 {
+	// Vectors must be normalized and perpendicular!
 	m_Vec3 center;
 	m_Vec3 size;
+	m_Vec3 normal;
+	m_Vec3 binormal;
 };
 
 struct Cylinder
 {
 	// Vectors must be normalized and perpendicular!
 	m_Vec3 center;
+	m_Vec3 size;
 	m_Vec3 normal;
 	m_Vec3 binormal;
-	m_Vec3 size;
 };
 
 struct Cone

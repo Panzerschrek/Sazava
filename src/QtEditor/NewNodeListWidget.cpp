@@ -10,7 +10,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	, button_add_chain_("add chain", this)
 	, button_sub_chain_("sub chain", this)
 	, button_ellipsoid_("ellipsoid", this)
-	, button_cube_("cube", this)
+	, button_box_("box", this)
 	, button_cylinder_("cylinder", this)
 	, button_cone_("cone", this)
 	, button_paraboloid_("paraboloid", this)
@@ -21,7 +21,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	connect(&button_add_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddAddChain);
 	connect(&button_sub_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddSubChain);
 	connect(&button_ellipsoid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddEllipsoid);
-	connect(&button_cube_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCube);
+	connect(&button_box_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddBox);
 	connect(&button_cylinder_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCylinder);
 	connect(&button_cone_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCone);
 	connect(&button_paraboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddParaboloid);
@@ -32,7 +32,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	layout_.addWidget(&button_add_chain_);
 	layout_.addWidget(&button_sub_chain_);
 	layout_.addWidget(&button_ellipsoid_);
-	layout_.addWidget(&button_cube_);
+	layout_.addWidget(&button_box_);
 	layout_.addWidget(&button_cylinder_);
 	layout_.addWidget(&button_cone_);
 	layout_.addWidget(&button_paraboloid_);
@@ -81,11 +81,13 @@ void NewNodeListWidget::OnAddEllipsoid()
 	node_add_callback_(ellipsoid);
 }
 
-void NewNodeListWidget::OnAddCube()
+void NewNodeListWidget::OnAddBox()
 {
-	CSGTree::Cube cube{};
-	cube.size= m_Vec3(1.0f, 1.0f, 1.0f);
-	node_add_callback_(cube);
+	CSGTree::Box box{};
+	box.size= m_Vec3(1.0f, 1.0f, 1.0f);
+	box.normal= m_Vec3(0.0f, 0.0f, 1.0f);
+	box.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
+	node_add_callback_(box);
 }
 
 void NewNodeListWidget::OnAddCylinder()

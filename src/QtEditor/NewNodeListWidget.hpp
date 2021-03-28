@@ -19,7 +19,7 @@ private:
 	void OnAddAddChain();
 	void OnAddSubChain();
 	void OnAddEllipsoid();
-	void OnAddCube();
+	void OnAddBox();
 	void OnAddCylinder();
 	void OnAddCone();
 	void OnAddParaboloid();
@@ -32,7 +32,7 @@ private:
 	QPushButton button_add_chain_;
 	QPushButton button_sub_chain_;
 	QPushButton button_ellipsoid_;
-	QPushButton button_cube_;
+	QPushButton button_box_;
 	QPushButton button_cylinder_;
 	QPushButton button_cone_;
 	QPushButton button_paraboloid_;

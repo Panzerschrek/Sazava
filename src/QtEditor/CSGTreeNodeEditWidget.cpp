@@ -99,7 +99,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Ellipsoid& node)
 	setLayout(layout);
 }
 
-void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Cube& node)
+void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Box& node)
 {
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
