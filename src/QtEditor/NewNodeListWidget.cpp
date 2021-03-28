@@ -102,8 +102,7 @@ void NewNodeListWidget::OnAddCylinder()
 void NewNodeListWidget::OnAddCone()
 {
 	CSGTree::Cone cone{};
-	cone.angle= 0.5f;
-	cone.height= 1.0f;
+	cone.size= m_Vec3(1.0f, 1.0f, 1.0f);
 	cone.normal= m_Vec3(0.0f, 0.0f, 1.0f);
 	cone.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(cone);

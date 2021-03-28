@@ -119,7 +119,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Cone& node)
 {
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
-	AddValueControl(*layout, node.angle, ValueKind::Angle, "Angle:");
+	AddSizeControl(*layout, node.size);
 	setLayout(layout);
 }
 
