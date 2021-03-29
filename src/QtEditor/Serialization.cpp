@@ -142,6 +142,129 @@ QJsonObject CSGTreeNodeToJson(const CSGTree::CSGTreeNode& node)
 	return std::visit([](const auto& n){ return CSGTreeNodeToJson_impl(n); }, node);
 }
 
+
+CSGTree::CSGTreeNode GetDummyCSGTreeNode()
+{
+	return CSGTree::AddChain();
+}
+
+CSGTree::CSGTreeNode JsonToCSGTreeNode(const QJsonObject& obj);
+
+std::vector<CSGTree::CSGTreeNode> GetBranchNodeElements(const QJsonObject& obj)
+{
+	std::vector<CSGTree::CSGTreeNode> res;
+	for(const QJsonValue el : obj["elements"].toArray())
+		res.push_back(JsonToCSGTreeNode(el.toObject()));
+
+	return res;
+}
+
+template<typename T>
+void ReadLeafNodeElements(T& node, const QJsonObject& obj)
+{
+	{
+		const QJsonArray center= obj["center"].toArray();
+		node.center.x= float(center[0].toDouble());
+		node.center.y= float(center[1].toDouble());
+		node.center.z= float(center[2].toDouble());
+	}
+	{
+		const QJsonArray size= obj["size"].toArray();
+		node.size.x= float(size[0].toDouble());
+		node.size.y= float(size[1].toDouble());
+		node.size.z= float(size[2].toDouble());
+	}
+	{
+		const QJsonArray normal= obj["normal"].toArray();
+		node.normal.x= float(normal[0].toDouble());
+		node.normal.y= float(normal[1].toDouble());
+		node.normal.z= float(normal[2].toDouble());
+	}
+	{
+		const QJsonArray binormal= obj["binormal"].toArray();
+		node.binormal.x= float(binormal[0].toDouble());
+		node.binormal.y= float(binormal[1].toDouble());
+		node.binormal.z= float(binormal[2].toDouble());
+	}
+}
+
+CSGTree::CSGTreeNode JsonToCSGTreeNode(const QJsonObject& obj)
+{
+	const QString type= obj["type"].toString();
+	if(type == "mul")
+		return CSGTree::MulChain{ GetBranchNodeElements(obj) };
+	if(type == "add")
+		return CSGTree::AddChain{ GetBranchNodeElements(obj) };
+	if(type == "sub")
+		return CSGTree::SubChain{ GetBranchNodeElements(obj) };
+
+	if(type == "ellipsoid")
+	{
+		CSGTree::Ellipsoid ellipsoid{};
+		ReadLeafNodeElements(ellipsoid, obj);
+		return ellipsoid;
+	}
+	if(type == "box")
+	{
+		CSGTree::Box box{};
+		ReadLeafNodeElements(box, obj);
+		return box;
+	}
+	if(type == "cylinder")
+	{
+		CSGTree::Cylinder cylinder{};
+		ReadLeafNodeElements(cylinder, obj);
+		return cylinder;
+	}
+	if(type == "cone")
+	{
+		CSGTree::Cone cone{};
+		ReadLeafNodeElements(cone, obj);
+		return cone;
+	}
+	if(type == "paraboloid")
+	{
+		CSGTree::Paraboloid paraboloid{};
+		ReadLeafNodeElements(paraboloid, obj);
+		return paraboloid;
+	}
+	if(type == "hyperboloid")
+	{
+		CSGTree::Hyperboloid hyperboloid{};
+		ReadLeafNodeElements(hyperboloid, obj);
+		hyperboloid.focus_distance= float(obj["focus_distance"].toDouble());
+		return hyperboloid;
+	}
+	if(type == "hyperboloc_paraboloid")
+	{
+		CSGTree::HyperbolicParaboloid node{};
+
+		{
+			const QJsonArray center= obj["center"].toArray();
+			node.center.x= float(center[0].toDouble());
+			node.center.y= float(center[1].toDouble());
+			node.center.z= float(center[2].toDouble());
+		}
+		node.height= float(obj["height"].toDouble());
+		{
+			const QJsonArray normal= obj["normal"].toArray();
+			node.normal.x= float(normal[0].toDouble());
+			node.normal.y= float(normal[1].toDouble());
+			node.normal.z= float(normal[2].toDouble());
+		}
+		{
+			const QJsonArray binormal= obj["binormal"].toArray();
+			node.binormal.x= float(binormal[0].toDouble());
+			node.binormal.y= float(binormal[1].toDouble());
+			node.binormal.z= float(binormal[2].toDouble());
+		}
+
+		return node;
+	}
+
+	return GetDummyCSGTreeNode();
+}
+
 } // namespace
 
 QByteArray SerializeCSGExpressionTree(const CSGTree::CSGTreeNode& root)
@@ -156,9 +279,15 @@ QByteArray SerializeCSGExpressionTree(const CSGTree::CSGTreeNode& root)
 
 CSGTree::CSGTreeNode DeserializeCSGExpressionTree(const QByteArray& tree_serialized)
 {
-	// TODO
-	(void)tree_serialized;
-	return CSGTree::MulChain();
+	QJsonDocument doc= QJsonDocument::fromJson(tree_serialized);
+
+	if(!doc.isObject())
+		return GetDummyCSGTreeNode();
+
+	const QJsonObject header= doc.object();
+	const QJsonObject root= header["root"].toObject();
+
+	return JsonToCSGTreeNode(root);
 }
 
 } // namespace SZV

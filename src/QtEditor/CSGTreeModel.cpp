@@ -68,6 +68,13 @@ CSGTreeModel::CSGTreeModel(CSGTree::CSGTreeNode& root)
 	: root_(root)
 {}
 
+void CSGTreeModel::Reset(CSGTree::CSGTreeNode new_root)
+{
+	beginResetModel();
+	root_= std::move(new_root);
+	endResetModel();
+}
+
 void CSGTreeModel::DeleteNode(const QModelIndex& index)
 {
 	if(!index.isValid())

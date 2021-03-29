@@ -10,6 +10,8 @@ class CSGTreeModel final : public QAbstractItemModel
 public:
 	explicit CSGTreeModel(CSGTree::CSGTreeNode& root);
 
+	void Reset(CSGTree::CSGTreeNode new_root);
+
 	void DeleteNode(const QModelIndex& index);
 	void AddNode(const QModelIndex& index, CSGTree::CSGTreeNode node);
 	void MoveUpNode(const QModelIndex& index);

@@ -228,9 +228,14 @@ public:
 		setLayout(&layout_);
 	}
 
-	CSGTree::CSGTreeNode& GetCSGTreeRoot()
+	const CSGTree::CSGTreeNode& GetCSGTreeRoot() const
 	{
-		return host_.GetCSGTree();
+		return const_cast<Host&>(host_).GetCSGTree();
+	}
+
+	void SetCSGTree(CSGTree::CSGTreeNode root)
+	{
+		csg_tree_model_.Reset(std::move(root));
 	}
 
 private:
@@ -256,15 +261,32 @@ public:
 		: host_wrapper_(this)
 	{
 		const auto menu_bar = new QMenuBar(this);
-		const auto file_menu = menu_bar->addMenu("file");
-		file_menu->addAction("save", this, &MainWindow::OnSave);
-		file_menu->addAction("quit", this, &QWidget::close);
+		const auto file_menu = menu_bar->addMenu("&File");
+		file_menu->addAction("&Open", this, &MainWindow::OnOpen);
+		file_menu->addAction("&Save", this, &MainWindow::OnSave);
+		file_menu->addAction("&Quit", this, &QWidget::close);
 		setMenuBar(menu_bar);
 
 		setCentralWidget(&host_wrapper_);
 	}
 
 private:
+	void OnOpen()
+	{
+		const QString open_path= QFileDialog::getOpenFileName(this, "Sazava - open");
+		if(open_path.isEmpty())
+			return;
+
+		QFile f(open_path);
+		if(!f.open(QIODevice::ReadOnly))
+			return;
+
+		const QByteArray file_data= f.readAll();
+		f.close();
+
+		host_wrapper_.SetCSGTree(DeserializeCSGExpressionTree(file_data));
+	}
+
 	void OnSave()
 	{
 		const QString save_path= QFileDialog::getSaveFileName(this, "Sazava - save");
