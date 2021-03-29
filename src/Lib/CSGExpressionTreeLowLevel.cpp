@@ -358,7 +358,9 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= node.size.z * node.size.z * 4.0f / (node.size.x * node.size.x);
 		surface.yy= node.size.z * node.size.z * 4.0f / (node.size.y * node.size.y);
 		surface.zz= -1.0f;
-		surface= TransformSurface(surface, m_Vec3(node.center.x, node.center.y, node.center.z - node.size.z * 0.5f), basis);
+		surface.z= -node.size.z;
+		surface.k= -0.25f * node.size.z * node.size.z;
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 	{
@@ -397,7 +399,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= node.size.z * 4.0f / (node.size.x * node.size.x);
 		surface.yy= node.size.z * 4.0f / (node.size.y * node.size.y);
 		surface.z= -1.0f;
-		surface= TransformSurface(surface, m_Vec3(node.center.x, node.center.y, node.center.z - node.size.z * 0.5f), basis);
+		surface.k= -0.5f * node.size.z;
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 	{
