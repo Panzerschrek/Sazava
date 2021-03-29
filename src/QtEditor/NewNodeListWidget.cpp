@@ -6,7 +6,7 @@ namespace SZV
 NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node_add_callback)
 	: QWidget(parent)
 	, node_add_callback_(std::move(node_add_callback))
-	, button_mul_chain_("mut chain", this)
+	, button_mul_chain_("mul chain", this)
 	, button_add_chain_("add chain", this)
 	, button_sub_chain_("sub chain", this)
 	, button_ellipsoid_("ellipsoid", this)
