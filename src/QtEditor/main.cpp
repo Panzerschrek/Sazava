@@ -2,9 +2,11 @@
 #include "CSGTreeModel.hpp"
 #include "CSGTreeNodeEditWidget.hpp"
 #include "NewNodeListWidget.hpp"
+#include "Serialization.hpp"
 #include <QtCore/QTimer>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
@@ -226,6 +228,11 @@ public:
 		setLayout(&layout_);
 	}
 
+	CSGTree::CSGTreeNode& GetCSGTreeRoot()
+	{
+		return host_.GetCSGTree();
+	}
+
 private:
 	void Loop()
 	{
@@ -250,10 +257,28 @@ public:
 	{
 		const auto menu_bar = new QMenuBar(this);
 		const auto file_menu = menu_bar->addMenu("file");
+		file_menu->addAction("save", this, &MainWindow::OnSave);
 		file_menu->addAction("quit", this, &QWidget::close);
 		setMenuBar(menu_bar);
 
 		setCentralWidget(&host_wrapper_);
+	}
+
+private:
+	void OnSave()
+	{
+		const QString save_path= QFileDialog::getSaveFileName(this, "Sazava - save");
+		if(save_path.isEmpty())
+			return;
+
+		const QByteArray csg_tree_serialized= SerializeCSGExpressionTree(host_wrapper_.GetCSGTreeRoot());
+
+		QFile f(save_path);
+		if(!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+			return;
+
+		f.write(csg_tree_serialized);
+		f.close();
 	}
 
 private:
