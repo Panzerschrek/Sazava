@@ -73,6 +73,13 @@ void CSGTreeNodeEditWidget::AddSizeControl(QGridLayout& layout, m_Vec3& size)
 	AddValueControl(layout, size.z, ValueKind::Size, "Size Z:");
 }
 
+void CSGTreeNodeEditWidget::AddAnglesControl(QGridLayout& layout, m_Vec3& angles)
+{
+	AddValueControl(layout, angles.x, ValueKind::Angle, "Angle X:");
+	AddValueControl(layout, angles.y, ValueKind::Angle, "Angle Y:");
+	AddValueControl(layout, angles.z, ValueKind::Angle, "Angle Z:");
+}
+
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::MulChain& node)
 {
 	//TODO
@@ -96,6 +103,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Ellipsoid& node)
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	AddSizeControl(*layout, node.size);
+	AddAnglesControl(*layout, node.angles_deg);
 	setLayout(layout);
 }
 
@@ -104,6 +112,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Box& node)
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	AddSizeControl(*layout, node.size);
+	AddAnglesControl(*layout, node.angles_deg);
 	setLayout(layout);
 }
 
@@ -112,6 +121,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Cylinder& node)
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	AddSizeControl(*layout, node.size);
+	AddAnglesControl(*layout, node.angles_deg);
 	setLayout(layout);
 }
 
@@ -120,6 +130,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Cone& node)
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	AddSizeControl(*layout, node.size);
+	AddAnglesControl(*layout, node.angles_deg);
 	setLayout(layout);
 }
 
@@ -128,6 +139,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Paraboloid& node)
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	AddSizeControl(*layout, node.size);
+	AddAnglesControl(*layout, node.angles_deg);
 	setLayout(layout);
 }
 
@@ -136,6 +148,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Hyperboloid& node)
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
 	AddSizeControl(*layout, node.size);
+	AddAnglesControl(*layout, node.angles_deg);
 	AddValueControl(*layout, node.focus_distance, ValueKind::Pos, "Focus distance: ");
 	setLayout(layout);
 }
@@ -144,6 +157,7 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::HyperbolicParaboloid& node)
 {
 	const auto layout= new QGridLayout(this);
 	AddPosControl(*layout, node.center);
+	AddAnglesControl(*layout, node.angles_deg);
 	setLayout(layout);
 }
 

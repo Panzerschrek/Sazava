@@ -46,8 +46,8 @@ void NewNodeListWidget::OnAddMulChain()
 {
 	CSGTree::MulChain mul_chain
 	{ {
-		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
-		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } },
 	} };
 	node_add_callback_(std::move(mul_chain));
 }
@@ -56,8 +56,8 @@ void NewNodeListWidget::OnAddAddChain()
 {
 	CSGTree::AddChain add_chain
 	{ {
-		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
-		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } },
 	} };
 	node_add_callback_(std::move(add_chain));
 }
@@ -66,8 +66,8 @@ void NewNodeListWidget::OnAddSubChain()
 {
 	CSGTree::SubChain sub_chain
 	{ {
-		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
-		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, +0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } },
+		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } },
 	} };
 	node_add_callback_(std::move(sub_chain));
 }
@@ -76,8 +76,6 @@ void NewNodeListWidget::OnAddEllipsoid()
 {
 	CSGTree::Ellipsoid ellipsoid{};
 	ellipsoid.size= m_Vec3(1.0f, 1.0f, 1.0f);
-	ellipsoid.normal= m_Vec3(0.0f, 0.0f, 1.0f);
-	ellipsoid.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(ellipsoid);
 }
 
@@ -85,8 +83,6 @@ void NewNodeListWidget::OnAddBox()
 {
 	CSGTree::Box box{};
 	box.size= m_Vec3(1.0f, 1.0f, 1.0f);
-	box.normal= m_Vec3(0.0f, 0.0f, 1.0f);
-	box.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(box);
 }
 
@@ -94,8 +90,6 @@ void NewNodeListWidget::OnAddCylinder()
 {
 	CSGTree::Cylinder elliptic_cylinder{};
 	elliptic_cylinder.size= m_Vec3(1.0f, 1.0f, 1.0f);
-	elliptic_cylinder.normal= m_Vec3(0.0f, 0.0f, 1.0f);
-	elliptic_cylinder.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(elliptic_cylinder);
 }
 
@@ -103,8 +97,6 @@ void NewNodeListWidget::OnAddCone()
 {
 	CSGTree::Cone cone{};
 	cone.size= m_Vec3(1.0f, 1.0f, 1.0f);
-	cone.normal= m_Vec3(0.0f, 0.0f, 1.0f);
-	cone.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(cone);
 }
 
@@ -112,8 +104,6 @@ void NewNodeListWidget::OnAddParaboloid()
 {
 	CSGTree::Paraboloid paraboloid{};
 	paraboloid.size= m_Vec3( 1.0f, 1.0f, 1.0f );
-	paraboloid.normal= m_Vec3(0.0f, 0.0f, 1.0f);
-	paraboloid.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(paraboloid);
 }
 
@@ -122,8 +112,6 @@ void NewNodeListWidget::OnAddHyperboloid()
 	CSGTree::Hyperboloid hyperboloid{};
 	hyperboloid.size= m_Vec3( 1.0f, 1.0f, 1.0f );
 	hyperboloid.focus_distance= 0.125f;
-	hyperboloid.normal= m_Vec3(0.0f, 0.0f, 1.0f);
-	hyperboloid.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(hyperboloid);
 }
 
@@ -131,8 +119,6 @@ void NewNodeListWidget::OnAddHyperbolicParaboloid()
 {
 	CSGTree::HyperbolicParaboloid hyperbolic_paraboloid{};
 	hyperbolic_paraboloid.height= 1.0f;
-	hyperbolic_paraboloid.normal= m_Vec3(0.0f, 0.0f, 1.0f);
-	hyperbolic_paraboloid.binormal= m_Vec3(1.0f, 0.0f, 0.0f);
 	node_add_callback_(hyperbolic_paraboloid);
 }
 

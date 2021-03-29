@@ -82,39 +82,55 @@ GPUSurface TransformSurface_impl(
 	return r;
 }
 
-// Warning!
-// normal and binormal vectors must be perpendicular and must have identity length!
-GPUSurface TransformSurface(const GPUSurface& s, const m_Vec3& center, const m_Vec3& normal, const m_Vec3& binormal)
-{
-	const m_Vec3 tangent= mVec3Cross(normal, binormal);
+using BasisVecs= std::array<m_Vec3, 3>;
 
+BasisVecs GetTransformedBasis(const m_Vec3& angles)
+{
+	const float deg2rad= 3.1415926535f / 180.0f;
+
+	m_Mat4 rot_x, rot_y, rot_z, rot;
+	rot_x.RotateX(angles.x * deg2rad);
+	rot_y.RotateY(angles.y * deg2rad);
+	rot_z.RotateZ(angles.z * deg2rad);
+	rot= rot_x * rot_y * rot_z;
+
+	return
+	{
+		m_Vec3( rot.value[0], rot.value[4], rot.value[ 8] ),
+		m_Vec3( rot.value[1], rot.value[5], rot.value[ 9] ),
+		m_Vec3( rot.value[2], rot.value[6], rot.value[10] ),
+	};
+}
+
+// Warning!
+// Basis vectors must be perpendicular and must have identity length!
+GPUSurface TransformSurface(const GPUSurface& s, const m_Vec3& center, const BasisVecs& basis_vecs)
+{
 	return
 		TransformSurface_impl(
 			s,
-			-m_Vec3(mVec3Dot(center, binormal), mVec3Dot(center, tangent), mVec3Dot(center, normal)),
-			binormal,
-			tangent,
-			normal);
+			-m_Vec3(mVec3Dot(center, basis_vecs[0]), mVec3Dot(center, basis_vecs[1]), mVec3Dot(center, basis_vecs[2])),
+			basis_vecs[0],
+			basis_vecs[1],
+			basis_vecs[2]);
 }
 
 // Warning!
 // normal and binormal vectors must be perpendicular and must have identity length!
-BoundingBox TransformBoundingBox(const BoundingBox& bb, const m_Vec3& center, const m_Vec3& normal, const m_Vec3& binormal)
+BoundingBox TransformBoundingBox(const BoundingBox& bb, const m_Vec3& center, const BasisVecs& basis_vecs)
 {
 	m_Mat4 rotate, translate, full_transform;
 
-	const m_Vec3 tangent= mVec3Cross(normal, binormal);
-
 	rotate.MakeIdentity();
-	rotate.value[ 0]= binormal.x;
-	rotate.value[ 1]= binormal.y;
-	rotate.value[ 2]= binormal.z;
-	rotate.value[ 4]= tangent.x;
-	rotate.value[ 5]= tangent.y;
-	rotate.value[ 6]= tangent.z;
-	rotate.value[ 8]= normal.x;
-	rotate.value[ 9]= normal.y;
-	rotate.value[10]= normal.z;
+	rotate.value[ 0]= basis_vecs[0].x;
+	rotate.value[ 1]= basis_vecs[0].y;
+	rotate.value[ 2]= basis_vecs[0].z;
+	rotate.value[ 4]= basis_vecs[1].x;
+	rotate.value[ 5]= basis_vecs[1].y;
+	rotate.value[ 6]= basis_vecs[1].z;
+	rotate.value[ 8]= basis_vecs[2].x;
+	rotate.value[ 9]= basis_vecs[2].y;
+	rotate.value[10]= basis_vecs[2].z;
 
 	translate.Translate(center);
 
@@ -218,12 +234,14 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Ellipsoid& node)
 {
+	const auto basis= GetTransformedBasis(node.angles_deg);
+
 	GPUSurface surface{};
 	surface.xx= 4.0f / (node.size.x * node.size.x);
 	surface.yy= 4.0f / (node.size.y * node.size.y);
 	surface.zz= 4.0f / (node.size.z * node.size.z);
 	surface.k= -1.0f;
-	surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+	surface= TransformSurface(surface, node.center, basis);
 
 	const size_t surface_index= out_surfaces.size();
 	out_surfaces.push_back(surface);
@@ -232,12 +250,14 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 	TreeElementsLowLevel::Leaf leaf;
 	leaf.surface_index= surface_index;
-	leaf.bb= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+	leaf.bb= TransformBoundingBox(bb, node.center, basis);
 	return leaf;
 }
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Box& node)
 {
+	const auto basis= GetTransformedBasis(node.angles_deg);
+
 	// Represent three pairs of parallel planes of box using three quadratic surfaces.
 	const size_t surface_index= out_surfaces.size();
 
@@ -245,21 +265,21 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		GPUSurface surface{};
 		surface.xx= 1.0f;
 		surface.k= -0.25f * node.size.x * node.size.x;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.yy= 1.0f;
 		surface.k= -0.25f * node.size.y * node.size.y;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -0.25f * node.size.z * node.size.z;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 
@@ -268,7 +288,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		{ -node.size.x * 0.5f, -node.size.y * 0.5f, -node.size.z * 0.5f },
 		{ +node.size.x * 0.5f, +node.size.y * 0.5f, +node.size.z * 0.5f },
 	};
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
 
 	TreeElementsLowLevel::Leaf leafs[3];
 	for (size_t i= 0u; i < 3u; ++i)
@@ -291,6 +311,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cylinder& node)
 {
+	const auto basis= GetTransformedBasis(node.angles_deg);
+
 	const size_t surface_index= out_surfaces.size();
 
 	{
@@ -298,19 +320,19 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= 4.0f / (node.size.x * node.size.x);
 		surface.yy= 4.0f / (node.size.y * node.size.y);
 		surface.k= -1.0f;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -0.25f * node.size.z * node.size.z;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
@@ -328,25 +350,27 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
 {
+	const auto basis= GetTransformedBasis(node.angles_deg);
+
 	const size_t surface_index= out_surfaces.size();
 	{
 		GPUSurface surface{};
 		surface.xx= node.size.z * node.size.z * 4.0f / (node.size.x * node.size.x);
 		surface.yy= node.size.z * node.size.z * 4.0f / (node.size.y * node.size.y);
 		surface.zz= -1.0f;
-		surface= TransformSurface(surface, m_Vec3(node.center.x, node.center.y, node.center.z - node.size.z * 0.5f), node.normal, node.binormal);
+		surface= TransformSurface(surface, m_Vec3(node.center.x, node.center.y, node.center.z - node.size.z * 0.5f), basis);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -node.size.z * node.size.z * 0.25f;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
@@ -364,6 +388,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Paraboloid& node)
 {
+	const auto basis= GetTransformedBasis(node.angles_deg);
+
 	const size_t surface_index= out_surfaces.size();
 
 	{
@@ -371,19 +397,19 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= node.size.z * 4.0f / (node.size.x * node.size.x);
 		surface.yy= node.size.z * 4.0f / (node.size.y * node.size.y);
 		surface.z= -1.0f;
-		surface= TransformSurface(surface, m_Vec3(node.center.x, node.center.y, node.center.z - node.size.z * 0.5f), node.normal, node.binormal);
+		surface= TransformSurface(surface, m_Vec3(node.center.x, node.center.y, node.center.z - node.size.z * 0.5f), basis);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.z= 1.0f;
 		surface.k= -node.size.z * 0.5f;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
@@ -401,6 +427,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Hyperboloid& node)
 {
+	const auto basis= GetTransformedBasis(node.angles_deg);
+
 	const size_t surface_index= out_surfaces.size();
 
 	{
@@ -410,19 +438,19 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.yy= (node.size.z * node.size.z - k * 4.0f) / (node.size.y * node.size.y);
 		surface.zz= -1.0f;
 		surface.k= k;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -0.25f * node.size.z * node.size.z;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
@@ -440,6 +468,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::HyperbolicParaboloid& node)
 {
+	const auto basis= GetTransformedBasis(node.angles_deg);
+
 	const size_t surface_index= out_surfaces.size();
 
 	{ // Hyperbolic paraboloid itself.
@@ -447,21 +477,21 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= +1.0f;
 		surface.yy= -1.0f;
 		surface.z= 1.0f;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 	{ // Pair of bounding planes.
 		GPUSurface surface{};
 		surface.yy= 1.0f;
 		surface.k= -0.5f * node.height;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 	{ // Single bounding plane.
 		GPUSurface surface{};
 		surface.z= -1.0f;
 		surface.k= -0.5f * node.height;
-		surface= TransformSurface(surface, node.center, node.normal, node.binormal);
+		surface= TransformSurface(surface, node.center, basis);
 		out_surfaces.push_back(surface);
 	}
 
@@ -472,7 +502,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		{ -half_size_x, -half_size_y, -0.5f * node.height },
 		{ +half_size_x, +half_size_y, +0.5f * node.height },
 	};
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, node.normal, node.binormal);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
 
 	TreeElementsLowLevel::Leaf leafs[3];
 	for (size_t i= 0u; i < 3u; ++i)

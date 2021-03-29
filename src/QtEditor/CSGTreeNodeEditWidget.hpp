@@ -17,6 +17,7 @@ private:
 	void AddValueControl(QGridLayout& layout, float& value, ValueKind kind, const QString& caption);
 	void AddPosControl(QGridLayout& layout, m_Vec3& pos);
 	void AddSizeControl(QGridLayout& layout, m_Vec3& size);
+	void AddAnglesControl(QGridLayout& layout, m_Vec3& angles);
 
 	void AddWidgets(CSGTree::MulChain& node);
 	void AddWidgets(CSGTree::AddChain& node);

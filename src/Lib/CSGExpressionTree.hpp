@@ -51,70 +51,49 @@ struct Ellipsoid
 {
 	m_Vec3 center;
 	m_Vec3 size;
-	m_Vec3 normal;
-	m_Vec3 binormal;
+	m_Vec3 angles_deg;
 };
 
 struct Box
 {
-	// Vectors must be normalized and perpendicular!
 	m_Vec3 center;
 	m_Vec3 size;
-	m_Vec3 normal;
-	m_Vec3 binormal;
+	m_Vec3 angles_deg;
 };
 
 struct Cylinder
 {
-	// Vectors must be normalized and perpendicular!
 	m_Vec3 center;
 	m_Vec3 size;
-	m_Vec3 normal;
-	m_Vec3 binormal;
+	m_Vec3 angles_deg;
 };
 
 struct Cone
 {
 	m_Vec3 center;
 	m_Vec3 size;
-
-	// Vectors must be normalized and perpendicular!
-	// TODO - replace vectors with something else
-	m_Vec3 normal; // main axis of the cone
-	m_Vec3 binormal;
+	m_Vec3 angles_deg;
 };
 
 struct Paraboloid
 {
 	m_Vec3 center;
 	m_Vec3 size;
-
-	// Vectors must be normalized and perpendicular!
-	// TODO - replace vectors with something else
-	m_Vec3 normal; // main axis of the cone
-	m_Vec3 binormal;
+	m_Vec3 angles_deg;
 };
 
 struct Hyperboloid
 {
 	m_Vec3 center;
 	m_Vec3 size;
-
-	// Vectors must be normalized and perpendicular!
-	// TODO - replace vectors with something else
-	m_Vec3 normal; // main axis of the cone
-	m_Vec3 binormal;
+	m_Vec3 angles_deg;
 	float focus_distance;
 };
 
 struct HyperbolicParaboloid
 {
 	m_Vec3 center;
-
-	// Vectors must be normalized and perpendicular!
-	// TODO - replace vectors with something else
-	m_Vec3 normal; // main axis of the cone
-	m_Vec3 binormal;
+	m_Vec3 angles_deg;
 	float height;
 	// TODO - add more parameters.
 };

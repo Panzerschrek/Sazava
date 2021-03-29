@@ -18,7 +18,7 @@ CSGTree::CSGTreeNode GetTestCSGTree()
 {
 	return CSGTree::AddChain
 	{ {
-		CSGTree::Box{ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+		CSGTree::Box{ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } },
 	} };
 }
 

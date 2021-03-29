@@ -46,18 +46,11 @@ QJsonObject CSGTreeLeafNodeToJson(const T& node, const char* const type)
 		obj["size"]= std::move(size);
 	}
 	{
-		QJsonArray normal;
-		normal.append(node.normal.x);
-		normal.append(node.normal.y);
-		normal.append(node.normal.z);
-		obj["normal"]= std::move(normal);
-	}
-	{
-		QJsonArray binormal;
-		binormal.append(node.binormal.x);
-		binormal.append(node.binormal.y);
-		binormal.append(node.binormal.z);
-		obj["binormal"]= std::move(binormal);
+		QJsonArray angles;
+		angles.append(node.angles_deg.x);
+		angles.append(node.angles_deg.y);
+		angles.append(node.angles_deg.z);
+		obj["angles"]= std::move(angles);
 	}
 	return obj;
 }
@@ -122,17 +115,11 @@ QJsonObject CSGTreeNodeToJson_impl(const CSGTree::HyperbolicParaboloid& node)
 
 	obj["height"]= node.height;
 
-	QJsonArray normal;
-	normal.append(node.normal.x);
-	normal.append(node.normal.y);
-	normal.append(node.normal.z);
-	obj["normal"]= std::move(normal);
-
-	QJsonArray binormal;
-	binormal.append(node.binormal.x);
-	binormal.append(node.binormal.y);
-	binormal.append(node.binormal.z);
-	obj["binormal"]= std::move(binormal);
+	QJsonArray angles;
+	angles.append(node.angles_deg.x);
+	angles.append(node.angles_deg.y);
+	angles.append(node.angles_deg.z);
+	obj["angles"]= std::move(angles);
 
 	return obj;
 }
@@ -175,16 +162,10 @@ void ReadLeafNodeElements(T& node, const QJsonObject& obj)
 		node.size.z= float(size[2].toDouble());
 	}
 	{
-		const QJsonArray normal= obj["normal"].toArray();
-		node.normal.x= float(normal[0].toDouble());
-		node.normal.y= float(normal[1].toDouble());
-		node.normal.z= float(normal[2].toDouble());
-	}
-	{
-		const QJsonArray binormal= obj["binormal"].toArray();
-		node.binormal.x= float(binormal[0].toDouble());
-		node.binormal.y= float(binormal[1].toDouble());
-		node.binormal.z= float(binormal[2].toDouble());
+		const QJsonArray angles= obj["angles"].toArray();
+		node.angles_deg.x= float(angles[0].toDouble());
+		node.angles_deg.y= float(angles[1].toDouble());
+		node.angles_deg.z= float(angles[2].toDouble());
 	}
 }
 
@@ -247,16 +228,10 @@ CSGTree::CSGTreeNode JsonToCSGTreeNode(const QJsonObject& obj)
 		}
 		node.height= float(obj["height"].toDouble());
 		{
-			const QJsonArray normal= obj["normal"].toArray();
-			node.normal.x= float(normal[0].toDouble());
-			node.normal.y= float(normal[1].toDouble());
-			node.normal.z= float(normal[2].toDouble());
-		}
-		{
-			const QJsonArray binormal= obj["binormal"].toArray();
-			node.binormal.x= float(binormal[0].toDouble());
-			node.binormal.y= float(binormal[1].toDouble());
-			node.binormal.z= float(binormal[2].toDouble());
+			const QJsonArray angles= obj["angles"].toArray();
+			node.angles_deg.x= float(angles[0].toDouble());
+			node.angles_deg.y= float(angles[1].toDouble());
+			node.angles_deg.z= float(angles[2].toDouble());
 		}
 
 		return node;
