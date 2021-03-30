@@ -187,6 +187,10 @@ public:
 			return;
 
 		const auto& node= *reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
+
+		if(node.index() == node_template.index())
+			node_template= node; // If new node have same type - copy all params.
+
 		const m_Vec3 current_pos= GetNodePos(node);
 		const m_Vec3 current_size= GetNodeSize(node);
 		const m_Vec3 current_angles= GetNodeAngles(node);
