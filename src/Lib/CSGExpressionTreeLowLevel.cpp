@@ -1,5 +1,6 @@
 #include "CSGExpressionTreeLowLevel.hpp"
 #include "Mat.hpp"
+#include <array>
 
 namespace SZV
 {
