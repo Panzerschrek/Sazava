@@ -216,7 +216,7 @@ CSGTree::CSGTreeNode JsonToCSGTreeNode(const QJsonObject& obj)
 		hyperboloid.focus_distance= float(obj["focus_distance"].toDouble());
 		return hyperboloid;
 	}
-	if(type == "hyperboloc_paraboloid")
+	if(type == "hyperbolic_paraboloid")
 	{
 		CSGTree::HyperbolicParaboloid node{};
 
