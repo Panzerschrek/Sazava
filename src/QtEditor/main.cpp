@@ -87,6 +87,37 @@ m_Vec3 GetNodeSize(const CSGTree::CSGTreeNode& node)
 	return std::visit([](const auto& n){ return GetNodeSizeImpl(n); }, node);
 }
 
+m_Vec3 GetNodeAngles(const CSGTree::CSGTreeNode& node);
+
+template<typename T>
+m_Vec3 GetNodeAnglesImpl(const T& t){ return t.angles_deg; }
+
+m_Vec3 GetNodeAnglesImpl(const CSGTree::MulChain& node)
+{
+	if(!node.elements.empty())
+		return GetNodeAngles(node.elements.front());
+	return m_Vec3(0.0f, 0.0f, 0.0f);
+}
+
+m_Vec3 GetNodeAnglesImpl(const CSGTree::AddChain& node)
+{
+	if(!node.elements.empty())
+		return GetNodeAngles(node.elements.front());
+	return m_Vec3(0.0f, 0.0f, 0.0f);
+}
+
+m_Vec3 GetNodeAnglesImpl(const CSGTree::SubChain& node)
+{
+	if(!node.elements.empty())
+		return GetNodeAngles(node.elements.front());
+	return m_Vec3(0.0f, 0.0f, 0.0f);
+}
+
+m_Vec3 GetNodeAngles(const CSGTree::CSGTreeNode& node)
+{
+	return std::visit([](const auto& n){ return GetNodeAnglesImpl(n); }, node);
+}
+
 void SetNodePosImpl(CSGTree::MulChain&, const m_Vec3&){}
 void SetNodePosImpl(CSGTree::AddChain&, const m_Vec3&){}
 void SetNodePosImpl(CSGTree::SubChain&, const m_Vec3&){}
@@ -108,6 +139,18 @@ template<typename T> void SetNodeSizeImpl(T& node, const m_Vec3& size){ node.siz
 void SetNodeSize(CSGTree::CSGTreeNode& node, const m_Vec3& size)
 {
 	std::visit([&](auto& n){ SetNodeSizeImpl(n, size); }, node);
+}
+
+void SetNodeAnglesImpl(CSGTree::MulChain&, const m_Vec3&){}
+void SetNodeAnglesImpl(CSGTree::AddChain&, const m_Vec3&){}
+void SetNodeAnglesImpl(CSGTree::SubChain&, const m_Vec3&){}
+void SetNodeAnglesImpl(CSGTree::HyperbolicParaboloid&, const m_Vec3&){}
+
+template<typename T> void SetNodeAnglesImpl(T& node, const m_Vec3& angles_deg){ node.angles_deg= angles_deg; }
+
+void SetNodeAngles(CSGTree::CSGTreeNode& node, const m_Vec3& angles_deg)
+{
+	std::visit([&](auto& n){ SetNodeAnglesImpl(n, angles_deg); }, node);
 }
 
 class CSGNodesTreeWidget final : public QWidget
@@ -146,9 +189,11 @@ public:
 		const auto& node= *reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
 		const m_Vec3 current_pos= GetNodePos(node);
 		const m_Vec3 current_size= GetNodeSize(node);
+		const m_Vec3 current_angles= GetNodeAngles(node);
 
 		SetNodePos(node_template, current_pos);
 		SetNodeSize(node_template, current_size);
+		SetNodeAngles(node_template, current_angles);
 		csg_tree_model_.AddNode(index, std::move(node_template));
 	}
 
