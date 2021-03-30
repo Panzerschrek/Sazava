@@ -191,7 +191,10 @@ public:
 		const m_Vec3 current_size= GetNodeSize(node);
 		const m_Vec3 current_angles= GetNodeAngles(node);
 
-		SetNodePos(node_template, current_pos);
+		// Shift new node relative to old node to shoi it in different location.
+		const m_Vec3 pos_shifted= current_pos + current_size;
+
+		SetNodePos(node_template, pos_shifted);
 		SetNodeSize(node_template, current_size);
 		SetNodeAngles(node_template, current_angles);
 		csg_tree_model_.AddNode(index, std::move(node_template));
