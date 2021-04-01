@@ -172,10 +172,10 @@ public:
 			&CSGNodesTreeWidget::OnContextMenu);
 
 		connect(
-			&csg_tree_view_,
-			&QAbstractItemView::clicked,
+			csg_tree_view_.selectionModel(),
+			&QItemSelectionModel::selectionChanged,
 			this,
-			&CSGNodesTreeWidget::OnNodeActivated);
+			&CSGNodesTreeWidget::OnSelectionChanged);
 
 		setLayout(&layout_);
 		layout_.addWidget(&csg_tree_view_);
@@ -230,6 +230,18 @@ private:
 	void OnMoveDownNode()
 	{
 		csg_tree_model_.MoveDownNode(csg_tree_view_.currentIndex());
+	}
+
+	void OnSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+	{
+		Q_UNUSED(deselected);
+		if(!selected.empty())
+		{
+			const auto range= selected.front();
+			if(!range.isEmpty())
+				return OnNodeActivated(range.indexes().front());
+		}
+		OnNodeActivated(QModelIndex());
 	}
 
 	void OnNodeActivated(const QModelIndex& index)
