@@ -220,16 +220,19 @@ private:
 	void OnDeleteNode()
 	{
 		csg_tree_model_.DeleteNode(csg_tree_view_.currentIndex());
+		OnNodeActivated(csg_tree_view_.currentIndex());
 	}
 
 	void OnMoveUpNode()
 	{
 		csg_tree_model_.MoveUpNode(csg_tree_view_.currentIndex());
+		OnNodeActivated(csg_tree_view_.currentIndex());
 	}
 
 	void OnMoveDownNode()
 	{
 		csg_tree_model_.MoveDownNode(csg_tree_view_.currentIndex());
+		OnNodeActivated(csg_tree_view_.currentIndex());
 	}
 
 	void OnSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
