@@ -7,6 +7,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
@@ -270,13 +271,17 @@ public:
 			)
 		, csg_nodes_tree_widget_(csg_tree_model_, this)
 	{
-		setMinimumSize(300, 480);
-
 		connect(&timer_, &QTimer::timeout, this, &HostWrapper::Loop);
 		timer_.start(20);
 
 		layout_.addWidget(&new_node_list_widget_);
-		layout_.addWidget(&csg_nodes_tree_widget_);
+
+		const auto down_layout= new QHBoxLayout();
+		down_layout->addWidget(&csg_nodes_tree_widget_, 1);
+		down_layout->addWidget(new QLabel("TODO - 3d view here", this), 4);
+
+		layout_.insertLayout(1, down_layout);
+
 		setLayout(&layout_);
 	}
 

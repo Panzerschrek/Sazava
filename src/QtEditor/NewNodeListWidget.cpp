@@ -39,6 +39,8 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	layout_.addWidget(&button_hyperboloid_);
 	layout_.addWidget(&button_hyperbolic_paraboloid_);
 
+	layout_.addStretch(1);
+
 	setLayout(&layout_);
 }
 
