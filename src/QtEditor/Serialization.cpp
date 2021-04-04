@@ -102,6 +102,11 @@ QJsonObject CSGTreeNodeToJson_impl(const CSGTree::Hyperboloid& node)
 	return obj;
 }
 
+QJsonObject CSGTreeNodeToJson_impl(const CSGTree::ParabolicCylinder& node)
+{
+	return CSGTreeLeafNodeToJson(node, "parabolic_cylinder");
+}
+
 QJsonObject CSGTreeNodeToJson_impl(const CSGTree::HyperbolicParaboloid& node)
 {
 	QJsonObject obj;
@@ -128,7 +133,6 @@ QJsonObject CSGTreeNodeToJson(const CSGTree::CSGTreeNode& node)
 {
 	return std::visit([](const auto& n){ return CSGTreeNodeToJson_impl(n); }, node);
 }
-
 
 CSGTree::CSGTreeNode GetDummyCSGTreeNode()
 {
@@ -215,6 +219,12 @@ CSGTree::CSGTreeNode JsonToCSGTreeNode(const QJsonObject& obj)
 		ReadLeafNodeElements(hyperboloid, obj);
 		hyperboloid.focus_distance= float(obj["focus_distance"].toDouble());
 		return hyperboloid;
+	}
+	if(type == "parabolic_cylinder")
+	{
+		CSGTree::ParabolicCylinder parabolic_cylinder{};
+		ReadLeafNodeElements(parabolic_cylinder, obj);
+		return parabolic_cylinder;
 	}
 	if(type == "hyperbolic_paraboloid")
 	{

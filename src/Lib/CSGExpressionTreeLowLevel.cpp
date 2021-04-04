@@ -461,6 +461,57 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::ParabolicCylinder& node)
+{
+	const auto basis= GetTransformedBasis(node.angles_deg);
+
+	const size_t surface_index= out_surfaces.size();
+
+	// Parabolic surface.
+	{
+		GPUSurface surface{};
+		surface.xx= 4.0f * node.size.z / (node.size.x * node.size.x);
+		surface.z= -1.0f;
+		surface.k= -0.5f * node.size.z;
+		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+	}
+	// Upper bounding plane.
+	{
+		GPUSurface surface{};
+		surface.z= 1.0f;
+		surface.k= -0.5f * node.size.z;
+		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+	}
+	// Pair of side bounding planes.
+	{
+		GPUSurface surface{};
+		surface.yy= 1.0f;
+		surface.k= -0.25f * node.size.y * node.size.y;
+		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+	}
+
+	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+
+	TreeElementsLowLevel::Leaf leafs[3];
+	for (size_t i= 0u; i < 3u; ++i)
+	{
+		leafs[i].surface_index= surface_index + i;
+		leafs[i].bb= bb_transformed;
+	}
+
+	return TreeElementsLowLevel::Mul
+	{
+		std::make_unique<TreeElementsLowLevel::TreeElement>(
+			TreeElementsLowLevel::Mul
+			{
+				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[0]),
+				std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[1]),
+			}),
+		std::make_unique<TreeElementsLowLevel::TreeElement>(leafs[2]),
+	};
+}
+
 TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::HyperbolicParaboloid& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);

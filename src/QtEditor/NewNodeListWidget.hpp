@@ -24,6 +24,7 @@ private:
 	void OnAddCone();
 	void OnAddParaboloid();
 	void OnAddHyperboloid();
+	void OnAddParabolicCylinder();
 	void OnAddHyperbolicParaboloid();
 
 private:
@@ -37,6 +38,7 @@ private:
 	QPushButton button_cone_;
 	QPushButton button_paraboloid_;
 	QPushButton button_hyperboloid_;
+	QPushButton button_parabolic_cylinder_;
 	QPushButton button_hyperbolic_paraboloid_;
 	QHBoxLayout layout_;
 };

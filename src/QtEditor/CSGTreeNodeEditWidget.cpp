@@ -153,6 +153,15 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Hyperboloid& node)
 	setLayout(layout);
 }
 
+void CSGTreeNodeEditWidget::AddWidgets(CSGTree::ParabolicCylinder& node)
+{
+	const auto layout= new QGridLayout(this);
+	AddPosControl(*layout, node.center);
+	AddSizeControl(*layout, node.size);
+	AddAnglesControl(*layout, node.angles_deg);
+	setLayout(layout);
+}
+
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::HyperbolicParaboloid& node)
 {
 	const auto layout= new QGridLayout(this);

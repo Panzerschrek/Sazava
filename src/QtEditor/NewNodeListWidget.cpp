@@ -15,6 +15,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	, button_cone_("cone", this)
 	, button_paraboloid_("paraboloid", this)
 	, button_hyperboloid_("hyperboloid", this)
+	, button_parabolic_cylinder_("parabolic cylinder", this)
 	, button_hyperbolic_paraboloid_("hyperbolic paraboloid", this)
 {
 	connect(&button_mul_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddMulChain);
@@ -26,6 +27,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	connect(&button_cone_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCone);
 	connect(&button_paraboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddParaboloid);
 	connect(&button_hyperboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddHyperboloid);
+	connect(&button_parabolic_cylinder_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddParabolicCylinder);
 	connect(&button_hyperbolic_paraboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddHyperbolicParaboloid);
 
 	layout_.addWidget(&button_mul_chain_);
@@ -37,6 +39,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	layout_.addWidget(&button_cone_);
 	layout_.addWidget(&button_paraboloid_);
 	layout_.addWidget(&button_hyperboloid_);
+	layout_.addWidget(&button_parabolic_cylinder_);
 	layout_.addWidget(&button_hyperbolic_paraboloid_);
 
 	layout_.addStretch(1);
@@ -115,6 +118,13 @@ void NewNodeListWidget::OnAddHyperboloid()
 	hyperboloid.size= m_Vec3( 1.0f, 1.0f, 1.0f );
 	hyperboloid.focus_distance= 0.125f;
 	node_add_callback_(hyperboloid);
+}
+
+void NewNodeListWidget::OnAddParabolicCylinder()
+{
+	CSGTree::ParabolicCylinder parabolic_cylinder{};
+	parabolic_cylinder.size= m_Vec3( 1.0f, 1.0f, 1.0f );
+	node_add_callback_(parabolic_cylinder);
 }
 
 void NewNodeListWidget::OnAddHyperbolicParaboloid()

@@ -51,6 +51,7 @@ QString GetElementTypeNameImpl(const CSGTree::Cylinder&) { return "cylinder"; }
 QString GetElementTypeNameImpl(const CSGTree::Cone&) { return "cone"; }
 QString GetElementTypeNameImpl(const CSGTree::Paraboloid&) { return "paraboloid"; }
 QString GetElementTypeNameImpl(const CSGTree::Hyperboloid&) { return "hyperboloid"; }
+QString GetElementTypeNameImpl(const CSGTree::ParabolicCylinder&) { return "parabolic cylinder"; }
 QString GetElementTypeNameImpl(const CSGTree::HyperbolicParaboloid&) { return "hyperbolic paraboloid"; }
 QString GetElementTypeName(const CSGTree::CSGTreeNode& node)
 {
