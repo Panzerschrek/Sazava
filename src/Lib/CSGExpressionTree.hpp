@@ -19,6 +19,7 @@ struct Cone;
 struct Paraboloid;
 struct Hyperboloid;
 struct ParabolicCylinder;
+struct HyperbolicCylinder;
 struct HyperbolicParaboloid;
 
 using CSGTreeNode= std::variant<
@@ -32,6 +33,7 @@ using CSGTreeNode= std::variant<
 	Paraboloid,
 	Hyperboloid,
 	ParabolicCylinder,
+	HyperbolicCylinder,
 	HyperbolicParaboloid>;
 
 struct MulChain
@@ -97,6 +99,14 @@ struct ParabolicCylinder
 	m_Vec3 center;
 	m_Vec3 size;
 	m_Vec3 angles_deg;
+};
+
+struct HyperbolicCylinder
+{
+	m_Vec3 center;
+	m_Vec3 size;
+	m_Vec3 angles_deg;
+	float focus_distance;
 };
 
 struct HyperbolicParaboloid

@@ -29,6 +29,7 @@ private:
 	void AddWidgets(CSGTree::Paraboloid& node);
 	void AddWidgets(CSGTree::Hyperboloid& node);
 	void AddWidgets(CSGTree::ParabolicCylinder& node);
+	void AddWidgets(CSGTree::HyperbolicCylinder& node);
 	void AddWidgets(CSGTree::HyperbolicParaboloid& node);
 };
 

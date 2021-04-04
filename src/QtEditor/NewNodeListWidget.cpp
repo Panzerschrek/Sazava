@@ -16,6 +16,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	, button_paraboloid_("paraboloid", this)
 	, button_hyperboloid_("hyperboloid", this)
 	, button_parabolic_cylinder_("parabolic cylinder", this)
+	, button_hyperbolic_cylinder_("hyperbolic cylinder", this)
 	, button_hyperbolic_paraboloid_("hyperbolic paraboloid", this)
 {
 	connect(&button_mul_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddMulChain);
@@ -28,6 +29,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	connect(&button_paraboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddParaboloid);
 	connect(&button_hyperboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddHyperboloid);
 	connect(&button_parabolic_cylinder_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddParabolicCylinder);
+	connect(&button_hyperbolic_cylinder_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddHyperbolicCylinder);
 	connect(&button_hyperbolic_paraboloid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddHyperbolicParaboloid);
 
 	layout_.addWidget(&button_mul_chain_);
@@ -40,6 +42,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	layout_.addWidget(&button_paraboloid_);
 	layout_.addWidget(&button_hyperboloid_);
 	layout_.addWidget(&button_parabolic_cylinder_);
+	layout_.addWidget(&button_hyperbolic_cylinder_);
 	layout_.addWidget(&button_hyperbolic_paraboloid_);
 
 	layout_.addStretch(1);
@@ -125,6 +128,14 @@ void NewNodeListWidget::OnAddParabolicCylinder()
 	CSGTree::ParabolicCylinder parabolic_cylinder{};
 	parabolic_cylinder.size= m_Vec3( 1.0f, 1.0f, 1.0f );
 	node_add_callback_(parabolic_cylinder);
+}
+
+void NewNodeListWidget::OnAddHyperbolicCylinder()
+{
+	CSGTree::HyperbolicCylinder hyperbolic_cylinder{};
+	hyperbolic_cylinder.size= m_Vec3( 1.0f, 1.0f, 1.0f );
+	hyperbolic_cylinder.focus_distance= 0.125f;
+	node_add_callback_(hyperbolic_cylinder);
 }
 
 void NewNodeListWidget::OnAddHyperbolicParaboloid()
