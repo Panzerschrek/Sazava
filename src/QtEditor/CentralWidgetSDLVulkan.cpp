@@ -52,8 +52,7 @@ public: // ICentralWidget
 private:
 	void Loop()
 	{
-		if(host_.Loop())
-			close();
+		host_.Loop();
 	}
 
 private:
