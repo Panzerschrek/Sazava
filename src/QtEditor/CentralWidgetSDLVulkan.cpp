@@ -8,6 +8,8 @@
 namespace SZV
 {
 
+namespace
+{
 
 class CentralWidgetSDLVulkan final : public CentralWidgetBase
 {
@@ -62,5 +64,12 @@ private:
 	NewNodeListWidget new_node_list_widget_;
 	CSGNodesTreeWidget csg_nodes_tree_widget_;
 };
+
+} // namespace
+
+CentralWidgetBase* CreateCentralWidget(QWidget* const parent)
+{
+	return new CentralWidgetSDLVulkan(parent);
+}
 
 } // namespace SZV
