@@ -45,6 +45,22 @@ SurfaceDescription FetchSurface(int index)
 	return s;
 }
 
+struct TextureVecs
+{
+	vec3 u;
+	vec3 v;
+};
+
+TextureVecs FetchTextureVecs(int index)
+{
+	TextureVecs tv;
+
+	int offset= index * 16;
+	tv.u= vec3( surfaces_description[offset+10], surfaces_description[offset+11], surfaces_description[offset+12] );
+	tv.v= vec3( surfaces_description[offset+13], surfaces_description[offset+14], surfaces_description[offset+15] );
+	return tv;
+}
+
 vec3 TextureFetch3d( vec3 coord, float smooth_size )
 {
 	vec3 tc_mod= abs( fract( coord * 6.0 ) - vec3( 0.5, 0.5, 0.5 ) );
@@ -135,7 +151,8 @@ void main()
 {
 	// Find itersection between ray from camera and surface, solving quadratic equation relative to "distance" variable.
 	// This variable is not real distance, since input direction vector is not normalized.
-	SurfaceDescription s= FetchSurface( expressions_description[int(f_surface_description_offset)] );
+	int surface_index= expressions_description[int(f_surface_description_offset)];
+	SurfaceDescription s= FetchSurface( surface_index );
 
 	vec3 n= f_dir;
 	vec3 v= cam_pos.xyz;
@@ -199,8 +216,11 @@ void main()
 
 	float sun_light_dot= max( dot( normal, dir_to_sun_normalized.xyz ), 0.0 );
 
+	TextureVecs texture_vecs= FetchTextureVecs( surface_index );
+	vec3 tex_coord= vec3( dot( texture_vecs.u, intersection_pos ), dot(texture_vecs.v, intersection_pos ), 0.0 );
+
 	float smooth_size= dist * 0.02 / max( 0.1, abs(dir_normal_dot) );
-	vec3 tex_value= TextureFetch3d( intersection_pos, smooth_size );
+	vec3 tex_value= TextureFetch3d( tex_coord, smooth_size );
 
 	vec3 color= tex_value * ( sun_light_dot * sun_color.rgb + ambient_light_color.rgb );
 	out_color= vec4( color, 0.5 );

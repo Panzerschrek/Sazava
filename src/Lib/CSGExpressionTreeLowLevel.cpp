@@ -80,6 +80,14 @@ GPUSurface TransformSurface_impl(
 		s.x * shift.x + s.y * shift.y + s.z * shift.z +
 		s.k;
 
+	r.vec0.x= s.vec0.x * x_vec.x + s.vec0.y * y_vec.x + s.vec0.z * z_vec.x;
+	r.vec0.y= s.vec0.x * x_vec.y + s.vec0.y * y_vec.y + s.vec0.z * z_vec.y;
+	r.vec0.z= s.vec0.x * x_vec.z + s.vec0.y * y_vec.z + s.vec0.z * z_vec.z;
+
+	r.vec1.x= s.vec1.x * x_vec.x + s.vec1.y * y_vec.x + s.vec1.z * z_vec.x;
+	r.vec1.y= s.vec1.x * x_vec.y + s.vec1.y * y_vec.y + s.vec1.z * z_vec.y;
+	r.vec1.z= s.vec1.x * x_vec.z + s.vec1.y * y_vec.z + s.vec1.z * z_vec.z;
+
 	return r;
 }
 
@@ -242,6 +250,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	surface.yy= 4.0f / (node.size.y * node.size.y);
 	surface.zz= 4.0f / (node.size.z * node.size.z);
 	surface.k= -1.0f;
+	surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+	surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 
 	const size_t surface_index= out_surfaces.size();
 	out_surfaces.push_back(TransformSurface(surface, node.center, basis));
@@ -265,18 +275,24 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		GPUSurface surface{};
 		surface.xx= 1.0f;
 		surface.k= -0.25f * node.size.x * node.size.x;
+		surface.vec0= m_Vec3(0.0f, 1.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	{
 		GPUSurface surface{};
 		surface.yy= 1.0f;
 		surface.k= -0.25f * node.size.y * node.size.y;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -0.25f * node.size.z * node.size.z;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 
@@ -313,12 +329,16 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= 4.0f / (node.size.x * node.size.x);
 		surface.yy= 4.0f / (node.size.y * node.size.y);
 		surface.k= -1.0f;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -0.25f * node.size.z * node.size.z;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 
@@ -355,12 +375,16 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.zz= -1.0f;
 		surface.z= -node.size.z;
 		surface.k= k;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= k;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 
@@ -394,12 +418,16 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.yy= z4 / (node.size.y * node.size.y);
 		surface.z= -1.0f;
 		surface.k= -0.5f * node.size.z;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	{
 		GPUSurface surface{};
 		surface.z= 1.0f;
 		surface.k= -0.5f * node.size.z;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 
@@ -435,12 +463,16 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.yy= z_factor / (node.size.y * node.size.y);
 		surface.zz= -1.0f;
 		surface.k= k;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	{
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -0.25f * square_z;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 
@@ -473,6 +505,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= 4.0f * node.size.z / (node.size.x * node.size.x);
 		surface.z= -1.0f;
 		surface.k= -0.5f * node.size.z;
+		surface.vec0= m_Vec3(0.0f, 1.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	// Upper bounding plane.
@@ -480,6 +514,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		GPUSurface surface{};
 		surface.z= 1.0f;
 		surface.k= -0.5f * node.size.z;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	// Pair of side bounding planes.
@@ -487,6 +523,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		GPUSurface surface{};
 		surface.yy= 1.0f;
 		surface.k= -0.25f * node.size.y * node.size.y;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 
@@ -526,6 +564,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= z_factor / (node.size.x * node.size.x);
 		surface.zz= -1.0f;
 		surface.k= k;
+		surface.vec0= m_Vec3(0.0f, 1.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	// Pair of top and bottom bounding planes.
@@ -533,6 +573,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		GPUSurface surface{};
 		surface.zz= 1.0f;
 		surface.k= -0.25f * square_z;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	// Pair of side bounding planes.
@@ -540,6 +582,8 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		GPUSurface surface{};
 		surface.yy= 1.0f;
 		surface.k= -0.25f * node.size.y * node.size.y;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 
@@ -576,18 +620,24 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.xx= +1.0f;
 		surface.yy= -1.0f;
 		surface.z= 1.0f;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	{ // Pair of bounding planes.
 		GPUSurface surface{};
 		surface.yy= 1.0f;
 		surface.k= -0.5f * node.height;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 	{ // Single bounding plane.
 		GPUSurface surface{};
 		surface.z= -1.0f;
 		surface.k= -0.5f * node.height;
+		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
+		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
 		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
 	}
 

@@ -67,7 +67,7 @@ struct GPUSurface
 	float y;
 	float z;
 	float k;
-	float reserved[6];
+	m_Vec3 vec0, vec1; // Vectors for texture mapping
 };
 static_assert(sizeof(GPUSurface) == sizeof(float) * 16, "Invalid size");
 
