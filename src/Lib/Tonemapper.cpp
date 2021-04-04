@@ -56,7 +56,7 @@ Tonemapper::Tonemapper(I_WindowVulkan& window_vulkan)
 	, queue_family_index_(window_vulkan.GetQueueFamilyIndex())
 {
 	const vk::Extent2D viewport_size= window_vulkan.GetViewportSize();
-	const vk::PhysicalDeviceMemoryProperties& memory_properties= window_vulkan.GetMemoryProperties();
+	const vk::PhysicalDeviceMemoryProperties memory_properties= window_vulkan.GetMemoryProperties();
 
 	// Select color buffer format.
 	const vk::Format hdr_color_formats[]
@@ -974,6 +974,18 @@ Tonemapper::Pipeline Tonemapper::CreateMainPipeline(I_WindowVulkan& window_vulka
 
 	const vk::PipelineMultisampleStateCreateInfo pipeline_multisample_state_create_info;
 
+	const vk::PipelineDepthStencilStateCreateInfo vk_pipeline_depth_state_create_info(
+		vk::PipelineDepthStencilStateCreateFlags(),
+		VK_FALSE,
+		VK_FALSE,
+		vk::CompareOp::eLess,
+		VK_FALSE,
+		VK_FALSE,
+		vk::StencilOpState(),
+		vk::StencilOpState(),
+		0.0f,
+		1.0f);
+
 	const vk::PipelineColorBlendAttachmentState pipeline_color_blend_attachment_state(
 		VK_FALSE,
 		vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
@@ -998,7 +1010,7 @@ Tonemapper::Pipeline Tonemapper::CreateMainPipeline(I_WindowVulkan& window_vulka
 				&pipieline_viewport_state_create_info,
 				&pipilane_rasterization_state_create_info,
 				&pipeline_multisample_state_create_info,
-				nullptr,
+				window_vulkan.HasDepthBuffer() ? &vk_pipeline_depth_state_create_info : nullptr,
 				&vk_pipeline_color_blend_state_create_info,
 				nullptr,
 				*pipeline.pipeline_layout,

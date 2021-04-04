@@ -18,13 +18,13 @@ public:
 	vk::CommandBuffer BeginFrame();
 	void EndFrame(const DrawFunctions& draw_functions);
 
-	vk::Device GetVulkanDevice() const;
-	vk::Queue GetQueue() const;
-	vk::Extent2D GetViewportSize() const;
-	uint32_t GetQueueFamilyIndex() const;
-	vk::RenderPass GetRenderPass() const; // Render pass for rendering directly into screen.
-	const vk::PhysicalDeviceMemoryProperties& GetMemoryProperties() const;
-	const vk::PhysicalDevice& GetPhysicalDevice() const;
+	vk::Device GetVulkanDevice() const override;
+	vk::Extent2D GetViewportSize() const override;
+	uint32_t GetQueueFamilyIndex() const override;
+	vk::RenderPass GetRenderPass() const override; // Render pass for rendering directly into screen.
+	bool HasDepthBuffer() const override;
+	vk::PhysicalDeviceMemoryProperties GetMemoryProperties() const override;
+	vk::PhysicalDevice GetPhysicalDevice() const;
 
 private:
 	struct CommandBufferData

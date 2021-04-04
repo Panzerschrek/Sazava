@@ -16,6 +16,11 @@ CameraController::CameraController(const float aspect)
 	: aspect_(std::move(aspect))
 {}
 
+void CameraController::SetAspect(const float aspect)
+{
+	aspect_= aspect;
+}
+
 void CameraController::Update(const float time_delta_s, const InputState& input_state)
 {
 	const float speed= 1.0f;

@@ -437,11 +437,6 @@ vk::Device WindowVulkan::GetVulkanDevice() const
 	return *vk_device_;
 }
 
-vk::Queue WindowVulkan::GetQueue() const
-{
-	return vk_queue_;
-}
-
 vk::Extent2D WindowVulkan::GetViewportSize() const
 {
 	return viewport_size_;
@@ -457,12 +452,17 @@ vk::RenderPass WindowVulkan::GetRenderPass() const
 	return *vk_render_pass_;
 }
 
-const vk::PhysicalDeviceMemoryProperties& WindowVulkan::GetMemoryProperties() const
+bool WindowVulkan::HasDepthBuffer() const
+{
+	return false;
+}
+
+vk::PhysicalDeviceMemoryProperties WindowVulkan::GetMemoryProperties() const
 {
 	return memory_properties_;
 }
 
-const vk::PhysicalDevice& WindowVulkan::GetPhysicalDevice() const
+vk::PhysicalDevice WindowVulkan::GetPhysicalDevice() const
 {
 	return physical_device_;
 }

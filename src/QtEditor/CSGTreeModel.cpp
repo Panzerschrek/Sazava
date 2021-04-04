@@ -68,6 +68,16 @@ CSGTreeModel::CSGTreeModel(CSGTree::CSGTreeNode& root)
 	: root_(root)
 {}
 
+CSGTree::CSGTreeNode& CSGTreeModel::GetRoot()
+{
+	return root_;
+}
+
+const CSGTree::CSGTreeNode& CSGTreeModel::GetRoot() const
+{
+	return root_;
+}
+
 void CSGTreeModel::Reset(CSGTree::CSGTreeNode new_root)
 {
 	beginResetModel();
