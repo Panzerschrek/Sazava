@@ -478,11 +478,20 @@ private:
 	const CSGTree::CSGTreeNode& csg_tree_root_;
 };
 
-class CentralWidget final : public QWidget
+class CentralWidgetBase : public QWidget
 {
 public:
-	explicit CentralWidget(QWidget* const parent)
-		: QWidget(parent)
+	explicit CentralWidgetBase(QWidget* const parent) : QWidget(parent) {}
+
+	virtual CSGTree::CSGTreeNode& GetCSGTreeRoot() = 0;
+	virtual const CSGTree::CSGTreeNode& GetCSGTreeRoot() const = 0;
+};
+
+class CentralWidgetQtVulkan final : public CentralWidgetBase
+{
+public:
+	explicit CentralWidgetQtVulkan(QWidget* const parent)
+		: CentralWidgetBase(parent)
 		, csg_tree_root_(GetTestCSGTree())
 		, csg_tree_model_(csg_tree_root_)
 		, layout_(this)
@@ -508,12 +517,13 @@ public:
 		setLayout(&layout_);
 	}
 
-	CSGTree::CSGTreeNode& GetCSGTreeRoot()
+public: // ICentralWidget
+	CSGTree::CSGTreeNode& GetCSGTreeRoot() override
 	{
 		return csg_tree_model_.GetRoot();
 	}
 
-	const CSGTree::CSGTreeNode& GetCSGTreeRoot() const
+	const CSGTree::CSGTreeNode& GetCSGTreeRoot() const override
 	{
 		return csg_tree_model_.GetRoot();
 	}
@@ -529,12 +539,68 @@ private:
 	CSGNodesTreeWidget csg_nodes_tree_widget_;
 };
 
+class CentralWidgetSDLVulkan final : public CentralWidgetBase
+{
+public:
+	explicit CentralWidgetSDLVulkan(QWidget* const parent)
+		: CentralWidgetBase(parent)
+		, csg_tree_model_(host_.GetCSGTree())
+		, layout_(this)
+		, new_node_list_widget_(
+			this,
+			[this](CSGTree::CSGTreeNode node){ csg_nodes_tree_widget_.AddNode(std::move(node)); }
+			)
+		, csg_nodes_tree_widget_(csg_tree_model_, this)
+	{
+		connect(&timer_, &QTimer::timeout, this, &CentralWidgetSDLVulkan::Loop);
+		timer_.start(20);
+
+		layout_.addWidget(&new_node_list_widget_);
+
+		const auto down_layout= new QHBoxLayout();
+		down_layout->addWidget(&csg_nodes_tree_widget_, 1);
+		down_layout->addWidget(new QLabel("Sorry, QtVulkan is not available", this), 4);
+
+		layout_.insertLayout(1, down_layout);
+
+		setLayout(&layout_);
+	}
+
+public: // ICentralWidget
+	CSGTree::CSGTreeNode& GetCSGTreeRoot() override
+	{
+		return csg_tree_model_.GetRoot();
+	}
+
+	const CSGTree::CSGTreeNode& GetCSGTreeRoot() const override
+	{
+		return csg_tree_model_.GetRoot();
+	}
+
+
+private:
+	void Loop()
+	{
+		if(host_.Loop())
+			close();
+	}
+
+private:
+	Host host_;
+	QTimer timer_;
+	CSGTreeModel csg_tree_model_;
+	QVBoxLayout layout_;
+	NewNodeListWidget new_node_list_widget_;
+	CSGNodesTreeWidget csg_nodes_tree_widget_;
+};
+
 class MainWindow final : public QMainWindow
 {
 public:
 	explicit MainWindow()
-		: central_widget_(this)
 	{
+		central_widget_= new CentralWidgetQtVulkan(this);
+
 		const auto menu_bar = new QMenuBar(this);
 		const auto file_menu = menu_bar->addMenu("&File");
 		file_menu->addAction("&Open", this, &MainWindow::OnOpen);
@@ -542,7 +608,7 @@ public:
 		file_menu->addAction("&Quit", this, &QWidget::close);
 		setMenuBar(menu_bar);
 
-		setCentralWidget(&central_widget_);
+		setCentralWidget(central_widget_);
 	}
 
 private:
@@ -559,7 +625,7 @@ private:
 		const QByteArray file_data= f.readAll();
 		f.close();
 
-		central_widget_.GetCSGTreeRoot()= DeserializeCSGExpressionTree(file_data);
+		central_widget_->GetCSGTreeRoot()= DeserializeCSGExpressionTree(file_data);
 	}
 
 	void OnSave()
@@ -568,7 +634,7 @@ private:
 		if(save_path.isEmpty())
 			return;
 
-		const QByteArray csg_tree_serialized= SerializeCSGExpressionTree(central_widget_.GetCSGTreeRoot());
+		const QByteArray csg_tree_serialized= SerializeCSGExpressionTree(central_widget_->GetCSGTreeRoot());
 
 		QFile f(save_path);
 		if(!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -579,7 +645,7 @@ private:
 	}
 
 private:
-	CentralWidget central_widget_;
+	CentralWidgetBase* central_widget_= nullptr;
 };
 
 int Main(int argc, char* argv[])
