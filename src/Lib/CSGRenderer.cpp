@@ -27,11 +27,11 @@ struct Uniforms
 
 } // namespace
 
-CSGRenderer::CSGRenderer(WindowVulkan& window_vulkan)
+CSGRenderer::CSGRenderer(I_WindowVulkan& window_vulkan)
 	: vk_device_(window_vulkan.GetVulkanDevice())
 	, tonemapper_(window_vulkan)
 {
-	const vk::PhysicalDeviceMemoryProperties& memory_properties= window_vulkan.GetMemoryProperties();
+	const vk::PhysicalDeviceMemoryProperties memory_properties= window_vulkan.GetMemoryProperties();
 
 	{ // Create surfaces data buffer
 		const uint32_t buffer_size= 65536u; // Maximum size for vkCmdUpdateBuffer

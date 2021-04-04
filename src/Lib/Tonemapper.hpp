@@ -1,5 +1,5 @@
 #pragma once
-#include "WindowVulkan.hpp"
+#include "I_WindowVulkan.hpp"
 
 
 namespace SZV
@@ -8,7 +8,7 @@ namespace SZV
 class Tonemapper final
 {
 public:
-	Tonemapper(WindowVulkan& window_vulkan);
+	Tonemapper(I_WindowVulkan& window_vulkan);
 	~Tonemapper();
 
 	vk::Extent2D GetFramebufferSize() const;
@@ -38,7 +38,7 @@ private:
 	};
 
 private:
-	Pipeline CreateMainPipeline(WindowVulkan& window_vulkan);
+	Pipeline CreateMainPipeline(I_WindowVulkan& window_vulkan);
 	Pipeline CreateBloomPipeline();
 
 private:

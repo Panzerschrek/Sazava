@@ -33,7 +33,7 @@ void main()
 	// Use inverse values in mix function for better look.
 
 	gl_Position= vec4(pos[gl_VertexIndex], 0.0, 1.0);
-	f_tex_coord= pos[gl_VertexIndex];
+	f_tex_coord= pos[gl_VertexIndex] * 0.5 + vec2(0.5, 0.5);
 
 	float brightness= dot(textureLod(brightness_tex, vec2(0.5, 0.5), 16).rgb, vec3(0.299, 0.587, 0.114));
 	float cur_exposure= 0.6 * pow(brightness + 0.001, -0.75);

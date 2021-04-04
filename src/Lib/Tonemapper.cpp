@@ -1,5 +1,6 @@
 #include "Tonemapper.hpp"
 #include "Log.hpp"
+#include <cmath>
 
 
 namespace SZV
@@ -27,7 +28,6 @@ struct Uniforms
 
 	struct
 	{
-		float deformation_factor[4];
 		float bloom_scale;
 		float padding[3];
 	} fragment;
@@ -51,12 +51,12 @@ const uint32_t g_blured_tex_uniform_binding= 3u;
 
 } // namespace
 
-Tonemapper::Tonemapper( WindowVulkan& window_vulkan)
+Tonemapper::Tonemapper(I_WindowVulkan& window_vulkan)
 	: vk_device_(window_vulkan.GetVulkanDevice())
 	, queue_family_index_(window_vulkan.GetQueueFamilyIndex())
 {
 	const vk::Extent2D viewport_size= window_vulkan.GetViewportSize();
-	const vk::PhysicalDeviceMemoryProperties& memory_properties= window_vulkan.GetMemoryProperties();
+	const vk::PhysicalDeviceMemoryProperties memory_properties= window_vulkan.GetMemoryProperties();
 
 	// Select color buffer format.
 	const vk::Format hdr_color_formats[]
@@ -107,11 +107,7 @@ Tonemapper::Tonemapper( WindowVulkan& window_vulkan)
 	}
 
 	// Calculate image sizes.
-	// Use bigger framebuffer, because we use lenses distortion effect.
-	framebuffer_size_.width = viewport_size.width  * 4u / 3u;
-	framebuffer_size_.height= viewport_size.height * 4u / 3u;
-	framebuffer_size_.width = (framebuffer_size_.width  + 7u) & ~7u;
-	framebuffer_size_.height= (framebuffer_size_.height + 7u) & ~7u;
+	framebuffer_size_ = viewport_size;
 
 	// Use powert of two sizes, because we needs iterative downsampling and it works properly only for power of two images.
 	const vk::Extent2D aux_image_size_log2(
@@ -805,15 +801,9 @@ void Tonemapper::EndFrame(const vk::CommandBuffer command_buffer)
 		1u, &*main_descriptor_set_,
 		0u, nullptr);
 
-	const float deformation_factor= 10.0f;
-	const float color_deformation_factor= 0.25f;
 	const float bloom_scale= 0.125f;
 
 	Uniforms uniforms;
-	uniforms.fragment.deformation_factor[0]= deformation_factor * (1.0f - 0.1f * color_deformation_factor);
-	uniforms.fragment.deformation_factor[1]= deformation_factor;
-	uniforms.fragment.deformation_factor[2]= deformation_factor * (1.0f + 0.1f * color_deformation_factor);
-	uniforms.fragment.deformation_factor[3]= 0.0f;
 	uniforms.fragment.bloom_scale= bloom_scale;
 
 	const float c_exposure_change_speed= 8.0f;
@@ -838,7 +828,7 @@ void Tonemapper::EndFrame(const vk::CommandBuffer command_buffer)
 	command_buffer.draw(6u, 1u, 0u, 0u);
 }
 
-Tonemapper::Pipeline Tonemapper::CreateMainPipeline(WindowVulkan& window_vulkan)
+Tonemapper::Pipeline Tonemapper::CreateMainPipeline(I_WindowVulkan& window_vulkan)
 {
 	const vk::Extent2D& viewport_size= window_vulkan.GetViewportSize();
 
@@ -984,6 +974,18 @@ Tonemapper::Pipeline Tonemapper::CreateMainPipeline(WindowVulkan& window_vulkan)
 
 	const vk::PipelineMultisampleStateCreateInfo pipeline_multisample_state_create_info;
 
+	const vk::PipelineDepthStencilStateCreateInfo vk_pipeline_depth_state_create_info(
+		vk::PipelineDepthStencilStateCreateFlags(),
+		VK_FALSE,
+		VK_FALSE,
+		vk::CompareOp::eLess,
+		VK_FALSE,
+		VK_FALSE,
+		vk::StencilOpState(),
+		vk::StencilOpState(),
+		0.0f,
+		1.0f);
+
 	const vk::PipelineColorBlendAttachmentState pipeline_color_blend_attachment_state(
 		VK_FALSE,
 		vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd,
@@ -1008,7 +1010,7 @@ Tonemapper::Pipeline Tonemapper::CreateMainPipeline(WindowVulkan& window_vulkan)
 				&pipieline_viewport_state_create_info,
 				&pipilane_rasterization_state_create_info,
 				&pipeline_multisample_state_create_info,
-				nullptr,
+				window_vulkan.HasDepthBuffer() ? &vk_pipeline_depth_state_create_info : nullptr,
 				&vk_pipeline_color_blend_state_create_info,
 				nullptr,
 				*pipeline.pipeline_layout,

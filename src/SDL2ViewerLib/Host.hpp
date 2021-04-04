@@ -1,6 +1,6 @@
 #pragma once
-#include "CameraController.hpp"
-#include "CSGRenderer.hpp"
+#include "../Lib/CameraController.hpp"
+#include "../Lib/CSGRenderer.hpp"
 #include "SystemWindow.hpp"
 #include "WindowVulkan.hpp"
 #include <chrono>
@@ -17,8 +17,7 @@ public:
 	// Returns false on quit
 	bool Loop();
 
-private:
-	void CommandQuit();
+	CSGTree::CSGTreeNode& GetCSGTree();
 
 private:
 	using Clock= std::chrono::steady_clock;
@@ -30,6 +29,8 @@ private:
 
 	const Clock::time_point init_time_;
 	Clock::time_point prev_tick_time_;
+
+	CSGTree::CSGTreeNode csg_tree_;
 
 	bool quit_requested_= false;
 };

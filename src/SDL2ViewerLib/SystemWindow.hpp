@@ -1,5 +1,5 @@
 #pragma once
-#include "SystemEvent.hpp"
+#include "../Lib/SystemEvent.hpp"
 #include <SDL_video.h>
 
 

@@ -1,5 +1,5 @@
-#include "Log.hpp"
-#include "Host.hpp"
+#include "../Lib/Log.hpp"
+#include "../SDL2ViewerLib/Host.hpp"
 
 namespace SZV
 {

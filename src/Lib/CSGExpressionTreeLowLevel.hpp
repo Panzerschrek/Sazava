@@ -19,6 +19,7 @@ namespace TreeElementsLowLevel
 struct Add;
 struct Mul;
 struct Sub;
+struct OneLeaf{};
 
 struct Leaf
 {
@@ -30,7 +31,8 @@ using TreeElement= std::variant<
 	Add,
 	Mul,
 	Sub,
-	Leaf >;
+	Leaf,
+	OneLeaf >;
 
 struct Add
 {

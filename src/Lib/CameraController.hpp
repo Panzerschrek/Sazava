@@ -11,6 +11,8 @@ class CameraController final
 public:
 	CameraController(float aspect);
 
+	void SetAspect(float aspect);
+
 	void Update(float time_delta_s, const InputState& input_state);
 
 	// Returns rotation + aspect
@@ -19,7 +21,7 @@ public:
 	m_Vec3 GetCameraPosition() const;
 
 private:
-	const float aspect_;
+	float aspect_;
 
 	m_Vec3 pos_= m_Vec3(0.0f, 0.0f, 0.0f);
 	float azimuth_= 0.0f;

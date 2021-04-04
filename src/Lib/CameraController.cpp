@@ -16,6 +16,11 @@ CameraController::CameraController(const float aspect)
 	: aspect_(std::move(aspect))
 {}
 
+void CameraController::SetAspect(const float aspect)
+{
+	aspect_= aspect;
+}
+
 void CameraController::Update(const float time_delta_s, const InputState& input_state)
 {
 	const float speed= 1.0f;
@@ -66,7 +71,7 @@ void CameraController::Update(const float time_delta_s, const InputState& input_
 
 m_Mat4 CameraController::CalculateViewMatrix() const
 {
-	const float fov_deg= 90.0;
+	const float fov_deg= 75.0;
 
 	const float fov= fov_deg * (g_pi / 180.0f);
 

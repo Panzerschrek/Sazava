@@ -1,6 +1,6 @@
 #include "SystemWindow.hpp"
-#include "Assert.hpp"
-#include "Log.hpp"
+#include "../Lib/Assert.hpp"
+#include "../Lib/Log.hpp"
 #include <SDL.h>
 #include <algorithm>
 #include <cstring>

@@ -1,5 +1,5 @@
 #include "Log.hpp"
-#include <SDL_messagebox.h>
+//#include <SDL_messagebox.h>
 
 
 namespace SZV
@@ -15,11 +15,15 @@ void Log::SetLogCallback(LogCallback callback)
 
 void Log::ShowFatalMessageBox(const std::string& error_message)
 {
+	(void)error_message;
+	// TODO
+	/*
 	SDL_ShowSimpleMessageBox(
 		SDL_MESSAGEBOX_ERROR,
 		"Fatal error",
 		error_message.c_str(),
 		nullptr );
+	*/
 }
 
 } // namespace SZV

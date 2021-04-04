@@ -2,7 +2,7 @@
 #include "CameraController.hpp"
 #include "CSGExpressionTree.hpp"
 #include "Tonemapper.hpp"
-#include "WindowVulkan.hpp"
+#include "I_WindowVulkan.hpp"
 
 namespace SZV
 {
@@ -10,7 +10,7 @@ namespace SZV
 class CSGRenderer final
 {
 public:
-	explicit CSGRenderer(WindowVulkan& window_vulkan);
+	explicit CSGRenderer(I_WindowVulkan& window_vulkan);
 	~CSGRenderer();
 
 	void BeginFrame(
