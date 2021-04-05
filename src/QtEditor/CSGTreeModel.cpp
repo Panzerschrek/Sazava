@@ -182,7 +182,11 @@ QModelIndex CSGTreeModel::index(const int row, const int column, const QModelInd
 
 	const auto element_ptr= reinterpret_cast<CSGTree::CSGTreeNode*>(parent.internalPointer());
 	if(const auto vec= GetElementsVector(*element_ptr))
+	{
+		if(row >= int(vec->size()) || row < 0)
+			return QModelIndex();
 		return createIndex(row, column, reinterpret_cast<uintptr_t>(&(*vec)[row]));
+	}
 	return QModelIndex();
 }
 
