@@ -1,6 +1,7 @@
 #include "CSGRenderer.hpp"
 #include "Assert.hpp"
 #include "CSGDataGPU.hpp"
+#include "Log.hpp"
 
 namespace SZV
 {
@@ -34,7 +35,7 @@ CSGRenderer::CSGRenderer(I_WindowVulkan& window_vulkan)
 	const vk::PhysicalDeviceMemoryProperties memory_properties= window_vulkan.GetMemoryProperties();
 
 	{ // Create surfaces data buffer
-		const uint32_t buffer_size= 65536u; // Maximum size for vkCmdUpdateBuffer
+		const uint32_t buffer_size= 65536u * sizeof(GPUSurface);
 		surfaces_buffer_size_= buffer_size;
 
 		surfaces_data_buffer_gpu_=
@@ -58,8 +59,8 @@ CSGRenderer::CSGRenderer(I_WindowVulkan& window_vulkan)
 		surfaces_data_buffer_memory_= vk_device_.allocateMemoryUnique(vk_memory_allocate_info);
 		vk_device_.bindBufferMemory(*surfaces_data_buffer_gpu_, *surfaces_data_buffer_memory_, 0u);
 	}
-	{ // Create surfaces data buffer
-		const uint32_t buffer_size= 65536u; // Maximum size for vkCmdUpdateBuffer
+	{ // Create expressions data buffer
+		const uint32_t buffer_size= 1024u * 1024u * sizeof(CSGExpressionGPUBufferType);
 		expressions_buffer_size_= buffer_size;
 
 		expressions_data_buffer_gpu_=
@@ -295,7 +296,7 @@ CSGRenderer::CSGRenderer(I_WindowVulkan& window_vulkan)
 	}
 
 	{ // Create vertex buffer.
-		vertex_buffer_vertices_= 65536u / sizeof(SurfaceVertex);
+		vertex_buffer_vertices_= 1024u * 1024u;
 
 		vertex_buffer_=
 			vk_device_.createBufferUnique(
@@ -318,7 +319,7 @@ CSGRenderer::CSGRenderer(I_WindowVulkan& window_vulkan)
 			vk_device_.bindBufferMemory(*vertex_buffer_, *vertex_buffer_memory_, 0u);
 	}
 	{ // Create index buffer.
-		index_buffer_indeces_= 65536u / sizeof(IndexType);
+		index_buffer_indeces_= 1024u * 1024u * 2u;
 
 		index_buffer_=
 				vk_device_.createBufferUnique(
@@ -359,29 +360,34 @@ void CSGRenderer::BeginFrame(
 	CSGExpressionGPUBuffer expressions;
 	BuildSceneMeshTree(vertices, indices, expressions, BuildLowLevelTree(surfaces, csg_tree));
 
-	command_buffer.updateBuffer(
-		*vertex_buffer_,
-		0u,
-		vk::DeviceSize(sizeof(SurfaceVertex) * vertices.size()),
-		vertices.data());
+	const auto update_buffer=
+	[&](const auto& vec, const vk::UniqueBuffer& buffer)
+	{
+		const size_t data_size= vec.size() * sizeof(vec[0]);
+		const size_t update_granularity= 65536u; // Max size for "VkCmdUpdateBuffer"
+		for(size_t offset= 0; offset < data_size; offset+= update_granularity)
+			command_buffer.updateBuffer(
+				*buffer,
+				vk::DeviceSize(offset),
+				vk::DeviceSize(std::min(data_size - offset, update_granularity)),
+				reinterpret_cast<const char*>(vec.data()) + offset);
+	};
 
-	command_buffer.updateBuffer(
-		*index_buffer_,
-		0u,
-		vk::DeviceSize(sizeof(IndexType) * indices.size()),
-		indices.data());
+	if(vertices.size() > vertex_buffer_vertices_)
+		Log::FatalError("Vertices buffer overflow");
+	update_buffer(vertices, vertex_buffer_);
 
-	command_buffer.updateBuffer(
-		*surfaces_data_buffer_gpu_,
-		0u,
-		surfaces.size() * sizeof(GPUSurface),
-		surfaces.data());
+	if(indices.size() > index_buffer_indeces_)
+		Log::FatalError("Indices buffer overflow");
+	update_buffer(indices, index_buffer_);
 
-	command_buffer.updateBuffer(
-		*expressions_data_buffer_gpu_,
-		0u,
-		expressions.size() * sizeof(CSGExpressionGPUBufferType),
-		expressions.data());
+	if(surfaces.size() * sizeof(GPUSurface) > surfaces_buffer_size_)
+		Log::FatalError("Surfaces buffer overflow");
+	update_buffer(surfaces, surfaces_data_buffer_gpu_);
+
+	if(expressions.size() * sizeof(CSGExpressionGPUBufferType) > expressions_buffer_size_)
+		Log::FatalError("Expressions buffer overflow");
+	update_buffer(expressions, expressions_data_buffer_gpu_);
 
 	tonemapper_.DoMainPass(
 		command_buffer,
