@@ -14,7 +14,7 @@ public:
 	void EndFrame(
 		vk::CommandBuffer command_buffer,
 		const CameraController& camera_controller,
-		const m_Vec3& bb_center, const m_Vec3& bb_size);
+		const m_Vec3& bb_center, const m_Vec3& bb_size, const m_Vec3& angles_deg);
 
 private:
 

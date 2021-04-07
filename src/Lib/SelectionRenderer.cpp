@@ -159,14 +159,20 @@ SelectionRenderer::~SelectionRenderer()
 void SelectionRenderer::EndFrame(
 	const vk::CommandBuffer command_buffer,
 	const CameraController& camera_controller,
-	const m_Vec3& bb_center, const m_Vec3& bb_size)
+	const m_Vec3& bb_center, const m_Vec3& bb_size, const m_Vec3& angles_deg)
 {
-	m_Mat4 scale_mat, translate_mat;
+	m_Mat4 scale_mat, rotate_x, rotate_y, rotate_z, translate_mat;
 	scale_mat.Scale(bb_size);
+
+	const float deg2rad= 3.1415926535f / 180.0f;
+	rotate_x.RotateX(-angles_deg.x * deg2rad);
+	rotate_y.RotateY(-angles_deg.y * deg2rad);
+	rotate_z.RotateZ(-angles_deg.z * deg2rad);
+
 	translate_mat.Translate(bb_center);
 
 	Uniforms uniforms{};
-	uniforms.mat= scale_mat * translate_mat * camera_controller.CalculateFullViewMatrix();
+	uniforms.mat= scale_mat * rotate_z * rotate_y * rotate_x * translate_mat * camera_controller.CalculateFullViewMatrix();
 
 	command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline_);
 

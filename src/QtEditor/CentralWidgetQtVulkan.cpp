@@ -24,6 +24,7 @@ struct SelectionBox
 {
 	m_Vec3 center;
 	m_Vec3 size;
+	m_Vec3 angles_deg;
 };
 
 class VulkanRenderer final : public QVulkanWindowRenderer, public I_WindowVulkan
@@ -93,7 +94,10 @@ public:
 		csg_renderer_->EndFrame(command_buffer);
 
 		// TODO - draw real selection.
-		selection_renderer_->EndFrame(command_buffer, camera_controller_, selection_box_.center, selection_box_.size);
+		selection_renderer_->EndFrame(
+			command_buffer,
+			camera_controller_,
+			selection_box_.center, selection_box_.size, selection_box_.angles_deg);
 
 		command_buffer.endRenderPass();
 
@@ -267,10 +271,11 @@ public:
 			&csg_nodes_tree_widget_,
 			&CSGNodesTreeWidget::selectionBoxChanged,
 			this,
-			[this](const m_Vec3& box_center, const m_Vec3& box_size)
+			[this](const m_Vec3& box_center, const m_Vec3& box_size, const m_Vec3& angles_deg)
 			{
 				selection_box_.center= box_center;
 				selection_box_.size= box_size;
+				selection_box_.angles_deg= angles_deg;
 			} );
 	}
 

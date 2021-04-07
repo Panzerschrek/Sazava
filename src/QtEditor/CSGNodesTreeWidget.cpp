@@ -243,15 +243,15 @@ void CSGNodesTreeWidget::OnNodeActivated(const QModelIndex& index)
 
 	if(!index.isValid())
 	{
-		emit selectionBoxChanged(m_Vec3(0.0f, 0.0f, 0.0f), m_Vec3(0.1f, 0.1f, 0.1f));
+		emit selectionBoxChanged(m_Vec3(0.0f, 0.0f, 0.0f), m_Vec3(0.1f, 0.1f, 0.1f), m_Vec3(0.0f, 0.0f, 0.0f));
 		return;
 	}
 
-	auto node= reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
-	edit_widget_= new CSGTreeNodeEditWidget(*node, this);
+	auto& node= *reinterpret_cast<CSGTree::CSGTreeNode*>(index.internalPointer());
+	edit_widget_= new CSGTreeNodeEditWidget(node, this);
 	layout_.addWidget(edit_widget_);
 
-	emit selectionBoxChanged(GetNodePos(*node), GetNodeSize(*node));
+	emit selectionBoxChanged(GetNodePos(node), GetNodeSize(node), GetNodeAngles(node));
 }
 
 
