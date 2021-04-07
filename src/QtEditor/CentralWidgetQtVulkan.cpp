@@ -20,15 +20,23 @@ CSGTree::CSGTreeNode GetTestCSGTree()
 	} };
 }
 
+struct SelectionBox
+{
+	m_Vec3 center;
+	m_Vec3 size;
+};
+
 class VulkanRenderer final : public QVulkanWindowRenderer, public I_WindowVulkan
 {
 public:
 	explicit VulkanRenderer(
 		QVulkanWindow& window,
 		const CSGTree::CSGTreeNode& csg_tree_root,
+		const SelectionBox& selection_box,
 		const InputState& input_state)
 		: window_(window)
 		, csg_tree_root_(csg_tree_root)
+		, selection_box_(selection_box)
 		, input_state_(input_state)
 		, camera_controller_(1.0f)
 		, prev_tick_time_(Clock::now())
@@ -85,7 +93,7 @@ public:
 		csg_renderer_->EndFrame(command_buffer);
 
 		// TODO - draw real selection.
-		selection_renderer_->EndFrame(command_buffer, camera_controller_, m_Vec3(0.0f, 2.0f, 0.0f), m_Vec3(1.0f, 1.0f, 2.0f));
+		selection_renderer_->EndFrame(command_buffer, camera_controller_, selection_box_.center, selection_box_.size);
 
 		command_buffer.endRenderPass();
 
@@ -157,6 +165,7 @@ private:
 private:
 	QVulkanWindow& window_;
 	const CSGTree::CSGTreeNode& csg_tree_root_;
+	const SelectionBox& selection_box_;
 	const InputState& input_state_;
 	CameraController camera_controller_;
 	std::unique_ptr<CSGRenderer> csg_renderer_;
@@ -169,13 +178,13 @@ private:
 class VulkanWindow final : public QVulkanWindow
 {
 public:
-	VulkanWindow(QWindow* const parent, const CSGTree::CSGTreeNode& csg_tree_root)
-		: QVulkanWindow(parent), csg_tree_root_(csg_tree_root)
+	VulkanWindow(QWindow* const parent, const CSGTree::CSGTreeNode& csg_tree_root, const SelectionBox& selection_box)
+		: QVulkanWindow(parent), csg_tree_root_(csg_tree_root), selection_box_(selection_box)
 	{}
 
 	QVulkanWindowRenderer *createRenderer() override
 	{
-		return new VulkanRenderer(*this, csg_tree_root_, input_state_);
+		return new VulkanRenderer(*this, csg_tree_root_, selection_box_, input_state_);
 	}
 
 private:
@@ -221,8 +230,8 @@ private:
 private:
 	InputState input_state_{};
 	const CSGTree::CSGTreeNode& csg_tree_root_;
+	const SelectionBox& selection_box_;
 };
-
 
 
 class CentralWidgetQtVulkan final : public CentralWidgetBase
@@ -241,7 +250,7 @@ public:
 	{
 		vulkan_instance_.setFlags(QVulkanInstance::NoDebugOutputRedirect);
 		vulkan_instance_.create();
-		vulkan_window_= new VulkanWindow(this->windowHandle(), csg_tree_root_);
+		vulkan_window_= new VulkanWindow(this->windowHandle(), csg_tree_root_, selection_box_);
 		vulkan_window_->setVulkanInstance(&vulkan_instance_);
 
 		layout_.addWidget(&new_node_list_widget_);
@@ -253,6 +262,16 @@ public:
 		layout_.insertLayout(1, down_layout);
 
 		setLayout(&layout_);
+
+		connect(
+			&csg_nodes_tree_widget_,
+			&CSGNodesTreeWidget::selectionBoxChanged,
+			this,
+			[this](const m_Vec3& box_center, const m_Vec3& box_size)
+			{
+				selection_box_.center= box_center;
+				selection_box_.size= box_size;
+			} );
 	}
 
 public: // CentralWidgetBase
@@ -271,6 +290,7 @@ private:
 	VulkanWindow* vulkan_window_= nullptr;
 
 	CSGTree::CSGTreeNode csg_tree_root_;
+	SelectionBox selection_box_;
 	CSGTreeModel csg_tree_model_;
 	QVBoxLayout layout_;
 	NewNodeListWidget new_node_list_widget_;
