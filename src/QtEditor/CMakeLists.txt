@@ -12,6 +12,8 @@ else()
 	list(REMOVE_ITEM SOURCES ${SOURCES_QT_VULKAN})
 endif()
 
+set(CMAKE_AUTOMOC ON)
+
 add_executable(SazavaEditor ${SOURCES})
 
 if(SAZAVA_EDITOR_USE_QT_VULKAN)

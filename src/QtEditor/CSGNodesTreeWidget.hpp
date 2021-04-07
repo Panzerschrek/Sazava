@@ -9,9 +9,14 @@ namespace SZV
 
 class CSGNodesTreeWidget final : public QWidget
 {
+	Q_OBJECT
+
 public:
 	CSGNodesTreeWidget(CSGTreeModel& csg_tree_model, QWidget*  parent);
 	void AddNode(CSGTree::CSGTreeNode node_template);
+
+signals:
+	void selectionBoxChanged(const m_Vec3& box_center, const m_Vec3& box_size);
 
 private:
 	void OnContextMenu(const QPoint& p);
