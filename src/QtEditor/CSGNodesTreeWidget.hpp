@@ -16,7 +16,7 @@ public:
 	void AddNode(CSGTree::CSGTreeNode node_template);
 
 signals:
-	void selectionBoxChanged(const m_Vec3& box_center, const m_Vec3& box_size);
+	void selectionBoxChanged(const m_Vec3& box_center, const m_Vec3& box_size, const m_Vec3& box_angles_deg);
 
 private:
 	void OnContextMenu(const QPoint& p);
