@@ -1,4 +1,5 @@
 #include "../Lib/CSGRenderer.hpp"
+#include "../Lib/SelectionRenderer.hpp"
 #include "CentralWidget.hpp"
 #include "CSGNodesTreeWidget.hpp"
 #include "NewNodeListWidget.hpp"
@@ -38,24 +39,28 @@ public:
 
 	void initSwapChainResources() override
 	{
-		if(csg_renderer_ != nullptr)
-			csg_renderer_= nullptr;
+		csg_renderer_= nullptr;
 		csg_renderer_= std::make_unique<CSGRenderer>(*this);
+
+		selection_renderer_= nullptr;
+		selection_renderer_= std::make_unique<SelectionRenderer>(*this);
 	}
 
 	void releaseSwapChainResources() override
 	{
 		csg_renderer_= nullptr;
+		selection_renderer_ = nullptr;
 	}
 
 	void releaseResources() override
 	{
 		csg_renderer_= nullptr;
+		selection_renderer_ = nullptr;
 	}
 
 	void startNextFrame() override
 	{
-		if(csg_renderer_ == nullptr)
+		if(csg_renderer_ == nullptr || selection_renderer_ == nullptr)
 			return;
 
 		UpdateCamera();
@@ -78,6 +83,9 @@ public:
 			vk::SubpassContents::eInline);
 
 		csg_renderer_->EndFrame(command_buffer);
+
+		// TODO - draw real selection.
+		selection_renderer_->EndFrame(command_buffer, camera_controller_, m_Vec3(0.0f, 2.0f, 0.0f), m_Vec3(1.0f, 1.0f, 2.0f));
 
 		command_buffer.endRenderPass();
 
@@ -152,6 +160,7 @@ private:
 	const InputState& input_state_;
 	CameraController camera_controller_;
 	std::unique_ptr<CSGRenderer> csg_renderer_;
+	std::unique_ptr<SelectionRenderer> selection_renderer_;
 
 	using Clock= std::chrono::steady_clock;
 	Clock::time_point prev_tick_time_;
