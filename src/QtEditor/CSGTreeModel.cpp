@@ -10,6 +10,7 @@ using ElementsVector= std::vector<CSGTree::CSGTreeNode>;
 ElementsVector* GetElementsVectorImpl(CSGTree::MulChain& node) { return &node.elements; }
 ElementsVector* GetElementsVectorImpl(CSGTree::AddChain& node) { return &node.elements; }
 ElementsVector* GetElementsVectorImpl(CSGTree::SubChain& node) { return &node.elements; }
+ElementsVector* GetElementsVectorImpl(CSGTree::AddArray& node) { return &node.elements; }
 template<class T> ElementsVector* GetElementsVectorImpl(T&) { return nullptr; }
 ElementsVector* GetElementsVector(CSGTree::CSGTreeNode& node)
 {
@@ -45,6 +46,7 @@ CSGTree::CSGTreeNode* FindParent(const CSGTree::CSGTreeNode& child, CSGTree::CSG
 QString GetElementTypeNameImpl(const CSGTree::MulChain&) { return "mul"; }
 QString GetElementTypeNameImpl(const CSGTree::AddChain&) { return "add"; }
 QString GetElementTypeNameImpl(const CSGTree::SubChain&) { return "sub"; }
+QString GetElementTypeNameImpl(const CSGTree::AddArray&) { return "add array"; }
 QString GetElementTypeNameImpl(const CSGTree::Ellipsoid&) { return "ellipsoid"; }
 QString GetElementTypeNameImpl(const CSGTree::Box&) { return "box"; }
 QString GetElementTypeNameImpl(const CSGTree::Cylinder&) { return "cylinder"; }

@@ -1,5 +1,6 @@
 #pragma once
 #include "Vec.hpp"
+#include <cstdint>
 #include <variant>
 #include <vector>
 
@@ -12,6 +13,7 @@ namespace CSGTree
 struct MulChain;
 struct AddChain;
 struct SubChain;
+struct AddArray;
 struct Ellipsoid;
 struct Box;
 struct Cylinder;
@@ -26,6 +28,7 @@ using CSGTreeNode= std::variant<
 	MulChain,
 	AddChain,
 	SubChain,
+	AddArray,
 	Ellipsoid,
 	Box,
 	Cylinder,
@@ -49,6 +52,13 @@ struct AddChain
 struct SubChain
 {
 	std::vector<CSGTreeNode> elements;
+};
+
+struct AddArray
+{
+	std::vector<CSGTreeNode> elements;
+	uint8_t size[3];
+	m_Vec3 step;
 };
 
 struct Ellipsoid

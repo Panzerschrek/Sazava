@@ -173,75 +173,110 @@ BoundingBox TransformBoundingBox(const BoundingBox& bb, const m_Vec3& center, co
 	return res;
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node);
+TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::CSGTreeNode& node);
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::MulChain& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::MulChain& node)
 {
 	if(node.elements.empty())
 		return TreeElementsLowLevel::OneLeaf{};
 	else if(node.elements.size() == 1u)
-		return BuildLowLevelTree_r(out_surfaces, node.elements.front());
+		return BuildLowLevelTree_r(out_surfaces, shift, node.elements.front());
 
 	TreeElementsLowLevel::Mul mul;
-	mul.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
-	mul.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));
+	mul.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[0]));
+	mul.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[1]));
 
 	for (size_t i= 2u; i < node.elements.size(); ++i)
 	{
 		TreeElementsLowLevel::Mul mul_element;
 		mul_element.l= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(mul));
-		mul_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
+		mul_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[i]));
 		mul= std::move(mul_element);
 	}
 
 	return std::move(mul);
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::AddChain& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::AddChain& node)
 {
 	if(node.elements.empty())
 		return TreeElementsLowLevel::OneLeaf{};
 	else if(node.elements.size() == 1u)
-		return BuildLowLevelTree_r(out_surfaces, node.elements.front());
+		return BuildLowLevelTree_r(out_surfaces, shift, node.elements.front());
 
 	TreeElementsLowLevel::Add add;
-	add.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
-	add.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));
+	add.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[0]));
+	add.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[1]));
 
 	for (size_t i= 2u; i < node.elements.size(); ++i)
 	{
 		TreeElementsLowLevel::Add add_element;
 		add_element.l= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(add));
-		add_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
+		add_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[i]));
 		add= std::move(add_element);
 	}
 
 	return std::move(add);
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::SubChain& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::SubChain& node)
 {
 	if(node.elements.empty())
 		return TreeElementsLowLevel::OneLeaf{};
 	else if(node.elements.size() == 1u)
-		return BuildLowLevelTree_r(out_surfaces, node.elements.front());
+		return BuildLowLevelTree_r(out_surfaces, shift, node.elements.front());
 
 	TreeElementsLowLevel::Sub sub;
-	sub.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[0]));
-	sub.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[1]));
+	sub.l= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[0]));
+	sub.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[1]));
 
 	for (size_t i= 2u; i < node.elements.size(); ++i)
 	{
 		TreeElementsLowLevel::Sub sub_element;
 		sub_element.l= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(sub));
-		sub_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, node.elements[i]));
+		sub_element.r= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, shift, node.elements[i]));
 		sub= std::move(sub_element);
 	}
 
 	return std::move(sub);
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Ellipsoid& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::AddArray& node)
+{
+	TreeElementsLowLevel::Add add;
+
+	for(size_t x= 0; x < node.size[0]; ++x)
+	for(size_t y= 0; y < node.size[1]; ++y)
+	for(size_t z= 0; z < node.size[2]; ++z)
+	for (const CSGTree::CSGTreeNode& element_node : node.elements)
+	{
+		const m_Vec3 self_shift(float(x) * node.step.x, float(y) * node.step.y, float(z) * node.step.z);
+		auto el= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, self_shift + shift, element_node));
+
+		if(add.l == nullptr)
+			add.l= std::move(el);
+		else if(add.r == nullptr)
+			add.r= std::move(el);
+		else
+		{
+			TreeElementsLowLevel::Add add_element;
+			add_element.l= std::make_unique<TreeElementsLowLevel::TreeElement>(std::move(add));
+			add_element.r= std::move(el);
+			add= std::move(add_element);
+		}
+	}
+
+	if(add.l == nullptr || add.r == nullptr)
+		return TreeElementsLowLevel::OneLeaf{};
+	if(add.l == nullptr)
+		return std::move(*add.r);
+	if(add.r == nullptr)
+		return std::move(*add.l);
+
+	return std::move(add);
+}
+
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::Ellipsoid& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -254,17 +289,17 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
 
 	const size_t surface_index= out_surfaces.size();
-	out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+	out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
 
 	TreeElementsLowLevel::Leaf leaf;
 	leaf.surface_index= surface_index;
-	leaf.bb= TransformBoundingBox(bb, node.center, basis);
+	leaf.bb= TransformBoundingBox(bb, node.center + shift, basis);
 	return leaf;
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Box& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::Box& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -277,7 +312,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.25f * node.size.x * node.size.x;
 		surface.vec0= m_Vec3(0.0f, 1.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	{
 		GPUSurface surface{};
@@ -285,7 +320,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.25f * node.size.y * node.size.y;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	{
 		GPUSurface surface{};
@@ -293,11 +328,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.25f * node.size.z * node.size.z;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center + shift, basis);
 
 	TreeElementsLowLevel::Leaf leafs[3];
 	for (size_t i= 0u; i < 3u; ++i)
@@ -318,7 +353,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cylinder& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::Cylinder& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -331,7 +366,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -1.0f;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	{
 		GPUSurface surface{};
@@ -339,11 +374,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.25f * node.size.z * node.size.z;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center + shift, basis);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
@@ -359,7 +394,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Cone& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::Cone& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -377,7 +412,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= k;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	{
 		GPUSurface surface{};
@@ -385,11 +420,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= k;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center + shift, basis);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
@@ -405,7 +440,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Paraboloid& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::Paraboloid& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -420,7 +455,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.5f * node.size.z;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	{
 		GPUSurface surface{};
@@ -428,11 +463,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.5f * node.size.z;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center + shift, basis);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
@@ -448,7 +483,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::Hyperboloid& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::Hyperboloid& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -465,7 +500,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= k;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	{
 		GPUSurface surface{};
@@ -473,11 +508,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.25f * square_z;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center + shift, basis);
 
 	TreeElementsLowLevel::Leaf leafs[2];
 	for (size_t i= 0u; i < 2u; ++i)
@@ -493,7 +528,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::ParabolicCylinder& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::ParabolicCylinder& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -507,7 +542,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.5f * node.size.z;
 		surface.vec0= m_Vec3(0.0f, 1.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	// Upper bounding plane.
 	{
@@ -516,7 +551,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.5f * node.size.z;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	// Pair of side bounding planes.
 	{
@@ -525,11 +560,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.25f * node.size.y * node.size.y;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center + shift, basis);
 
 	TreeElementsLowLevel::Leaf leafs[3];
 	for (size_t i= 0u; i < 3u; ++i)
@@ -550,7 +585,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::HyperbolicCylinder& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::HyperbolicCylinder& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -566,7 +601,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= k;
 		surface.vec0= m_Vec3(0.0f, 1.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	// Pair of top and bottom bounding planes.
 	{
@@ -575,7 +610,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.25f * square_z;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	// Pair of side bounding planes.
 	{
@@ -584,11 +619,11 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.25f * node.size.y * node.size.y;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 
 	const BoundingBox bb{ -node.size * 0.5f, node.size * 0.5f };
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center + shift, basis);
 
 	TreeElementsLowLevel::Leaf leafs[3];
 	for (size_t i= 0u; i < 3u; ++i)
@@ -609,7 +644,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const CSGTree::HyperbolicParaboloid& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::HyperbolicParaboloid& node)
 {
 	const auto basis= GetTransformedBasis(node.angles_deg);
 
@@ -622,7 +657,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.z= 1.0f;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	{ // Pair of bounding planes.
 		GPUSurface surface{};
@@ -630,7 +665,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.5f * node.height;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 0.0f, 1.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 	{ // Single bounding plane.
 		GPUSurface surface{};
@@ -638,7 +673,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		surface.k= -0.5f * node.height;
 		surface.vec0= m_Vec3(1.0f, 0.0f, 0.0f);
 		surface.vec1= m_Vec3(0.0f, 1.0f, 0.0f);
-		out_surfaces.push_back(TransformSurface(surface, node.center, basis));
+		out_surfaces.push_back(TransformSurface(surface, node.center + shift, basis));
 	}
 
 	const float half_size_x= std::sqrt(node.height);
@@ -648,7 +683,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		{ -half_size_x, -half_size_y, -0.5f * node.height },
 		{ +half_size_x, +half_size_y, +0.5f * node.height },
 	};
-	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center, basis);
+	const BoundingBox bb_transformed= TransformBoundingBox(bb, node.center + shift, basis);
 
 	TreeElementsLowLevel::Leaf leafs[3];
 	for (size_t i= 0u; i < 3u; ++i)
@@ -669,12 +704,12 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 	};
 }
 
-TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& node)
+TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_surfaces, const m_Vec3& shift, const CSGTree::CSGTreeNode& node)
 {
 	return std::visit(
 		[&](const auto& el)
 		{
-			return BuildLowLevelTreeNode_impl(out_surfaces, el);
+			return BuildLowLevelTreeNode_impl(out_surfaces, shift, el);
 		},
 		node);
 }
@@ -683,7 +718,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTree_r(GPUSurfacesVector& out_sur
 
 TreeElementsLowLevel::TreeElement BuildLowLevelTree(GPUSurfacesVector& out_surfaces, const CSGTree::CSGTreeNode& root)
 {
-	return BuildLowLevelTree_r(out_surfaces, root);
+	return BuildLowLevelTree_r(out_surfaces, m_Vec3(0.0f, 0.0f, 0.0f), root);
 }
 
 } // namespace SZV

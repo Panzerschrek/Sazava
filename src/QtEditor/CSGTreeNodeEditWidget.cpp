@@ -98,6 +98,57 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::SubChain& node)
 	(void)node;
 }
 
+void CSGTreeNodeEditWidget::AddWidgets(CSGTree::AddArray& node)
+{
+	const auto layout= new QGridLayout(this);
+
+	const QString captions_size[3]{ "Num X", "Num Y", "Num Z" };
+	for(size_t i= 0; i < 3; ++i)
+	{
+		const auto box= new QSpinBox(this);
+		box->setMinimum(1);
+		box->setMaximum(255);
+
+		const auto value_ptr= &node.size[i];
+		box->setValue(*value_ptr);
+
+		connect(
+			box,
+			static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+			this,
+			[value_ptr](const int value){ *value_ptr= uint8_t(value); });
+
+		const int row= layout->rowCount();
+		layout->addWidget(new QLabel(captions_size[i]), row, 0);
+		layout->addWidget(box, row, 1);
+	}
+
+	const QString captions_step[3]{ "Step X", "Step Y", "Step Z" };
+	for(size_t i= 0; i < 3; ++i)
+	{
+		const auto box= new QDoubleSpinBox(this);
+		box->setSingleStep(0.125f);
+		box->setDecimals(3);
+		box->setMaximum(+1024.0f);
+		box->setMinimum(0.125f);
+
+		const auto value_ptr= (&node.step.x) + i;
+		box->setValue(*value_ptr);
+
+		connect(
+			box,
+			static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+			this,
+			[value_ptr](const double value){ *value_ptr= float(value); });
+
+		const int row= layout->rowCount();
+		layout->addWidget(new QLabel(captions_step[i]), row, 0);
+		layout->addWidget(box, row, 1);
+	}
+
+	setLayout(layout);
+}
+
 void CSGTreeNodeEditWidget::AddWidgets(CSGTree::Ellipsoid& node)
 {
 	const auto layout= new QGridLayout(this);

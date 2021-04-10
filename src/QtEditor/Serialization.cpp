@@ -70,6 +70,19 @@ QJsonObject CSGTreeNodeToJson_impl(const CSGTree::SubChain& node)
 	return CSGTreeBranchNodeToJson(node, "sub");
 }
 
+QJsonObject CSGTreeNodeToJson_impl(const CSGTree::AddArray& node)
+{
+	QJsonObject obj= CSGTreeBranchNodeToJson(node, "add_array");
+
+	QJsonArray size;
+	for(size_t i= 0; i < std::size(node.size); ++i)
+		size.append(double(node.size[i]));
+
+	obj["size"]= std::move(size);
+
+	return obj;
+}
+
 QJsonObject CSGTreeNodeToJson_impl(const CSGTree::Ellipsoid& node)
 {
 	return CSGTreeLeafNodeToJson(node, "ellipsoid");
@@ -189,6 +202,15 @@ CSGTree::CSGTreeNode JsonToCSGTreeNode(const QJsonObject& obj)
 		return CSGTree::AddChain{ GetBranchNodeElements(obj) };
 	if(type == "sub")
 		return CSGTree::SubChain{ GetBranchNodeElements(obj) };
+
+	if(type == "add_array")
+	{
+		CSGTree::AddArray add_array;
+		add_array.elements= GetBranchNodeElements(obj);
+		for(size_t i= 0; i < std::size(add_array.size); ++i)
+			add_array.size[i]= uint8_t(obj["size"].toArray()[int(i)].toDouble());
+		return add_array;
+	}
 
 	if(type == "ellipsoid")
 	{

@@ -18,6 +18,7 @@ private:
 	void OnAddMulChain();
 	void OnAddAddChain();
 	void OnAddSubChain();
+	void OnAddAddArray();
 	void OnAddEllipsoid();
 	void OnAddBox();
 	void OnAddCylinder();
@@ -33,6 +34,7 @@ private:
 	QPushButton button_mul_chain_;
 	QPushButton button_add_chain_;
 	QPushButton button_sub_chain_;
+	QPushButton button_add_array_;
 	QPushButton button_ellipsoid_;
 	QPushButton button_box_;
 	QPushButton button_cylinder_;

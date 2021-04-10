@@ -9,6 +9,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	, button_mul_chain_("mul chain", this)
 	, button_add_chain_("add chain", this)
 	, button_sub_chain_("sub chain", this)
+	, button_add_array_("add array", this)
 	, button_ellipsoid_("ellipsoid", this)
 	, button_box_("box", this)
 	, button_cylinder_("cylinder", this)
@@ -22,6 +23,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	connect(&button_mul_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddMulChain);
 	connect(&button_add_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddAddChain);
 	connect(&button_sub_chain_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddSubChain);
+	connect(&button_add_array_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddAddArray);
 	connect(&button_ellipsoid_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddEllipsoid);
 	connect(&button_box_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddBox);
 	connect(&button_cylinder_, &QPushButton::clicked, this, &NewNodeListWidget::OnAddCylinder);
@@ -35,6 +37,7 @@ NewNodeListWidget::NewNodeListWidget(QWidget* const parent, NodeAddCallback node
 	layout_.addWidget(&button_mul_chain_);
 	layout_.addWidget(&button_add_chain_);
 	layout_.addWidget(&button_sub_chain_);
+	layout_.addWidget(&button_add_array_);
 	layout_.addWidget(&button_ellipsoid_);
 	layout_.addWidget(&button_box_);
 	layout_.addWidget(&button_cylinder_);
@@ -78,6 +81,17 @@ void NewNodeListWidget::OnAddSubChain()
 		CSGTree::Ellipsoid{ { 0.0f, 0.0f, -0.25f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } },
 	} };
 	node_add_callback_(std::move(sub_chain));
+}
+
+void NewNodeListWidget::OnAddAddArray()
+{
+	CSGTree::AddArray add_array
+	{
+		{ CSGTree::Ellipsoid{ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } } },
+		{ 3, 2, 1 },
+		{ 1.0f, 1.0f, 1.0f },
+	};
+	node_add_callback_(std::move(add_array));
 }
 
 void NewNodeListWidget::OnAddEllipsoid()

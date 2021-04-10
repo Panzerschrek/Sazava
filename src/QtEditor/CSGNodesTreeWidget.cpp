@@ -34,6 +34,13 @@ m_Vec3 GetNodePosImpl(const CSGTree::SubChain& node)
 	return m_Vec3(0.0f, 0.0f, 0.0f);
 }
 
+m_Vec3 GetNodePosImpl(const CSGTree::AddArray& node)
+{
+	if(!node.elements.empty())
+		return GetNodePos(node.elements.front());
+	return m_Vec3(0.0f, 0.0f, 0.0f);
+}
+
 m_Vec3 GetNodePos(const CSGTree::CSGTreeNode& node)
 {
 	return std::visit([](const auto& n){ return GetNodePosImpl(n); }, node);
@@ -59,6 +66,13 @@ m_Vec3 GetNodeSizeImpl(const CSGTree::AddChain& node)
 }
 
 m_Vec3 GetNodeSizeImpl(const CSGTree::SubChain& node)
+{
+	if(!node.elements.empty())
+		return GetNodeSize(node.elements.front());
+	return m_Vec3(1.0f, 1.0f, 1.0f);
+}
+
+m_Vec3 GetNodeSizeImpl(const CSGTree::AddArray& node)
 {
 	if(!node.elements.empty())
 		return GetNodeSize(node.elements.front());
@@ -101,6 +115,13 @@ m_Vec3 GetNodeAnglesImpl(const CSGTree::SubChain& node)
 	return m_Vec3(0.0f, 0.0f, 0.0f);
 }
 
+m_Vec3 GetNodeAnglesImpl(const CSGTree::AddArray& node)
+{
+	if(!node.elements.empty())
+		return GetNodeAngles(node.elements.front());
+	return m_Vec3(0.0f, 0.0f, 0.0f);
+}
+
 m_Vec3 GetNodeAngles(const CSGTree::CSGTreeNode& node)
 {
 	return std::visit([](const auto& n){ return GetNodeAnglesImpl(n); }, node);
@@ -109,6 +130,7 @@ m_Vec3 GetNodeAngles(const CSGTree::CSGTreeNode& node)
 void SetNodePosImpl(CSGTree::MulChain&, const m_Vec3&){}
 void SetNodePosImpl(CSGTree::AddChain&, const m_Vec3&){}
 void SetNodePosImpl(CSGTree::SubChain&, const m_Vec3&){}
+void SetNodePosImpl(CSGTree::AddArray&, const m_Vec3&){}
 
 template<typename T> void SetNodePosImpl(T& node, const m_Vec3& pos){ node.center= pos; }
 
@@ -120,6 +142,7 @@ void SetNodePos(CSGTree::CSGTreeNode& node, const m_Vec3& pos)
 void SetNodeSizeImpl(CSGTree::MulChain&, const m_Vec3&){}
 void SetNodeSizeImpl(CSGTree::AddChain&, const m_Vec3&){}
 void SetNodeSizeImpl(CSGTree::SubChain&, const m_Vec3&){}
+void SetNodeSizeImpl(CSGTree::AddArray&, const m_Vec3&){}
 void SetNodeSizeImpl(CSGTree::HyperbolicParaboloid&, const m_Vec3&){}
 
 template<typename T> void SetNodeSizeImpl(T& node, const m_Vec3& size){ node.size= size; }
@@ -132,6 +155,7 @@ void SetNodeSize(CSGTree::CSGTreeNode& node, const m_Vec3& size)
 void SetNodeAnglesImpl(CSGTree::MulChain&, const m_Vec3&){}
 void SetNodeAnglesImpl(CSGTree::AddChain&, const m_Vec3&){}
 void SetNodeAnglesImpl(CSGTree::SubChain&, const m_Vec3&){}
+void SetNodeAnglesImpl(CSGTree::AddArray&, const m_Vec3&){}
 void SetNodeAnglesImpl(CSGTree::HyperbolicParaboloid&, const m_Vec3&){}
 
 template<typename T> void SetNodeAnglesImpl(T& node, const m_Vec3& angles_deg){ node.angles_deg= angles_deg; }
