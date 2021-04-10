@@ -272,7 +272,7 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 		}
 	}
 
-	if(add.l == nullptr || add.r == nullptr)
+	if(add.l == nullptr && add.r == nullptr)
 		return TreeElementsLowLevel::OneLeaf{};
 	if(add.l == nullptr)
 		return std::move(*add.r);
