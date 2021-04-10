@@ -115,13 +115,6 @@ m_Vec3 GetNodeAnglesImpl(const CSGTree::SubChain& node)
 	return m_Vec3(0.0f, 0.0f, 0.0f);
 }
 
-m_Vec3 GetNodeAnglesImpl(const CSGTree::AddArray& node)
-{
-	if(!node.elements.empty())
-		return GetNodeAngles(node.elements.front());
-	return m_Vec3(0.0f, 0.0f, 0.0f);
-}
-
 m_Vec3 GetNodeAngles(const CSGTree::CSGTreeNode& node)
 {
 	return std::visit([](const auto& n){ return GetNodeAnglesImpl(n); }, node);
@@ -155,7 +148,6 @@ void SetNodeSize(CSGTree::CSGTreeNode& node, const m_Vec3& size)
 void SetNodeAnglesImpl(CSGTree::MulChain&, const m_Vec3&){}
 void SetNodeAnglesImpl(CSGTree::AddChain&, const m_Vec3&){}
 void SetNodeAnglesImpl(CSGTree::SubChain&, const m_Vec3&){}
-void SetNodeAnglesImpl(CSGTree::AddArray&, const m_Vec3&){}
 void SetNodeAnglesImpl(CSGTree::HyperbolicParaboloid&, const m_Vec3&){}
 
 template<typename T> void SetNodeAnglesImpl(T& node, const m_Vec3& angles_deg){ node.angles_deg= angles_deg; }

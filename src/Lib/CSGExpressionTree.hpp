@@ -59,6 +59,7 @@ struct AddArray
 	std::vector<CSGTreeNode> elements;
 	uint8_t size[3];
 	m_Vec3 step;
+	m_Vec3 angles_deg;
 };
 
 struct Ellipsoid

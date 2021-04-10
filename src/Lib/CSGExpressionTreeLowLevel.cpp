@@ -245,12 +245,18 @@ TreeElementsLowLevel::TreeElement BuildLowLevelTreeNode_impl(GPUSurfacesVector& 
 {
 	TreeElementsLowLevel::Add add;
 
+	BasisVecs basis= GetTransformedBasis(node.angles_deg);
+	basis[0]*= node.step.x;
+	basis[1]*= node.step.y;
+	basis[2]*= node.step.z;
+
 	for(size_t x= 0; x < node.size[0]; ++x)
 	for(size_t y= 0; y < node.size[1]; ++y)
 	for(size_t z= 0; z < node.size[2]; ++z)
 	for (const CSGTree::CSGTreeNode& element_node : node.elements)
 	{
-		const m_Vec3 self_shift(float(x) * node.step.x, float(y) * node.step.y, float(z) * node.step.z);
+		const m_Vec3 self_shift= basis[0] * float(x) + basis[1] * float(y) + basis[2] * float(z);
+
 		auto el= std::make_unique<TreeElementsLowLevel::TreeElement>(BuildLowLevelTree_r(out_surfaces, self_shift + shift, element_node));
 
 		if(add.l == nullptr)

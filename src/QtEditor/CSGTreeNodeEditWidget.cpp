@@ -146,6 +146,8 @@ void CSGTreeNodeEditWidget::AddWidgets(CSGTree::AddArray& node)
 		layout->addWidget(box, row, 1);
 	}
 
+	AddAnglesControl(*layout, node.angles_deg);
+
 	setLayout(layout);
 }
 

@@ -74,11 +74,26 @@ QJsonObject CSGTreeNodeToJson_impl(const CSGTree::AddArray& node)
 {
 	QJsonObject obj= CSGTreeBranchNodeToJson(node, "add_array");
 
-	QJsonArray size;
-	for(size_t i= 0; i < std::size(node.size); ++i)
-		size.append(double(node.size[i]));
-
-	obj["size"]= std::move(size);
+	{
+		QJsonArray size;
+		for(size_t i= 0; i < std::size(node.size); ++i)
+			size.append(double(node.size[i]));
+		obj["size"]= std::move(size);
+	}
+	{
+		QJsonArray step;
+		step.append(node.step.x);
+		step.append(node.step.y);
+		step.append(node.step.z);
+		obj["step"]= std::move(step);
+	}
+	{
+		QJsonArray angles;
+		angles.append(node.angles_deg.x);
+		angles.append(node.angles_deg.y);
+		angles.append(node.angles_deg.z);
+		obj["angles"]= std::move(angles);
+	}
 
 	return obj;
 }
@@ -207,8 +222,23 @@ CSGTree::CSGTreeNode JsonToCSGTreeNode(const QJsonObject& obj)
 	{
 		CSGTree::AddArray add_array;
 		add_array.elements= GetBranchNodeElements(obj);
+
 		for(size_t i= 0; i < std::size(add_array.size); ++i)
 			add_array.size[i]= uint8_t(obj["size"].toArray()[int(i)].toDouble());
+
+		{
+			const QJsonArray step= obj["step"].toArray();
+			add_array.step.x= float(step[0].toDouble());
+			add_array.step.y= float(step[1].toDouble());
+			add_array.step.z= float(step[2].toDouble());
+		}
+		{
+			const QJsonArray angles= obj["angles"].toArray();
+			add_array.angles_deg.x= float(angles[0].toDouble());
+			add_array.angles_deg.y= float(angles[1].toDouble());
+			add_array.angles_deg.z= float(angles[2].toDouble());
+		}
+
 		return add_array;
 	}
 

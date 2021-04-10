@@ -90,6 +90,7 @@ void NewNodeListWidget::OnAddAddArray()
 		{ CSGTree::Ellipsoid{ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f } } },
 		{ 3, 2, 1 },
 		{ 1.0f, 1.0f, 1.0f },
+		{ 0.0f, 0.0f, 0.0f },
 	};
 	node_add_callback_(std::move(add_array));
 }
