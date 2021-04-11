@@ -205,6 +205,8 @@ void CSGNodesTreeWidget::AddNode(CSGTree::CSGTreeNode node_template)
 	SetNodeSize(node_template, current_size);
 	SetNodeAngles(node_template, current_angles);
 	csg_tree_model_.AddNode(index, std::move(node_template));
+
+	OnNodeActivated(csg_tree_view_.currentIndex());
 }
 
 void CSGNodesTreeWidget::OnContextMenu(const QPoint& p)
