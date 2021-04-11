@@ -29,7 +29,7 @@ public:
 		setCentralWidget(central_widget_);
 
 		setMinimumSize(640, 480);
-		resize(800, 600);
+		resize(1024, 768);
 	}
 
 private:
