@@ -257,6 +257,11 @@ public:
 		vulkan_window_= new VulkanWindow(this->windowHandle(), csg_tree_root_, selection_box_);
 		vulkan_window_->setVulkanInstance(&vulkan_instance_);
 
+		QVector<VkFormat> color_formats;
+		color_formats.push_back(VK_FORMAT_R8G8B8A8_UNORM);
+		color_formats.push_back(VK_FORMAT_B8G8R8A8_UNORM);
+		vulkan_window_->setPreferredColorFormats(color_formats);
+
 		layout_.addWidget(&new_node_list_widget_);
 
 		const auto down_layout= new QHBoxLayout();
